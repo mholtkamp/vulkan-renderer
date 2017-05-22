@@ -3,9 +3,20 @@
 #include <vulkan/vulkan.h>
 #include "ApplicationState.h"
 
+struct QueueFamilyIndices
+{
+	int32_t mGraphicsFamily = -1;
+
+	bool IsComplete()
+	{
+		return mGraphicsFamily >= 0;
+	}
+};
+
 class Renderer
 {
 public:
+
 	static void Create();
 	static void Destroy();
 	static Renderer* Get();
@@ -37,6 +48,12 @@ private:
 
 	void CreateDebugCallback();
 
+	void PickPhysicalDevice();
+
+	bool IsDeviceSuitable(VkPhysicalDevice device);
+
+	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
+
 	bool CheckValidationLayerSupport(const char** layers,
 									 uint32_t count);
 
@@ -48,6 +65,7 @@ private:
 
 	VkInstance mInstance;
 	VkDebugReportCallbackEXT mCallback;
+	VkPhysicalDevice mPhysicalDevice;
 
 	AppState* mAppState;
 };

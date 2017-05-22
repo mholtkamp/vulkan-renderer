@@ -6,13 +6,18 @@
 #include <stdlib.h>
 #include <exception>
 #include <stdio.h>
+#include <vector>
+
+using namespace std;
 
 static const char* sValidationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
 
 Renderer* Renderer::sInstance = nullptr;
 
 Renderer::Renderer() :
-	mInstance(nullptr)
+	mInstance(0),
+	mCallback(0),
+	mPhysicalDevice(0)
 {
 	
 }
@@ -54,6 +59,7 @@ void Renderer::Initialize()
 {
 	CreateInstance();
 	CreateDebugCallback();
+	PickPhysicalDevice();
 }
 
 void Renderer::CreateSwapchain()
@@ -205,8 +211,81 @@ void Renderer::CreateDebugCallback()
 	}
 	else
 	{
-		throw std::exception("Failed to setup debug callback!");
+		throw exception("Failed to setup debug callback!");
 	}
+}
+
+void Renderer::PickPhysicalDevice()
+{
+	uint32_t deviceCount = 0;
+	vkEnumeratePhysicalDevices(mInstance, &deviceCount, nullptr);
+
+	if (deviceCount == 0)
+	{
+		throw exception("No physical device found.");
+	}
+
+	vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(mInstance, &deviceCount, devices.data());
+
+	for (const auto& device : devices)
+	{
+		if (IsDeviceSuitable(device))
+		{
+			mPhysicalDevice = device;
+			break;
+		}
+	}
+
+	if (mPhysicalDevice == VK_NULL_HANDLE)
+	{
+		throw exception("Failed to find a suitable GPU.");
+	}
+
+}
+
+bool Renderer::IsDeviceSuitable(VkPhysicalDevice device)
+{
+	VkPhysicalDeviceProperties deviceProperties;
+	vkGetPhysicalDeviceProperties(device, &deviceProperties);
+
+	VkPhysicalDeviceFeatures deviceFeatures;
+	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+
+	QueueFamilyIndices indices = FindQueueFamilies(device);
+
+	return indices.IsComplete();
+}
+
+QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device)
+{
+	QueueFamilyIndices indices;
+
+	uint32_t queueFamilyCount = 0;
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+	vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+	vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+	int32_t i = 0;
+	
+	for (const auto& queueFamily : queueFamilies)
+	{
+		if (queueFamily.queueCount > 0 &&
+			queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+		{
+			indices.mGraphicsFamily = i;
+		}
+
+		if (indices.IsComplete())
+		{
+			break;
+		}
+
+		i++;
+	}
+
+	return indices;
 }
 
 bool Renderer::CheckValidationLayerSupport(const char** layers, uint32_t count)
