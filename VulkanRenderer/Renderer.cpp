@@ -11,6 +11,7 @@
 using namespace std;
 
 static const char* sValidationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
+static uint32_t sNumValidationLayers = 1;
 
 Renderer* Renderer::sInstance = nullptr;
 
@@ -105,7 +106,7 @@ void Renderer::CreateInstance()
 	uint32_t enabledExtensions = 0;
 
 	if (mAppState->mValidate &&
-		CheckValidationLayerSupport(sValidationLayers, 1) == false)
+		CheckValidationLayerSupport(sValidationLayers, sNumValidationLayers) == false)
 	{
 		throw std::exception("Validation layers enabled but the configured layers are not supported.");
 	}
@@ -271,7 +272,7 @@ void Renderer::CreateLogicalDevice()
 
 	if (mAppState->mValidate)
 	{
-		ciDevice.enabledLayerCount = sizeof(sValidationLayers);
+		ciDevice.enabledLayerCount = sNumValidationLayers;
 		ciDevice.ppEnabledLayerNames = sValidationLayers;
 	}
 	else
