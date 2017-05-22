@@ -17,7 +17,9 @@ Renderer* Renderer::sInstance = nullptr;
 Renderer::Renderer() :
 	mInstance(0),
 	mCallback(0),
-	mPhysicalDevice(0)
+	mPhysicalDevice(0),
+	mDevice(0),
+	mGraphicsQueue(0)
 {
 	
 }
@@ -52,6 +54,7 @@ Renderer::~Renderer()
 {
 	DestroyDebugCallback();
 
+	vkDestroyDevice(mDevice, nullptr);
 	vkDestroyInstance(mInstance, nullptr);
 }
 
@@ -60,6 +63,7 @@ void Renderer::Initialize()
 	CreateInstance();
 	CreateDebugCallback();
 	PickPhysicalDevice();
+	CreateLogicalDevice();
 }
 
 void Renderer::CreateSwapchain()
@@ -241,7 +245,48 @@ void Renderer::PickPhysicalDevice()
 	{
 		throw exception("Failed to find a suitable GPU.");
 	}
+}
 
+void Renderer::CreateLogicalDevice()
+{
+	QueueFamilyIndices indices = FindQueueFamilies(mPhysicalDevice);
+
+	float priorities = 1.0f;
+
+	VkDeviceQueueCreateInfo ciDeviceQueue = {};
+	ciDeviceQueue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	ciDeviceQueue.queueFamilyIndex = indices.mGraphicsFamily;
+	ciDeviceQueue.queueCount = 1;
+	ciDeviceQueue.pQueuePriorities = &priorities;
+
+	VkPhysicalDeviceFeatures deviceFeatures = {};
+
+	VkDeviceCreateInfo ciDevice = {};
+	ciDevice.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	ciDevice.pQueueCreateInfos = &ciDeviceQueue;
+	ciDevice.queueCreateInfoCount = 1;
+	ciDevice.pEnabledFeatures = &deviceFeatures;
+
+	ciDevice.enabledExtensionCount = 0;
+
+	if (mAppState->mValidate)
+	{
+		ciDevice.enabledLayerCount = sizeof(sValidationLayers);
+		ciDevice.ppEnabledLayerNames = sValidationLayers;
+	}
+	else
+	{
+		ciDevice.enabledLayerCount = 0;
+	}
+
+	VkResult result = vkCreateDevice(mPhysicalDevice, &ciDevice, nullptr, &mDevice);
+
+	if (result != VK_SUCCESS)
+	{
+		throw exception("Failed to create logical device.");
+	}
+
+	vkGetDeviceQueue(mDevice, indices.mGraphicsFamily, 0, &mGraphicsQueue);
 }
 
 bool Renderer::IsDeviceSuitable(VkPhysicalDevice device)

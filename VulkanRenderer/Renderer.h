@@ -50,6 +50,8 @@ private:
 
 	void PickPhysicalDevice();
 
+	void CreateLogicalDevice();
+
 	bool IsDeviceSuitable(VkPhysicalDevice device);
 
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
@@ -66,6 +68,8 @@ private:
 	VkInstance mInstance;
 	VkDebugReportCallbackEXT mCallback;
 	VkPhysicalDevice mPhysicalDevice;
+	VkDevice mDevice;
+	VkQueue mGraphicsQueue;
 
 	AppState* mAppState;
 };
