@@ -70,6 +70,8 @@ private:
 
 	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availableModes);
 
+	VkExtent2D ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
 	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
@@ -94,6 +96,7 @@ private:
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
 	VkSurfaceKHR mSurface;
+	VkSwapchainKHR mSwapchain;
 
 	AppState* mAppState;
 };

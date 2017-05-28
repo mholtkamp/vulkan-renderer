@@ -7,8 +7,8 @@ struct AppState
 	HINSTANCE mConnection;
 	HWND mWindow;
 	POINT mMinSize;
-	int mWindowWidth;
-	int mWindowHeight;
+	uint32_t mWindowWidth;
+	uint32_t mWindowHeight;
 	int mValidationError;
 	bool mInCallback;
 	uint32_t mEnabledExtensionCount;

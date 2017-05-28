@@ -9,6 +9,9 @@
 #include <vector>
 #include <set>
 
+#undef min
+#undef max
+
 using namespace std;
 
 static const char* sValidationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
@@ -26,7 +29,8 @@ Renderer::Renderer() :
 	mDevice(0),
 	mGraphicsQueue(0),
 	mPresentQueue(0),
-	mSurface(0)
+	mSurface(0),
+	mSwapchain(0)
 {
 	
 }
@@ -61,6 +65,7 @@ Renderer::~Renderer()
 {
 	DestroyDebugCallback();
 
+	vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
 	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
 	vkDestroyDevice(mDevice, nullptr);
 	vkDestroyInstance(mInstance, nullptr);
@@ -73,11 +78,64 @@ void Renderer::Initialize()
 	CreateSurface();
 	PickPhysicalDevice();
 	CreateLogicalDevice();
+	CreateSwapchain();
 }
 
 void Renderer::CreateSwapchain()
 {
+	SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(mPhysicalDevice);
 
+	VkSurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.formats);
+	VkPresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.presentModes);
+	VkExtent2D extent = ChooseSwapExtent(swapChainSupport.capabilities);
+
+	uint32_t imageCount = 2;
+
+	if (imageCount < swapChainSupport.capabilities.minImageCount)
+		imageCount = swapChainSupport.capabilities.minImageCount;
+	if (swapChainSupport.capabilities.maxImageCount != 0 &&
+		imageCount > swapChainSupport.capabilities.maxImageCount)
+		imageCount = swapChainSupport.capabilities.maxImageCount;
+
+	VkSwapchainCreateInfoKHR ciSwapchain = {};
+	ciSwapchain.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	ciSwapchain.surface = mSurface;
+
+	ciSwapchain.minImageCount = imageCount;
+	ciSwapchain.imageFormat = surfaceFormat.format;
+	ciSwapchain.imageColorSpace = surfaceFormat.colorSpace;
+	ciSwapchain.imageExtent = extent;
+	ciSwapchain.imageArrayLayers = 1;
+	ciSwapchain.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	// TODO: Replace VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT with
+	//   VK_IMAGE_USAGE_TRANSFER_DST_BIT for deferred renderer output
+
+	QueueFamilyIndices indices = FindQueueFamilies(mPhysicalDevice);
+	uint32_t queueFamilyIndices[] = { (uint32_t)indices.mGraphicsFamily, (uint32_t)indices.mPresentFamily };
+
+	if (indices.mGraphicsFamily != indices.mPresentFamily)
+	{
+		ciSwapchain.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		ciSwapchain.queueFamilyIndexCount = 2;
+		ciSwapchain.pQueueFamilyIndices = queueFamilyIndices;
+	}
+	else
+	{
+		ciSwapchain.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		ciSwapchain.queueFamilyIndexCount = 0;
+		ciSwapchain.pQueueFamilyIndices = nullptr;
+	}
+
+	ciSwapchain.preTransform = swapChainSupport.capabilities.currentTransform;
+	ciSwapchain.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	ciSwapchain.presentMode = presentMode;
+	ciSwapchain.clipped = VK_TRUE;
+	ciSwapchain.oldSwapchain = VK_NULL_HANDLE;
+
+	if (vkCreateSwapchainKHR(mDevice, &ciSwapchain, nullptr, &mSwapchain) != VK_SUCCESS)
+	{
+		throw exception("Failed to create swapchain");
+	}
 }
 
 void Renderer::PreparePresentation()
@@ -101,6 +159,9 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(VkDebugReportFlagsEXT fla
 {
 	printf("Validation Layer ");
 	printf(msg);
+
+	OutputDebugString("Validation Layer: ");
+	OutputDebugString(msg);
 
 	return VK_FALSE;
 }
@@ -392,6 +453,29 @@ VkPresentModeKHR Renderer::ChooseSwapPresentMode(const std::vector<VkPresentMode
 	}
 
 	throw exception("Could not find a valid present mode for swapchain.");
+}
+
+VkExtent2D Renderer::ChooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+{
+	// Not entirely sure what this if statement is doing yet.
+	if (capabilities.currentExtent.width != numeric_limits<uint32_t>::max())
+	{
+		return capabilities.currentExtent;
+	}
+
+	VkExtent2D actualExtent = { mAppState->mWindowWidth, mAppState->mWindowHeight };
+
+	if (actualExtent.width < capabilities.minImageExtent.width)
+		actualExtent.width = capabilities.minImageExtent.width;
+	if (actualExtent.width > capabilities.maxImageExtent.width)
+		actualExtent.width = capabilities.maxImageExtent.width;
+
+	if (actualExtent.height < capabilities.minImageExtent.height)
+		actualExtent.height = capabilities.minImageExtent.height;
+	if (actualExtent.height > capabilities.maxImageExtent.height)
+		actualExtent.height = capabilities.maxImageExtent.height;
+
+	return actualExtent;
 }
 
 QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device)
