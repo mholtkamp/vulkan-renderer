@@ -20,7 +20,9 @@ Renderer::Renderer() :
 	mCallback(0),
 	mPhysicalDevice(0),
 	mDevice(0),
-	mGraphicsQueue(0)
+	mGraphicsQueue(0),
+	mPresentQueue(0),
+	mSurface(0)
 {
 	
 }
@@ -55,6 +57,7 @@ Renderer::~Renderer()
 {
 	DestroyDebugCallback();
 
+	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
 	vkDestroyDevice(mDevice, nullptr);
 	vkDestroyInstance(mInstance, nullptr);
 }
@@ -63,6 +66,7 @@ void Renderer::Initialize()
 {
 	CreateInstance();
 	CreateDebugCallback();
+	CreateSurface();
 	PickPhysicalDevice();
 	CreateLogicalDevice();
 }
@@ -220,6 +224,23 @@ void Renderer::CreateDebugCallback()
 	}
 }
 
+void Renderer::CreateSurface()
+{
+	PFN_vkCreateWin32SurfaceKHR pfnCreateWin32Surface = (PFN_vkCreateWin32SurfaceKHR)vkGetInstanceProcAddr(mInstance, "vkCreateWin32SurfaceKHR");
+
+	assert(pfnCreateWin32Surface != nullptr);
+
+	VkWin32SurfaceCreateInfoKHR ciSurface = {};
+	ciSurface.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	ciSurface.hwnd = mAppState->mWindow;
+	ciSurface.hinstance = GetModuleHandle(nullptr);
+
+	if (pfnCreateWin32Surface(mInstance, &ciSurface, nullptr, &mSurface) != VK_SUCCESS)
+	{
+		throw exception("Failed to create window surface.");
+	}
+}
+
 void Renderer::PickPhysicalDevice()
 {
 	uint32_t deviceCount = 0;
@@ -254,18 +275,28 @@ void Renderer::CreateLogicalDevice()
 
 	float priorities = 1.0f;
 
-	VkDeviceQueueCreateInfo ciDeviceQueue = {};
-	ciDeviceQueue.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	ciDeviceQueue.queueFamilyIndex = indices.mGraphicsFamily;
-	ciDeviceQueue.queueCount = 1;
-	ciDeviceQueue.pQueuePriorities = &priorities;
+	const int QUEUE_GRAPHICS = 0;
+	const int QUEUE_PRESENT = 1;
+	int queueCount = (indices.mGraphicsFamily != indices.mPresentFamily) ? 2 : 1;
+
+	VkDeviceQueueCreateInfo ciDeviceQueues[2];
+	memset(ciDeviceQueues, 0, sizeof(VkDeviceQueueCreateInfo)*2);
+	ciDeviceQueues[QUEUE_GRAPHICS].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	ciDeviceQueues[QUEUE_GRAPHICS].queueFamilyIndex = indices.mGraphicsFamily;
+	ciDeviceQueues[QUEUE_GRAPHICS].queueCount = 1;
+	ciDeviceQueues[QUEUE_GRAPHICS].pQueuePriorities = &priorities;
+
+	ciDeviceQueues[QUEUE_PRESENT].sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	ciDeviceQueues[QUEUE_PRESENT].queueFamilyIndex = indices.mPresentFamily;
+	ciDeviceQueues[QUEUE_PRESENT].queueCount = 1;
+	ciDeviceQueues[QUEUE_PRESENT].pQueuePriorities = &priorities;
 
 	VkPhysicalDeviceFeatures deviceFeatures = {};
 
 	VkDeviceCreateInfo ciDevice = {};
 	ciDevice.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	ciDevice.pQueueCreateInfos = &ciDeviceQueue;
-	ciDevice.queueCreateInfoCount = 1;
+	ciDevice.pQueueCreateInfos = ciDeviceQueues;
+	ciDevice.queueCreateInfoCount = queueCount;
 	ciDevice.pEnabledFeatures = &deviceFeatures;
 
 	ciDevice.enabledExtensionCount = 0;
@@ -288,6 +319,7 @@ void Renderer::CreateLogicalDevice()
 	}
 
 	vkGetDeviceQueue(mDevice, indices.mGraphicsFamily, 0, &mGraphicsQueue);
+	vkGetDeviceQueue(mDevice, indices.mPresentFamily, 0, &mPresentQueue);
 }
 
 bool Renderer::IsDeviceSuitable(VkPhysicalDevice device)
@@ -321,6 +353,15 @@ QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device)
 			queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
 		{
 			indices.mGraphicsFamily = i;
+		}
+
+		VkBool32 presentSupport = false;
+		vkGetPhysicalDeviceSurfaceSupportKHR(device, i, mSurface, &presentSupport);
+
+		if (queueFamily.queueCount > 0 &&
+			presentSupport)
+		{
+			indices.mPresentFamily = i;
 		}
 
 		if (indices.IsComplete())

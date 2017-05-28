@@ -6,10 +6,12 @@
 struct QueueFamilyIndices
 {
 	int32_t mGraphicsFamily = -1;
+	int32_t mPresentFamily = -1;
 
 	bool IsComplete()
 	{
-		return mGraphicsFamily >= 0;
+		return mGraphicsFamily >= 0 &&
+			mPresentFamily >= 0;
 	}
 };
 
@@ -48,6 +50,8 @@ private:
 
 	void CreateDebugCallback();
 
+	void CreateSurface();
+
 	void PickPhysicalDevice();
 
 	void CreateLogicalDevice();
@@ -70,6 +74,8 @@ private:
 	VkPhysicalDevice mPhysicalDevice;
 	VkDevice mDevice;
 	VkQueue mGraphicsQueue;
+	VkQueue mPresentQueue;
+	VkSurfaceKHR mSurface;
 
 	AppState* mAppState;
 };
