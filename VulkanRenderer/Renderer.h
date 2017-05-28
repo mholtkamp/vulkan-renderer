@@ -54,6 +54,8 @@ private:
 		const char* msg,
 		void* userData);
 
+	static std::vector<char> ReadFile(const std::string& filename);
+
 	void CreateInstance();
 
 	void CreateDebugCallback();
