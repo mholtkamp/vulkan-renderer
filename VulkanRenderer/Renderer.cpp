@@ -162,6 +162,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(VkDebugReportFlagsEXT fla
 
 	OutputDebugString("Validation Layer: ");
 	OutputDebugString(msg);
+	OutputDebugString("\n");
 
 	return VK_FALSE;
 }
@@ -365,8 +366,6 @@ void Renderer::CreateLogicalDevice()
 	ciDevice.pEnabledFeatures = &deviceFeatures;
 	ciDevice.enabledExtensionCount = sNumDeviceExtensions;
 	ciDevice.ppEnabledExtensionNames = sDeviceExtensions;
-
-	ciDevice.enabledExtensionCount = 0;
 
 	if (mAppState->mValidate)
 	{
