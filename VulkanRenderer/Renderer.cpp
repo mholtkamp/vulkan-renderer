@@ -63,6 +63,11 @@ void Renderer::SetAppState(AppState* appState)
 
 Renderer::~Renderer()
 {
+	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
+	{
+		vkDestroyImageView(mDevice, mSwapchainImageViews[i], nullptr);
+	}
+
 	DestroyDebugCallback();
 
 	vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
@@ -79,6 +84,7 @@ void Renderer::Initialize()
 	PickPhysicalDevice();
 	CreateLogicalDevice();
 	CreateSwapchain();
+	CreateImageViews();
 }
 
 void Renderer::CreateSwapchain()
@@ -136,6 +142,13 @@ void Renderer::CreateSwapchain()
 	{
 		throw exception("Failed to create swapchain");
 	}
+
+	vkGetSwapchainImagesKHR(mDevice, mSwapchain, &imageCount, nullptr);
+	mSwapchainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(mDevice, mSwapchain, &imageCount, mSwapchainImages.data());
+
+	mSwapchainImageFormat = surfaceFormat.format;
+	mSwapchainExtent = extent;
 }
 
 void Renderer::PreparePresentation()
@@ -386,6 +399,31 @@ void Renderer::CreateLogicalDevice()
 
 	vkGetDeviceQueue(mDevice, indices.mGraphicsFamily, 0, &mGraphicsQueue);
 	vkGetDeviceQueue(mDevice, indices.mPresentFamily, 0, &mPresentQueue);
+}
+
+void Renderer::CreateImageViews()
+{
+	mSwapchainImageViews.resize(mSwapchainImages.size());
+
+	for (size_t i = 0; i < mSwapchainImages.size(); ++i)
+	{
+		VkImageViewCreateInfo ciImageView = {};
+		ciImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ciImageView.image = mSwapchainImages[i];
+		ciImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		ciImageView.format = mSwapchainImageFormat;
+		ciImageView.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ciImageView.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ciImageView.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ciImageView.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		ciImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		ciImageView.subresourceRange.baseMipLevel = 0;
+		ciImageView.subresourceRange.levelCount = 1;
+		ciImageView.subresourceRange.baseArrayLayer = 0;
+		ciImageView.subresourceRange.layerCount = 1;
+
+		vkCreateImageView(mDevice, &ciImageView, nullptr, &mSwapchainImageViews[i]);
+	}
 }
 
 bool Renderer::IsDeviceSuitable(VkPhysicalDevice device)

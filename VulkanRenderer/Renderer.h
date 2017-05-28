@@ -64,6 +64,10 @@ private:
 
 	void CreateLogicalDevice();
 
+	void CreateImageViews();
+
+	void CreateGraphicsPipeline();
+
 	bool IsDeviceSuitable(VkPhysicalDevice device);
 
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -96,7 +100,12 @@ private:
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
 	VkSurfaceKHR mSurface;
+
 	VkSwapchainKHR mSwapchain;
+	std::vector<VkImage> mSwapchainImages;
+	std::vector<VkImageView> mSwapchainImageViews;
+	VkFormat mSwapchainImageFormat;
+	VkExtent2D mSwapchainExtent;
 
 	AppState* mAppState;
 };
