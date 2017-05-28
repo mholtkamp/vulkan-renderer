@@ -7,11 +7,15 @@
 #include <exception>
 #include <stdio.h>
 #include <vector>
+#include <set>
 
 using namespace std;
 
 static const char* sValidationLayers[] = { "VK_LAYER_LUNARG_standard_validation" };
 static uint32_t sNumValidationLayers = 1;
+
+static const char* sDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+static uint32_t sNumDeviceExtensions = 1;
 
 Renderer* Renderer::sInstance = nullptr;
 
@@ -298,6 +302,8 @@ void Renderer::CreateLogicalDevice()
 	ciDevice.pQueueCreateInfos = ciDeviceQueues;
 	ciDevice.queueCreateInfoCount = queueCount;
 	ciDevice.pEnabledFeatures = &deviceFeatures;
+	ciDevice.enabledExtensionCount = sNumDeviceExtensions;
+	ciDevice.ppEnabledExtensionNames = sDeviceExtensions;
 
 	ciDevice.enabledExtensionCount = 0;
 
@@ -330,9 +336,62 @@ bool Renderer::IsDeviceSuitable(VkPhysicalDevice device)
 	VkPhysicalDeviceFeatures deviceFeatures;
 	vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
+	bool extensionsSupported = CheckDeviceExtensionSupport(device, sDeviceExtensions, sNumDeviceExtensions);
+
 	QueueFamilyIndices indices = FindQueueFamilies(device);
 
-	return indices.IsComplete();
+	bool swapChainAdequate = false;
+
+	if (extensionsSupported)
+	{
+		SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
+		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+	}
+
+	return indices.IsComplete() && extensionsSupported && swapChainAdequate;
+}
+
+VkSurfaceFormatKHR Renderer::ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+{
+	if (availableFormats.size() == 0)
+	{
+		throw exception("No available formats for swap surface.");
+	}
+
+	if (availableFormats.size() == 1 &&
+		availableFormats[0].format == VK_FORMAT_UNDEFINED)
+	{
+		return { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
+	}
+
+	for (const auto& availableFormat : availableFormats)
+	{
+		if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
+			availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+		{
+			return availableFormat;
+		}
+	}
+
+	return availableFormats[0];
+}
+
+VkPresentModeKHR Renderer::ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availableModes)
+{
+	vector<VkPresentModeKHR> preferredModes = { VK_PRESENT_MODE_FIFO_KHR,
+											   VK_PRESENT_MODE_IMMEDIATE_KHR,
+											   VK_PRESENT_MODE_FIFO_RELAXED_KHR,
+											   VK_PRESENT_MODE_MAILBOX_KHR };
+
+	for (VkPresentModeKHR mode : preferredModes)
+	{
+		if (find(availableModes.begin(), availableModes.end(), mode) != availableModes.end())
+		{
+			return mode;
+		}
+	}
+
+	throw exception("Could not find a valid present mode for swapchain.");
 }
 
 QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device)
@@ -375,6 +434,33 @@ QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device)
 	return indices;
 }
 
+SwapChainSupportDetails Renderer::QuerySwapChainSupport(VkPhysicalDevice device)
+{
+	SwapChainSupportDetails details;
+
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, mSurface, &details.capabilities);
+
+	uint32_t formatCount = 0;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, nullptr);
+
+	if (formatCount != 0)
+	{
+		details.formats.resize(formatCount);
+		vkGetPhysicalDeviceSurfaceFormatsKHR(device, mSurface, &formatCount, details.formats.data());
+	}
+
+	uint32_t presentModeCount;
+	vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, nullptr);
+
+	if (presentModeCount != 0)
+	{
+		details.presentModes.resize(presentModeCount);
+		vkGetPhysicalDeviceSurfacePresentModesKHR(device, mSurface, &presentModeCount, details.presentModes.data());
+	}
+
+	return details;
+}
+
 bool Renderer::CheckValidationLayerSupport(const char** layers, uint32_t count)
 {
 	uint32_t numLayers = 0;
@@ -408,6 +494,31 @@ bool Renderer::CheckValidationLayerSupport(const char** layers, uint32_t count)
 
 	free(layerProperties);
 	return supported;
+}
+
+bool Renderer::CheckDeviceExtensionSupport(VkPhysicalDevice device,
+										   const char** extensions,
+										   uint32_t count)
+{
+	uint32_t availableExtensionCount = 0;
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &availableExtensionCount, nullptr);
+
+	vector<VkExtensionProperties> availableExtensions(availableExtensionCount);
+	vkEnumerateDeviceExtensionProperties(device, nullptr, &availableExtensionCount, availableExtensions.data());
+
+	set<string> requiredExtensions;
+
+	for (uint32_t i = 0; i < sNumDeviceExtensions; ++i)
+	{
+		requiredExtensions.insert(sDeviceExtensions[i]);
+	}
+
+	for (const auto& extension : availableExtensions)
+	{
+		requiredExtensions.erase(extension.extensionName);
+	}
+
+	return requiredExtensions.empty();
 }
 
 void Renderer::DestroyDebugCallback()

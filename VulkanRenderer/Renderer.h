@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 #include "ApplicationState.h"
+#include <vector>
 
 struct QueueFamilyIndices
 {
@@ -13,6 +14,13 @@ struct QueueFamilyIndices
 		return mGraphicsFamily >= 0 &&
 			mPresentFamily >= 0;
 	}
+};
+
+struct SwapChainSupportDetails
+{
+	VkSurfaceCapabilitiesKHR capabilities;
+	std::vector<VkSurfaceFormatKHR> formats;
+	std::vector<VkPresentModeKHR> presentModes;
 };
 
 class Renderer
@@ -58,9 +66,19 @@ private:
 
 	bool IsDeviceSuitable(VkPhysicalDevice device);
 
+	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+
+	VkPresentModeKHR ChooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availableModes);
+
 	QueueFamilyIndices FindQueueFamilies(VkPhysicalDevice device);
 
+	SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+
 	bool CheckValidationLayerSupport(const char** layers,
+									 uint32_t count);
+
+	bool CheckDeviceExtensionSupport(VkPhysicalDevice device, 
+									 const char** extensions,
 									 uint32_t count);
 
 	void DestroyDebugCallback();
