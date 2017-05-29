@@ -70,6 +70,8 @@ private:
 
 	void CreateGraphicsPipeline();
 
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
+
 	bool IsDeviceSuitable(VkPhysicalDevice device);
 
 	VkSurfaceFormatKHR ChooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
@@ -102,6 +104,7 @@ private:
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
 	VkSurfaceKHR mSurface;
+	VkPipelineLayout mPipelineLayout;
 
 	VkSwapchainKHR mSwapchain;
 	std::vector<VkImage> mSwapchainImages;
