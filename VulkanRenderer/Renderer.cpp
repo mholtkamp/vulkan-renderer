@@ -32,7 +32,8 @@ Renderer::Renderer() :
 	mPresentQueue(0),
 	mSurface(0),
 	mSwapchain(0),
-	mPipelineLayout(0)
+	mPipelineLayout(0),
+	mRenderPass(0)
 {
 	
 }
@@ -73,6 +74,7 @@ Renderer::~Renderer()
 	DestroyDebugCallback();
 
 	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
 	vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
 	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
 	vkDestroyDevice(mDevice, nullptr);
@@ -88,6 +90,7 @@ void Renderer::Initialize()
 	CreateLogicalDevice();
 	CreateSwapchain();
 	CreateImageViews();
+	CreateRenderPass();
 	CreateGraphicsPipeline();
 }
 
@@ -445,6 +448,40 @@ void Renderer::CreateImageViews()
 		ciImageView.subresourceRange.layerCount = 1;
 
 		vkCreateImageView(mDevice, &ciImageView, nullptr, &mSwapchainImageViews[i]);
+	}
+}
+
+void Renderer::CreateRenderPass()
+{
+	VkAttachmentDescription colorAttachment = {};
+	colorAttachment.format = mSwapchainImageFormat;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+
+	VkRenderPassCreateInfo ciRenderPass = {};
+	ciRenderPass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	ciRenderPass.attachmentCount = 1;
+	ciRenderPass.pAttachments = &colorAttachment;
+	ciRenderPass.subpassCount = 1;
+	ciRenderPass.pSubpasses = &subpass;
+
+	if (vkCreateRenderPass(mDevice, &ciRenderPass, nullptr, &mRenderPass) != VK_SUCCESS)
+	{
+		throw exception("Failed to create render pass");
 	}
 }
 
