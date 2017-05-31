@@ -33,7 +33,8 @@ Renderer::Renderer() :
 	mSurface(0),
 	mSwapchain(0),
 	mPipelineLayout(0),
-	mRenderPass(0)
+	mRenderPass(0),
+	mGraphicsPipeline(0)
 {
 	
 }
@@ -73,6 +74,7 @@ Renderer::~Renderer()
 
 	DestroyDebugCallback();
 
+	vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
 	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
 	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
 	vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
@@ -92,6 +94,7 @@ void Renderer::Initialize()
 	CreateImageViews();
 	CreateRenderPass();
 	CreateGraphicsPipeline();
+	CreateFramebuffers();
 }
 
 void Renderer::CreateSwapchain()
@@ -594,6 +597,29 @@ void Renderer::CreateGraphicsPipeline()
 	if (vkCreatePipelineLayout(mDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to create pipeline layout!");
+	}
+
+	VkGraphicsPipelineCreateInfo ciPipeline = {};
+	ciPipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+	ciPipeline.stageCount = 2;
+	ciPipeline.pStages = shaderStages;
+	ciPipeline.pVertexInputState = &vertexInputInfo;
+	ciPipeline.pInputAssemblyState = &inputAssembly;
+	ciPipeline.pViewportState = &viewportState;
+	ciPipeline.pRasterizationState = &rasterizer;
+	ciPipeline.pMultisampleState = &multisampling;
+	ciPipeline.pDepthStencilState = nullptr;
+	ciPipeline.pColorBlendState = &colorBlending;
+	ciPipeline.pDynamicState = nullptr;
+	ciPipeline.layout = mPipelineLayout;
+	ciPipeline.renderPass = mRenderPass;
+	ciPipeline.subpass = 0;
+	ciPipeline.basePipelineHandle = VK_NULL_HANDLE;
+	ciPipeline.basePipelineIndex = -1;
+
+	if (vkCreateGraphicsPipelines(mDevice, VK_NULL_HANDLE, 1, &ciPipeline, nullptr, &mGraphicsPipeline) != VK_SUCCESS)
+	{
+		throw exception("Failed to create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);

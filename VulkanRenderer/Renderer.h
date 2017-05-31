@@ -72,6 +72,8 @@ private:
 
 	void CreateGraphicsPipeline();
 
+	void CreateFramebuffers();
+
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	bool IsDeviceSuitable(VkPhysicalDevice device);
@@ -108,12 +110,15 @@ private:
 	VkSurfaceKHR mSurface;
 	VkPipelineLayout mPipelineLayout;
 	VkRenderPass mRenderPass;
+	VkPipeline mGraphicsPipeline;
 
 	VkSwapchainKHR mSwapchain;
 	std::vector<VkImage> mSwapchainImages;
 	std::vector<VkImageView> mSwapchainImageViews;
 	VkFormat mSwapchainImageFormat;
 	VkExtent2D mSwapchainExtent;
+
+	std::vector<VkFramebuffer> mSwapChainFramebuffers;
 
 	AppState* mAppState;
 };
