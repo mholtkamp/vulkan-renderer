@@ -34,7 +34,8 @@ Renderer::Renderer() :
 	mSwapchain(0),
 	mPipelineLayout(0),
 	mRenderPass(0),
-	mGraphicsPipeline(0)
+	mGraphicsPipeline(0),
+	mInitialized(false)
 {
 	
 }
@@ -70,29 +71,38 @@ void Renderer::WaitOnExecutionFinished()
 	vkDeviceWaitIdle(mDevice);
 }
 
-Renderer::~Renderer()
+void Renderer::DestroySwapchain()
 {
-	vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
-	vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
-
-	vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
-
 	for (size_t i = 0; i < mSwapchainFramebuffers.size(); ++i)
 	{
 		vkDestroyFramebuffer(mDevice, mSwapchainFramebuffers[i], nullptr);
 	}
+
+	vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()), mCommandBuffers.data());
+
+	vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
+	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
 
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
 	{
 		vkDestroyImageView(mDevice, mSwapchainImageViews[i], nullptr);
 	}
 
+	vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
+}
+
+Renderer::~Renderer()
+{
+	DestroySwapchain();
+
+	vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
+	vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
+
+	vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
+
 	DestroyDebugCallback();
 
-	vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
-	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
-	vkDestroySwapchainKHR(mDevice, mSwapchain, nullptr);
 	vkDestroySurfaceKHR(mInstance, mSurface, nullptr);
 	vkDestroyDevice(mDevice, nullptr);
 	vkDestroyInstance(mInstance, nullptr);
@@ -113,6 +123,8 @@ void Renderer::Initialize()
 	CreateCommandPool();
 	CreateCommandBuffers();
 	CreateSemaphores();
+
+	mInitialized = true;
 }
 
 void Renderer::CreateSwapchain()
@@ -786,6 +798,25 @@ void Renderer::CreateSemaphores()
 	{
 		throw exception("Failed to create semaphores");
 	}
+}
+
+void Renderer::RecreateSwapchain()
+{
+	if (!mInitialized)
+	{
+		return;
+	}
+
+	vkDeviceWaitIdle(mDevice);
+
+	DestroySwapchain();
+
+	CreateSwapchain();
+	CreateImageViews();
+	CreateRenderPass();
+	CreateGraphicsPipeline();
+	CreateFramebuffers();
+	CreateCommandBuffers();
 }
 
 VkShaderModule Renderer::CreateShaderModule(const std::vector<char>& code)

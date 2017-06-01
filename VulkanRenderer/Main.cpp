@@ -15,6 +15,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_CLOSE:
 		PostQuitMessage(sAppState.mValidationError);
 		break;
+	case WM_SIZE:
+	{
+		WORD width = LOWORD(lParam);
+		WORD height = HIWORD(lParam);
+
+		if (width != 0 &&
+			height != 0)
+		{
+			sAppState.mWindowWidth = width;
+			sAppState.mWindowHeight = height;
+
+			Renderer* renderer = Renderer::Get();
+
+			if (renderer != nullptr)
+			{
+				renderer->RecreateSwapchain();
+			}
+		}
+		break;
+	}
 	//case WM_PAINT:
 	//	// The validation callback calls MessageBox which can generate paint
 	//	// events - don't make more Vulkan calls if we got here from the

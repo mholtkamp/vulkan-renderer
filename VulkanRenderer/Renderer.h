@@ -45,6 +45,8 @@ public:
 
 	void WaitOnExecutionFinished();
 
+	void RecreateSwapchain();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,
@@ -81,6 +83,8 @@ private:
 	void CreateCommandBuffers();
 
 	void CreateSemaphores();
+
+	void DestroySwapchain();
 
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
@@ -134,4 +138,6 @@ private:
 	VkSemaphore mRenderFinishedSemaphore;
 
 	AppState* mAppState;
+
+	bool mInitialized;
 };
