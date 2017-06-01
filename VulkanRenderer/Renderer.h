@@ -43,6 +43,8 @@ public:
 
 	void SetAppState(AppState* appState);
 
+	void WaitOnExecutionFinished();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,
@@ -73,6 +75,12 @@ private:
 	void CreateGraphicsPipeline();
 
 	void CreateFramebuffers();
+
+	void CreateCommandPool();
+
+	void CreateCommandBuffers();
+
+	void CreateSemaphores();
 
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
@@ -111,6 +119,7 @@ private:
 	VkPipelineLayout mPipelineLayout;
 	VkRenderPass mRenderPass;
 	VkPipeline mGraphicsPipeline;
+	VkCommandPool mCommandPool;
 
 	VkSwapchainKHR mSwapchain;
 	std::vector<VkImage> mSwapchainImages;
@@ -118,7 +127,11 @@ private:
 	VkFormat mSwapchainImageFormat;
 	VkExtent2D mSwapchainExtent;
 
-	std::vector<VkFramebuffer> mSwapChainFramebuffers;
+	std::vector<VkFramebuffer> mSwapchainFramebuffers;
+	std::vector<VkCommandBuffer> mCommandBuffers;
+
+	VkSemaphore mImageAvailableSemaphore;
+	VkSemaphore mRenderFinishedSemaphore;
 
 	AppState* mAppState;
 };

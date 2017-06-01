@@ -7,6 +7,7 @@
 #include "Renderer.h"
 
 static AppState sAppState;
+static bool sQuit = false;
 
 // MS-Windows event handling function:
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -14,18 +15,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	case WM_CLOSE:
 		PostQuitMessage(sAppState.mValidationError);
 		break;
-	case WM_PAINT:
-		// The validation callback calls MessageBox which can generate paint
-		// events - don't make more Vulkan calls if we got here from the
-		// callback
-		if (!sAppState.mInCallback)
-		{
-			if (Renderer::Get() != nullptr)
-			{
-				Renderer::Get()->Render();
-			}
-		}
-		break;
+	//case WM_PAINT:
+	//	// The validation callback calls MessageBox which can generate paint
+	//	// events - don't make more Vulkan calls if we got here from the
+	//	// callback
+	//	if (!sAppState.mInCallback)
+	//	{
+	//		if (Renderer::Get() != nullptr)
+	//		{
+	//			Renderer::Get()->Render();
+	//		}
+	//	}
+	//	break;
 	case WM_GETMINMAXINFO:     // set window's minimum size
 		((MINMAXINFO*)lParam)->ptMinTrackSize = sAppState.mMinSize;
 		return 0;
@@ -87,6 +88,25 @@ void CreateNativeWindow()
 	sAppState.mMinSize.y = GetSystemMetrics(SM_CYMINTRACK) + 1;
 }
 
+void ProcessMessages()
+{
+	MSG     msg;
+	BOOL    done = FALSE;
+
+	while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+	{
+		if (msg.message == WM_QUIT)
+		{
+			sQuit = true;
+		}
+		else
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
 {
 	Renderer::Create();
@@ -106,6 +126,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
 	renderer->Initialize();
 
+	while (sQuit == false)
+	{
+		ProcessMessages();
+		renderer->Render();
+	}
+
+	renderer->WaitOnExecutionFinished();
 
 	Renderer::Destroy();
 	printf("Done.\n");

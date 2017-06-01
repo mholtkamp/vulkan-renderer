@@ -65,8 +65,23 @@ void Renderer::SetAppState(AppState* appState)
 	mAppState = appState;
 }
 
+void Renderer::WaitOnExecutionFinished()
+{
+	vkDeviceWaitIdle(mDevice);
+}
+
 Renderer::~Renderer()
 {
+	vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
+	vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
+
+	vkDestroyCommandPool(mDevice, mCommandPool, nullptr);
+
+	for (size_t i = 0; i < mSwapchainFramebuffers.size(); ++i)
+	{
+		vkDestroyFramebuffer(mDevice, mSwapchainFramebuffers[i], nullptr);
+	}
+
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
 	{
 		vkDestroyImageView(mDevice, mSwapchainImageViews[i], nullptr);
@@ -95,6 +110,9 @@ void Renderer::Initialize()
 	CreateRenderPass();
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
+	CreateCommandPool();
+	CreateCommandBuffers();
+	CreateSemaphores();
 }
 
 void Renderer::CreateSwapchain()
@@ -168,7 +186,43 @@ void Renderer::PreparePresentation()
 
 void Renderer::Render()
 {
+	uint32_t imageIndex;
+	vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = { mImageAvailableSemaphore };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &mCommandBuffers[imageIndex];
+
+	VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphore };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	if (vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+	{
+		throw exception("Failed to submit draw command buffer");
+	}
+
+	VkPresentInfoKHR presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+	VkSwapchainKHR swapchains[] = { mSwapchain };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapchains;
+	presentInfo.pImageIndices = &imageIndex;
+	presentInfo.pResults = nullptr;
+
+	vkQueuePresentKHR(mPresentQueue, &presentInfo);
+
+	// TODO: Perhaps only wait if validation layers are enabled.
+	vkQueueWaitIdle(mPresentQueue);
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(VkDebugReportFlagsEXT flags,
@@ -470,6 +524,14 @@ void Renderer::CreateRenderPass()
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+	VkSubpassDependency dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = 0;
+	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subpass.colorAttachmentCount = 1;
@@ -481,6 +543,8 @@ void Renderer::CreateRenderPass()
 	ciRenderPass.pAttachments = &colorAttachment;
 	ciRenderPass.subpassCount = 1;
 	ciRenderPass.pSubpasses = &subpass;
+	ciRenderPass.dependencyCount = 1;
+	ciRenderPass.pDependencies = &dependency;
 
 	if (vkCreateRenderPass(mDevice, &ciRenderPass, nullptr, &mRenderPass) != VK_SUCCESS)
 	{
@@ -619,11 +683,109 @@ void Renderer::CreateGraphicsPipeline()
 
 	if (vkCreateGraphicsPipelines(mDevice, VK_NULL_HANDLE, 1, &ciPipeline, nullptr, &mGraphicsPipeline) != VK_SUCCESS)
 	{
-		throw exception("Failed to create graphics pipeline");
+throw exception("Failed to create graphics pipeline");
 	}
 
 	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);
 	vkDestroyShaderModule(mDevice, vertShaderModule, nullptr);
+}
+
+void Renderer::CreateFramebuffers()
+{
+	mSwapchainFramebuffers.resize(mSwapchainImageViews.size());
+
+	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
+	{
+		VkImageView attachments[] = { mSwapchainImageViews[i] };
+
+		VkFramebufferCreateInfo ciFramebuffer = {};
+		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		ciFramebuffer.renderPass = mRenderPass;
+		ciFramebuffer.attachmentCount = 1;
+		ciFramebuffer.pAttachments = attachments;
+		ciFramebuffer.width = mSwapchainExtent.width;
+		ciFramebuffer.height = mSwapchainExtent.height;
+		ciFramebuffer.layers = 1;
+
+		if (vkCreateFramebuffer(mDevice, &ciFramebuffer, nullptr, &mSwapchainFramebuffers[i]) != VK_SUCCESS)
+		{
+			throw exception("Failed to create framebuffer.");
+		}
+	}
+}
+
+void Renderer::CreateCommandPool()
+{
+	QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(mPhysicalDevice);
+
+	VkCommandPoolCreateInfo ciCommandPool = {};
+	ciCommandPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	ciCommandPool.queueFamilyIndex = queueFamilyIndices.mGraphicsFamily;
+	ciCommandPool.flags = 0;
+
+	if (vkCreateCommandPool(mDevice, &ciCommandPool, nullptr, &mCommandPool))
+	{
+		throw exception("Failed to create command pool");
+	}
+}
+
+void Renderer::CreateCommandBuffers()
+{
+	mCommandBuffers.resize(mSwapchainFramebuffers.size());
+
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = mCommandPool;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = (uint32_t)mCommandBuffers.size();
+
+	if (vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS)
+	{
+		throw exception("Failed to create command buffers");
+	}
+
+	for (size_t i = 0; i < mCommandBuffers.size(); ++i)
+	{
+		VkCommandBufferBeginInfo beginInfo = {};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+		beginInfo.pInheritanceInfo = nullptr;
+
+		vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo);
+
+		VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = mRenderPass;
+		renderPassInfo.framebuffer = mSwapchainFramebuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = mSwapchainExtent;
+
+		VkClearValue clearColor = { 0.2f, 0.2f, 0.2f, 1.0f };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+
+		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
+		vkCmdDraw(mCommandBuffers[i], 3, 1, 0, 0);
+		vkCmdEndRenderPass(mCommandBuffers[i]);
+
+		if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
+		{
+			throw exception("Failed to record command buffer");
+		}
+	}
+}
+
+void Renderer::CreateSemaphores()
+{
+	VkSemaphoreCreateInfo ciSemaphore = {};
+	ciSemaphore.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	if (vkCreateSemaphore(mDevice, &ciSemaphore, nullptr, &mImageAvailableSemaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(mDevice, &ciSemaphore, nullptr, &mRenderFinishedSemaphore) != VK_SUCCESS)
+	{
+		throw exception("Failed to create semaphores");
+	}
 }
 
 VkShaderModule Renderer::CreateShaderModule(const std::vector<char>& code)
