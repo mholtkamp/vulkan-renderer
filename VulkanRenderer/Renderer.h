@@ -6,6 +6,13 @@
 #include "glm/glm.hpp"
 #include <array>
 
+struct VSUniformBuffer
+{
+	glm::mat4 mModel;
+	glm::mat4 mView;
+	glm::mat4 mProjection;
+};
+
 struct Vertex
 {
 	glm::vec2 mPosition;
@@ -111,6 +118,8 @@ private:
 
 	void CreateRenderPass();
 
+	void CreateDescriptorSetLayout();
+
 	void CreateGraphicsPipeline();
 
 	void CreateFramebuffers();
@@ -124,6 +133,14 @@ private:
 	void CreateVertexBuffer();
 
 	void CreateIndexBuffer();
+
+	void CreateUniformBuffer();
+
+	void UpdateUniformBuffer();
+
+	void CreateDescriptorPool();
+
+	void CreateDescriptorSet();
 
 	void CreateBuffer(VkDeviceSize size,
 					  VkBufferUsageFlags usage,
@@ -171,6 +188,9 @@ private:
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
 	VkSurfaceKHR mSurface;
+	VkDescriptorSetLayout mDescriptorSetLayout;
+	VkDescriptorPool mDescriptorPool;
+	VkDescriptorSet mDescriptorSet;
 	VkPipelineLayout mPipelineLayout;
 	VkRenderPass mRenderPass;
 	VkPipeline mGraphicsPipeline;
@@ -192,6 +212,8 @@ private:
 	VkDeviceMemory mVertexBufferMemory;
 	VkBuffer mIndexBuffer;
 	VkDeviceMemory mIndexBufferMemory;
+	VkBuffer mUniformBuffer;
+	VkDeviceMemory mUniformBufferMemory;
 
 	AppState* mAppState;
 
