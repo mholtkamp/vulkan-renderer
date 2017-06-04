@@ -121,7 +121,9 @@ private:
 
 	void CreateSemaphores();
 
-	void CreateVertexBuffers();
+	void CreateVertexBuffer();
+
+	void CreateIndexBuffer();
 
 	void CreateBuffer(VkDeviceSize size,
 					  VkBufferUsageFlags usage,
@@ -188,6 +190,8 @@ private:
 
 	VkBuffer mVertexBuffer;
 	VkDeviceMemory mVertexBufferMemory;
+	VkBuffer mIndexBuffer;
+	VkDeviceMemory mIndexBufferMemory;
 
 	AppState* mAppState;
 
