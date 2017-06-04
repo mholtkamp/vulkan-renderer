@@ -831,37 +831,92 @@ void Renderer::CreateSemaphores()
 
 void Renderer::CreateVertexBuffers()
 {
+	VkDeviceSize bufferSize = sizeof(sVertices);
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(mDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, sVertices, (size_t)bufferSize);
+	vkUnmapMemory(mDevice, stagingBufferMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
+
+	CopyBuffer(stagingBuffer, mVertexBuffer, bufferSize);
+
+	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
+	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
+}
+
+void Renderer::CreateBuffer(VkDeviceSize size,
+	VkBufferUsageFlags usage,
+	VkMemoryPropertyFlags properties,
+	VkBuffer& buffer,
+	VkDeviceMemory& bufferMemory)
+{
 	VkBufferCreateInfo ciBuffer = {};
 	ciBuffer.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	ciBuffer.size = sizeof(sVertices);
-	ciBuffer.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	ciBuffer.size = size;
+	ciBuffer.usage = usage;
 	ciBuffer.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	ciBuffer.flags = 0;
 
-	if (vkCreateBuffer(mDevice, &ciBuffer, nullptr, &mVertexBuffer) != VK_SUCCESS)
+	if (vkCreateBuffer(mDevice, &ciBuffer, nullptr, &buffer) != VK_SUCCESS)
 	{
 		throw exception("Failed to create vertex buffer");
 	}
 
 	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(mDevice, mVertexBuffer, &memRequirements);
+	vkGetBufferMemoryRequirements(mDevice, buffer, &memRequirements);
 
 	VkMemoryAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
 
-	if (vkAllocateMemory(mDevice, &allocInfo, nullptr, &mVertexBufferMemory) != VK_SUCCESS)
+	if (vkAllocateMemory(mDevice, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
 	{
 		throw exception("Failed to allocate memory for vertex buffer");
 	}
 
-	vkBindBufferMemory(mDevice, mVertexBuffer, mVertexBufferMemory, 0);
+	vkBindBufferMemory(mDevice, buffer, bufferMemory, 0);
+}
 
-	void* data;
-	vkMapMemory(mDevice, mVertexBufferMemory, 0, ciBuffer.size, 0, &data);
-	memcpy(data, sVertices, (size_t)ciBuffer.size);
-	vkUnmapMemory(mDevice, mVertexBufferMemory);
+void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = mCommandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(mDevice, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	VkBufferCopy copyRegion = {};
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(mGraphicsQueue);
+
+	vkFreeCommandBuffers(mDevice, mCommandPool, 1, &commandBuffer);
 }
 
 void Renderer::RecreateSwapchain()
