@@ -144,11 +144,17 @@ private:
 
 	void CreateTextureImage();
 
+	void CreateTextureImageView();
+
+	void CreateTextureSampler();
+
 	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
 
 	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
+
+	VkImageView CreateImageView(VkImage image, VkFormat format);
 
 	VkCommandBuffer BeginSingleSubmissionCommands();
 
@@ -229,6 +235,8 @@ private:
 
 	VkImage mTextureImage;
 	VkDeviceMemory mTextureImageMemory;
+	VkImageView mTextureImageView;
+	VkSampler mTextureSampler;
 
 	AppState* mAppState;
 

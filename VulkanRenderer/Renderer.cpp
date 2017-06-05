@@ -115,6 +115,11 @@ Renderer::~Renderer()
 {
 	DestroySwapchain();
 
+	vkDestroySampler(mDevice, mTextureSampler, nullptr);
+	vkDestroyImageView(mDevice, mTextureImageView, nullptr);
+	vkDestroyImage(mDevice, mTextureImage, nullptr);
+	vkFreeMemory(mDevice, mTextureImageMemory, nullptr);
+
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
 
 	vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, nullptr);
@@ -153,6 +158,8 @@ void Renderer::Initialize()
 	CreateFramebuffers();
 	CreateCommandPool();
 	CreateTextureImage();
+	CreateTextureImageView();
+	CreateTextureSampler();
 	CreateVertexBuffer();
 	CreateIndexBuffer();
 	CreateUniformBuffer();
@@ -551,22 +558,7 @@ void Renderer::CreateImageViews()
 
 	for (size_t i = 0; i < mSwapchainImages.size(); ++i)
 	{
-		VkImageViewCreateInfo ciImageView = {};
-		ciImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ciImageView.image = mSwapchainImages[i];
-		ciImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ciImageView.format = mSwapchainImageFormat;
-		ciImageView.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ciImageView.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ciImageView.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ciImageView.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-		ciImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		ciImageView.subresourceRange.baseMipLevel = 0;
-		ciImageView.subresourceRange.levelCount = 1;
-		ciImageView.subresourceRange.baseArrayLayer = 0;
-		ciImageView.subresourceRange.layerCount = 1;
-
-		vkCreateImageView(mDevice, &ciImageView, nullptr, &mSwapchainImageViews[i]);
+		mSwapchainImageViews[i] = CreateImageView(mSwapchainImages[i], mSwapchainImageFormat);
 	}
 }
 
@@ -1019,6 +1011,37 @@ void Renderer::CreateTextureImage()
 	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
 }
 
+void Renderer::CreateTextureImageView()
+{
+	mTextureImageView = CreateImageView(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM);
+}
+
+void Renderer::CreateTextureSampler()
+{
+	VkSamplerCreateInfo ciSampler = {};
+	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	ciSampler.magFilter = VK_FILTER_LINEAR;
+	ciSampler.minFilter = VK_FILTER_LINEAR;
+	ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	ciSampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	ciSampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	ciSampler.anisotropyEnable = VK_FALSE;
+	ciSampler.maxAnisotropy = 1;
+	ciSampler.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	ciSampler.unnormalizedCoordinates = VK_FALSE;
+	ciSampler.compareEnable = VK_FALSE;
+	ciSampler.compareOp = VK_COMPARE_OP_ALWAYS;
+	ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	ciSampler.mipLodBias = 0.0f;
+	ciSampler.minLod = 0.0f;
+	ciSampler.maxLod = 0.0f;
+
+	if (vkCreateSampler(mDevice, &ciSampler, nullptr, &mTextureSampler) != VK_SUCCESS)
+	{
+		throw exception("Failed to create texture sampler");
+	}
+}
+
 void Renderer::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
 	VkCommandBuffer commandBuffer = BeginSingleSubmissionCommands();
@@ -1132,6 +1155,28 @@ void Renderer::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkI
 	}
 
 	vkBindImageMemory(mDevice, image, imageMemory, 0);
+}
+
+VkImageView Renderer::CreateImageView(VkImage image, VkFormat format)
+{
+	VkImageViewCreateInfo viewInfo = {};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = image;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.format = format;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 1;
+
+	VkImageView imageView;
+	if (vkCreateImageView(mDevice, &viewInfo, nullptr, &imageView) != VK_SUCCESS)
+	{
+		throw exception("Failed to create texture image view");
+	}
+
+	return imageView;
 }
 
 VkCommandBuffer Renderer::BeginSingleSubmissionCommands()
