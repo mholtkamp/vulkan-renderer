@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "VulkanRenderer", "VulkanRenderer.vcxproj", "{F08D83DC-D5D1-469D-BA01-BEAA593596CF}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ModelConverter", "..\ModelConverter\ModelConverter.vcxproj", "{8637460E-AB86-47C9-B73B-6A5A06E4A892}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,14 @@ Global
 		{F08D83DC-D5D1-469D-BA01-BEAA593596CF}.Release|x64.Build.0 = Release|x64
 		{F08D83DC-D5D1-469D-BA01-BEAA593596CF}.Release|x86.ActiveCfg = Release|Win32
 		{F08D83DC-D5D1-469D-BA01-BEAA593596CF}.Release|x86.Build.0 = Release|Win32
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Debug|x64.ActiveCfg = Debug|x64
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Debug|x64.Build.0 = Debug|x64
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Debug|x86.ActiveCfg = Debug|Win32
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Debug|x86.Build.0 = Debug|Win32
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Release|x64.ActiveCfg = Release|x64
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Release|x64.Build.0 = Release|x64
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Release|x86.ActiveCfg = Release|Win32
+		{8637460E-AB86-47C9-B73B-6A5A06E4A892}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
