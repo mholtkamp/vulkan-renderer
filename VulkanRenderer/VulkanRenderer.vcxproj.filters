@@ -24,6 +24,24 @@
     <ClCompile Include="stb_image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Texture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Pipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LightingPass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -36,6 +54,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Texture.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Pipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LightingPass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

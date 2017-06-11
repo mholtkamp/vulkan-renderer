@@ -126,14 +126,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="GeometryPass.cpp" />
+    <ClCompile Include="LightingPass.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Mesh.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="stb_image.cpp" />
+    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ApplicationInfo.h" />
     <ClInclude Include="ApplicationState.h" />
+    <ClInclude Include="GeometryPass.h" />
+    <ClInclude Include="LightingPass.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="Pipeline.h" />
     <ClInclude Include="Renderer.h" />
+    <ClInclude Include="Texture.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

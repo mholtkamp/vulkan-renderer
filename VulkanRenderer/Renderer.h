@@ -1,10 +1,13 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
-#include "ApplicationState.h"
+
 #include <vector>
 #include "glm/glm.hpp"
 #include <array>
+
+#include "ApplicationState.h"
+#include "Texture.h"
 
 struct VSUniformBuffer
 {
@@ -86,6 +89,8 @@ public:
 
 	void Initialize();
 
+	VkDevice GetDevice();
+
 	void CreateSwapchain();
 
 	void PreparePresentation();
@@ -97,6 +102,18 @@ public:
 	void WaitOnExecutionFinished();
 
 	void RecreateSwapchain();
+
+	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	void CreateBuffer(VkDeviceSize size,
+					  VkBufferUsageFlags usage,
+					  VkMemoryPropertyFlags properties,
+					  VkBuffer& buffer,
+					  VkDeviceMemory& bufferMemory);
+
+	VkCommandBuffer BeginSingleSubmissionCommands();
+
+	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer);
 
 private:
 
@@ -151,33 +168,9 @@ private:
 
 	void CreateTextureImage();
 
-	void CreateTextureImageView();
-
-	void CreateTextureSampler();
-
-	void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
-
-	void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-
-	void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
-
-	VkImageView CreateImageView(VkImage image, VkFormat format);
-
-	VkCommandBuffer BeginSingleSubmissionCommands();
-
-	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer);
-
-	void CreateBuffer(VkDeviceSize size,
-					  VkBufferUsageFlags usage,
-					  VkMemoryPropertyFlags properties,
-					  VkBuffer& buffer,
-					  VkDeviceMemory& bufferMemory);
-
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	void DestroySwapchain();
-
-	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
@@ -240,10 +233,7 @@ private:
 	VkBuffer mUniformBuffer;
 	VkDeviceMemory mUniformBufferMemory;
 
-	VkImage mTextureImage;
-	VkDeviceMemory mTextureImageMemory;
-	VkImageView mTextureImageView;
-	VkSampler mTextureSampler;
+	Texture mTexture;
 
 	AppState* mAppState;
 
