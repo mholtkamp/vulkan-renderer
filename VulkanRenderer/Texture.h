@@ -31,6 +31,8 @@ private:
 
 	static void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
+	std::string mName;
+
 	VkImage mTextureImage;
 	VkDeviceMemory mTextureImageMemory;
 	VkImageView mTextureImageView;

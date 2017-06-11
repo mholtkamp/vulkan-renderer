@@ -30,13 +30,6 @@ static uint32_t sNumValidationLayers = 1;
 static const char* sDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 static uint32_t sNumDeviceExtensions = 1;
 
-const Vertex sVertices[] = { {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-							 {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-							 {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-							 {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}} };
-
-const uint32_t sIndices[] = { 0, 1, 2, 2, 3, 0 };
-
 Renderer* Renderer::sInstance = nullptr;
 
 Renderer::Renderer() :
@@ -53,7 +46,6 @@ Renderer::Renderer() :
 	mGraphicsPipeline(0),
 	mImageAvailableSemaphore(0),
 	mRenderFinishedSemaphore(0),
-	mVertexBuffer(0),
 	mInitialized(false)
 {
 	
@@ -123,10 +115,7 @@ Renderer::~Renderer()
 	vkDestroyBuffer(mDevice, mUniformBuffer, nullptr);
 	vkFreeMemory(mDevice, mUniformBufferMemory, nullptr);
 
-	vkDestroyBuffer(mDevice, mIndexBuffer, nullptr);
-	vkFreeMemory(mDevice, mIndexBufferMemory, nullptr);
-	vkDestroyBuffer(mDevice, mVertexBuffer, nullptr);
-	vkFreeMemory(mDevice, mVertexBufferMemory, nullptr);
+	mMesh.Destroy();
 
 	vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
@@ -154,9 +143,8 @@ void Renderer::Initialize()
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
 	CreateCommandPool();
+	mMesh.Create(nullptr);
 	CreateTextureImage();
-	CreateVertexBuffer();
-	CreateIndexBuffer();
 	CreateUniformBuffer();
 	CreateDescriptorPool();
 	CreateDescriptorSet();
@@ -852,11 +840,7 @@ void Renderer::CreateCommandBuffers()
 		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 		
-		VkBuffer vertexBuffers[] = { mVertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
-		vkCmdBindVertexBuffers(mCommandBuffers[i], 0, 1, vertexBuffers, offsets);
-
-		vkCmdBindIndexBuffer(mCommandBuffers[i], mIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		mMesh.BindBuffers(mCommandBuffers[i]);
 
 		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSet, 0, nullptr);
 
@@ -881,48 +865,6 @@ void Renderer::CreateSemaphores()
 	{
 		throw exception("Failed to create semaphores");
 	}
-}
-
-void Renderer::CreateVertexBuffer()
-{
-	VkDeviceSize bufferSize = sizeof(sVertices);
-
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-	void* data;
-	vkMapMemory(mDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, sVertices, (size_t)bufferSize);
-	vkUnmapMemory(mDevice, stagingBufferMemory);
-
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
-
-	CopyBuffer(stagingBuffer, mVertexBuffer, bufferSize);
-
-	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
-	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
-}
-
-void Renderer::CreateIndexBuffer()
-{
-	VkDeviceSize bufferSize = sizeof(sIndices);
-
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-	void* data;
-	vkMapMemory(mDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, sIndices, static_cast<size_t>(bufferSize));
-	vkUnmapMemory(mDevice, stagingBufferMemory);
-
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mIndexBuffer, mIndexBufferMemory);
-
-	CopyBuffer(stagingBuffer, mIndexBuffer, bufferSize);
-
-	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
-	vkFreeMemory(mDevice, stagingBufferMemory, nullptr);
 }
 
 void Renderer::CreateUniformBuffer()

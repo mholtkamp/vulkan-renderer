@@ -8,6 +8,7 @@
 
 #include "ApplicationState.h"
 #include "Texture.h"
+#include "Mesh.h"
 
 struct VSUniformBuffer
 {
@@ -111,6 +112,8 @@ public:
 					  VkBuffer& buffer,
 					  VkDeviceMemory& bufferMemory);
 
+	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+
 	VkCommandBuffer BeginSingleSubmissionCommands();
 
 	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer);
@@ -154,10 +157,6 @@ private:
 
 	void CreateSemaphores();
 
-	void CreateVertexBuffer();
-
-	void CreateIndexBuffer();
-
 	void CreateUniformBuffer();
 
 	void UpdateUniformBuffer();
@@ -167,8 +166,6 @@ private:
 	void CreateDescriptorSet();
 
 	void CreateTextureImage();
-
-	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	void DestroySwapchain();
 
@@ -226,14 +223,11 @@ private:
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;
 
-	VkBuffer mVertexBuffer;
-	VkDeviceMemory mVertexBufferMemory;
-	VkBuffer mIndexBuffer;
-	VkDeviceMemory mIndexBufferMemory;
 	VkBuffer mUniformBuffer;
 	VkDeviceMemory mUniformBufferMemory;
 
 	Texture mTexture;
+	Mesh mMesh;
 
 	AppState* mAppState;
 
