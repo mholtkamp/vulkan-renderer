@@ -9,54 +9,19 @@
 #include "ApplicationState.h"
 #include "Texture.h"
 #include "Mesh.h"
+#include "Vertex.h"
+#include "Scene.h"
+
+#include "Pipeline.h"
+#include "GeometryPipeline.h"
+#include "LightPipeline.h"
+#include "DeferredPipeline.h"
 
 struct VSUniformBuffer
 {
 	glm::mat4 mModel;
 	glm::mat4 mView;
 	glm::mat4 mProjection;
-};
-
-struct Vertex
-{
-	glm::vec2 mPosition;
-	glm::vec3 mColor;
-	glm::vec2 mTexcoord;
-
-	static VkVertexInputBindingDescription GetBindingDescription()
-	{
-		VkVertexInputBindingDescription bindingDescription = {};
-		bindingDescription.binding = 0;
-		bindingDescription.stride = sizeof(Vertex);
-		bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-		return bindingDescription;
-	}
-
-	static std::array<VkVertexInputAttributeDescription, 3> GetAttributeDescriptions()
-	{
-		std::array<VkVertexInputAttributeDescription, 3> attributeDescriptions = {};
-
-		// Position
-		attributeDescriptions[0].binding = 0;
-		attributeDescriptions[0].location = 0;
-		attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[0].offset = offsetof(Vertex, mPosition);
-
-		// Color
-		attributeDescriptions[1].binding = 0;
-		attributeDescriptions[1].location = 1;
-		attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		attributeDescriptions[1].offset = offsetof(Vertex, mColor);
-
-		// Texcoord
-		attributeDescriptions[2].binding = 0;
-		attributeDescriptions[2].location = 2;
-		attributeDescriptions[2].format = VK_FORMAT_R32G32_SFLOAT;
-		attributeDescriptions[2].offset = offsetof(Vertex, mTexcoord);
-
-		return attributeDescriptions;
-	}
 };
 
 struct QueueFamilyIndices
@@ -98,11 +63,19 @@ public:
 
 	void Render();
 
+	void SetScene(const Scene* scene);
+
 	void SetAppState(AppState* appState);
 
 	void WaitOnExecutionFinished();
 
 	void RecreateSwapchain();
+
+	VkDescriptorPool GetDescriptorPool();
+
+	Pipeline& GetGeometryPipeline();
+	Pipeline& GetLightPipeline();
+	Pipeline& GetDeferredPipeline();
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
@@ -203,12 +176,10 @@ private:
 	VkQueue mGraphicsQueue;
 	VkQueue mPresentQueue;
 	VkSurfaceKHR mSurface;
-	VkDescriptorSetLayout mDescriptorSetLayout;
+
 	VkDescriptorPool mDescriptorPool;
-	VkDescriptorSet mDescriptorSet;
-	VkPipelineLayout mPipelineLayout;
+
 	VkRenderPass mRenderPass;
-	VkPipeline mGraphicsPipeline;
 	VkCommandPool mCommandPool;
 
 	VkSwapchainKHR mSwapchain;
@@ -223,11 +194,11 @@ private:
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;
 
-	VkBuffer mUniformBuffer;
-	VkDeviceMemory mUniformBufferMemory;
+	GeometryPipeline mGeometryPipeline;
+	LightPipeline mLightPipeline;
+	DeferredPipeline mDeferredPipeline;
 
-	Texture mTexture;
-	Mesh mMesh;
+	Scene* mScene;
 
 	AppState* mAppState;
 

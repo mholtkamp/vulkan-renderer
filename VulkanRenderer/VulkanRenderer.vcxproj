@@ -143,8 +143,13 @@
     <ClInclude Include="Actor.h" />
     <ClInclude Include="ApplicationInfo.h" />
     <ClInclude Include="ApplicationState.h" />
+    <ClInclude Include="Constants.h" />
+    <ClInclude Include="DeferredPipeline.h" />
+    <ClInclude Include="Enums.h" />
     <ClInclude Include="GeometryPass.h" />
+    <ClInclude Include="GeometryPipeline.h" />
     <ClInclude Include="LightingPass.h" />
+    <ClInclude Include="LightPipeline.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Pipeline.h" />
@@ -153,6 +158,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="Vertex.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -2,6 +2,9 @@
 
 #include <string>
 #include <vulkan/vulkan.h>
+#include <assimp/scene.h>
+
+#include "Material.h"
 
 class Mesh
 {
@@ -11,15 +14,22 @@ public:
 
 	void Destroy();
 
-	void Create(class aiMesh* meshData);
+	void Create(const aiMesh& meshData,
+		std::vector<Material>& materials);
 
 	void BindBuffers(VkCommandBuffer commandBuffer);
 
+	class Material* GetMaterial();
+
+	void UpdateDescriptorSets(VkDescriptorSet descriptorSet);
+
 private:
 
-	void CreateVertexBuffer();
+	void CreateVertexBuffer(aiVector3D* positions,
+							aiVector3D* texcoords,
+							aiVector3D* normals);
 
-	void CreateIndexBuffer();
+	void CreateIndexBuffer(aiFace* faces);
 
 	std::string mName;
 	class Material* mMaterial;

@@ -26,6 +26,16 @@ public:
 
 private:
 
+	void LoadMaterials(const aiScene& scene);
+
+	void LoadMeshes(const aiScene& scene);
+
+	void LoadActors(const aiScene& scene);
+
+	void LoadPointLights(const aiScene& scene);
+
+private:
+
 	std::vector<Mesh> mMeshes;
 
 	std::vector<Material> mMaterials;

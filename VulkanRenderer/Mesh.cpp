@@ -1,13 +1,15 @@
 #include "Mesh.h"
 #include "Renderer.h"
+#include "Vertex.h"
+#include <assimp/scene.h>
 
 // Temp mesh data
-const Vertex sVertices[] = { {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-							 {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-							 {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-							 {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}} };
-
-const uint32_t sIndices[] = { 0, 1, 2, 2, 3, 0 };
+//const Vertex sVertices[] = { {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
+//							 {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
+//							 {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
+//							 {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}} };
+//
+//const uint32_t sIndices[] = { 0, 1, 2, 2, 3, 0 };
 
 Mesh::Mesh() :
 	mName("Mesh"),
@@ -32,10 +34,27 @@ void Mesh::Destroy()
 	vkFreeMemory(device, mVertexBufferMemory, nullptr);
 }
 
-void Mesh::Create(class aiMesh* meshData)
+void Mesh::Create(const aiMesh& meshData,
+	std::vector<Material>& materials)
 {
-	CreateVertexBuffer();
-	CreateIndexBuffer();
+	mNumVertices = meshData.mNumVertices;
+	mNumFaces = meshData.mNumFaces;
+
+	if (mNumVertices == 0 ||
+		mNumFaces == 0)
+	{
+		return;
+	}
+
+	// Get pointers to vertex attributes
+	aiVector3D* positions = meshData.mVertices;
+	aiVector3D* texcoords3D = meshData.mTextureCoords[0];
+	aiVector3D* normals = meshData.mNormals;
+
+	aiFace* faces = meshData.mFaces;
+
+	CreateVertexBuffer(positions, texcoords3D, normals);
+	CreateIndexBuffer(faces);
 }
 
 void Mesh::BindBuffers(VkCommandBuffer commandBuffer)
@@ -47,12 +66,39 @@ void Mesh::BindBuffers(VkCommandBuffer commandBuffer)
 	vkCmdBindIndexBuffer(commandBuffer, mIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 }
 
-void Mesh::CreateVertexBuffer()
+Material* Mesh::GetMaterial()
 {
+	return mMaterial;
+}
+
+void Mesh::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
+{
+	mMaterial->UpdateDescriptorSets(descriptorSet);
+}
+
+void Mesh::CreateVertexBuffer(aiVector3D* positions,
+							  aiVector3D* texcoords,
+							  aiVector3D* normals)
+{
+	Vertex* vertices = static_cast<Vertex*>(malloc(sizeof(Vertex) * mNumVertices));
+
+	// Create an interleaved VBO
+	for (int i = 0; i < mNumVertices; ++i)
+	{
+		vertices[i].mPosition = glm::vec3(positions[i].x,
+										  positions[i].y,
+										  positions[i].z);
+		vertices[i].mTexcoord = glm::vec2(texcoords[i].x,
+										  texcoords[i].y);
+		vertices[i].mNormal = glm::vec3(normals[i].x,
+										normals[i].y,
+										normals[i].z);
+	}
+
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	VkDeviceSize bufferSize = sizeof(sVertices);
+	VkDeviceSize bufferSize = sizeof(Vertex) * mNumVertices;
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -60,7 +106,7 @@ void Mesh::CreateVertexBuffer()
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, sVertices, (size_t)bufferSize);
+	memcpy(data, vertices, (size_t)bufferSize);
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
@@ -69,14 +115,27 @@ void Mesh::CreateVertexBuffer()
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+	free(vertices);
 }
 
-void Mesh::CreateIndexBuffer()
+void Mesh::CreateIndexBuffer(aiFace* faces)
 {
+	uint32_t* indices = static_cast<uint32_t*>(malloc(mNumFaces * 3 * sizeof(uint32_t)));
+
+	for (int i = 0; i < mNumFaces; ++i)
+	{
+		// Enforce triangulated faces
+		assert(faces[i].mNumIndices == 3);
+		indices[i * 3 + 0] = faces[i].mIndices[0];
+		indices[i * 3 + 1] = faces[i].mIndices[1];
+		indices[i * 3 + 2] = faces[i].mIndices[2];
+	}
+
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	VkDeviceSize bufferSize = sizeof(sIndices);
+	VkDeviceSize bufferSize = mNumFaces * 3 * sizeof(uint32_t);
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -84,7 +143,7 @@ void Mesh::CreateIndexBuffer()
 
 	void* data;
 	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, sIndices, static_cast<size_t>(bufferSize));
+	memcpy(data, indices, static_cast<size_t>(bufferSize));
 	vkUnmapMemory(device, stagingBufferMemory);
 
 	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mIndexBuffer, mIndexBufferMemory);
@@ -93,4 +152,6 @@ void Mesh::CreateIndexBuffer()
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+	free(indices);
 }

@@ -7,10 +7,10 @@
 using namespace std;
 
 Texture::Texture() :
-	mTextureImage(VK_NULL_HANDLE),
-	mTextureImageMemory(VK_NULL_HANDLE),
-	mTextureImageView(VK_NULL_HANDLE),
-	mTextureSampler(VK_NULL_HANDLE)
+	mImage(VK_NULL_HANDLE),
+	mImageMemory(VK_NULL_HANDLE),
+	mImageView(VK_NULL_HANDLE),
+	mSampler(VK_NULL_HANDLE)
 {
 
 }
@@ -23,10 +23,10 @@ Texture::~Texture()
 void Texture::Destroy()
 {
 	VkDevice device = Renderer::Get()->GetDevice();
-	vkDestroySampler(device, mTextureSampler, nullptr);
-	vkDestroyImageView(device, mTextureImageView, nullptr);
-	vkDestroyImage(device, mTextureImage, nullptr);
-	vkFreeMemory(device, mTextureImageMemory, nullptr);
+	vkDestroySampler(device, mSampler, nullptr);
+	vkDestroyImageView(device, mImageView, nullptr);
+	vkDestroyImage(device, mImage, nullptr);
+	vkFreeMemory(device, mImageMemory, nullptr);
 }
 
 void Texture::Load(const std::string& path)
@@ -58,17 +58,27 @@ void Texture::Load(const std::string& path)
 
 	stbi_image_free(pixels);
 
-	CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mTextureImage, mTextureImageMemory);
+	CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mImage, mImageMemory);
 
-	TransitionImageLayout(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	CopyBufferToImage(stagingBuffer, mTextureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-	TransitionImageLayout(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	CopyBufferToImage(stagingBuffer, mImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 
-	mTextureImageView = CreateImageView(mTextureImage, VK_FORMAT_R8G8B8A8_UNORM);
+	mImageView = CreateImageView(mImage, VK_FORMAT_R8G8B8A8_UNORM);
 	CreateTextureSampler();
+}
+
+VkImageView Texture::GetImageView()
+{
+	return mImageView;
+}
+
+VkSampler Texture::GetSampler()
+{
+	return mSampler;
 }
 
 void Texture::GenerateDescriptorSetWrite(VkDescriptorSet descriptorSet,
@@ -79,8 +89,8 @@ void Texture::GenerateDescriptorSetWrite(VkDescriptorSet descriptorSet,
 	memset(&writeDescriptor, 0, sizeof(VkWriteDescriptorSet));
 
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = mTextureImageView;
-	imageInfo.sampler = mTextureSampler;
+	imageInfo.imageView = mImageView;
+	imageInfo.sampler = mSampler;
 
 	writeDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	writeDescriptor.dstSet = descriptorSet;
@@ -187,7 +197,7 @@ void Texture::CreateTextureSampler()
 	ciSampler.minLod = 0.0f;
 	ciSampler.maxLod = 0.0f;
 
-	if (vkCreateSampler(device, &ciSampler, nullptr, &mTextureSampler) != VK_SUCCESS)
+	if (vkCreateSampler(device, &ciSampler, nullptr, &mSampler) != VK_SUCCESS)
 	{
 		throw exception("Failed to create texture sampler");
 	}

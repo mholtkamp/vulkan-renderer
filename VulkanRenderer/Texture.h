@@ -17,6 +17,10 @@ public:
 
 	void CreateTextureSampler();
 
+	VkImageView GetImageView();
+
+	VkSampler GetSampler();
+
 	void GenerateDescriptorSetWrite(VkDescriptorSet descriptorSet,
 		VkDescriptorImageInfo& imageInfo,
 		VkWriteDescriptorSet& writeDescriptor);
@@ -33,8 +37,8 @@ private:
 
 	std::string mName;
 
-	VkImage mTextureImage;
-	VkDeviceMemory mTextureImageMemory;
-	VkImageView mTextureImageView;
-	VkSampler mTextureSampler;
+	VkImage mImage;
+	VkDeviceMemory mImageMemory;
+	VkImageView mImageView;
+	VkSampler mSampler;
 };

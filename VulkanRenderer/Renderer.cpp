@@ -41,11 +41,10 @@ Renderer::Renderer() :
 	mPresentQueue(0),
 	mSurface(0),
 	mSwapchain(0),
-	mPipelineLayout(0),
 	mRenderPass(0),
-	mGraphicsPipeline(0),
 	mImageAvailableSemaphore(0),
 	mRenderFinishedSemaphore(0),
+	mScene(nullptr),
 	mInitialized(false)
 {
 	
@@ -143,8 +142,7 @@ void Renderer::Initialize()
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
 	CreateCommandPool();
-	mMesh.Create(nullptr);
-	CreateTextureImage();
+
 	CreateUniformBuffer();
 	CreateDescriptorPool();
 	CreateDescriptorSet();
@@ -280,6 +278,19 @@ void Renderer::Render()
 
 	// TODO: Perhaps only wait if validation layers are enabled.
 	vkQueueWaitIdle(mPresentQueue);
+}
+
+void Renderer::SetScene(const Scene* scene)
+{
+	if (!mInitialized)
+	{
+		Renderer::Initialize();
+	}
+
+	if (mScene != scene)
+	{
+		CreateCommandBuffers()
+	}
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(VkDebugReportFlagsEXT flags,
@@ -804,17 +815,30 @@ void Renderer::CreateCommandPool()
 
 void Renderer::CreateCommandBuffers()
 {
-	mCommandBuffers.resize(mSwapchainFramebuffers.size());
-
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = mCommandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)mCommandBuffers.size();
-
-	if (vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS)
+	if (mCommandBuffers.size() == 0)
 	{
-		throw exception("Failed to create command buffers");
+		mCommandBuffers.resize(mSwapchainFramebuffers.size());
+
+		VkCommandBufferAllocateInfo allocInfo = {};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = mCommandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = (uint32_t)mCommandBuffers.size();
+
+		if (vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS)
+		{
+			throw exception("Failed to create command buffers");
+		}
+	}
+	else
+	{
+		// Command buffers cannot be in pending state when reset
+		vkQueueWaitIdle(mGraphicsQueue);
+
+		for (size_t i = 0; i < mCommandBuffers.size(); ++i)
+		{
+			vkResetCommandBuffer(mCommandBuffers[i], 0);
+		}
 	}
 
 	for (size_t i = 0; i < mCommandBuffers.size(); ++i)
@@ -838,8 +862,10 @@ void Renderer::CreateCommandBuffers()
 		renderPassInfo.pClearValues = &clearColor;
 
 		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGraphicsPipeline);
 		
+		mGeometryPipeline.BindPipeline(mCommandBuffers[i]);
+
+		mScene->RenderGeometry();
 		mMesh.BindBuffers(mCommandBuffers[i]);
 
 		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSet, 0, nullptr);
@@ -891,44 +917,6 @@ void Renderer::CreateDescriptorPool()
 	{
 		throw exception("Failed to create descriptor pool");
 	}
-}
-
-void Renderer::CreateDescriptorSet()
-{
-	VkDescriptorSetLayout layouts[] = { mDescriptorSetLayout };
-	VkDescriptorSetAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = mDescriptorPool;
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = layouts;
-
-	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mDescriptorSet) != VK_SUCCESS)
-	{
-		throw exception("Failed to create descriptor set");
-	}
-
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = mUniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(mUniformBuffer);
-
-	VkDescriptorImageInfo imageInfo = {};
-
-	VkWriteDescriptorSet descriptorWrites[2] = {};
-
-	descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrites[0].dstSet = mDescriptorSet;
-	descriptorWrites[0].dstBinding = 0;
-	descriptorWrites[0].dstArrayElement = 0;
-	descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrites[0].descriptorCount = 1;
-	descriptorWrites[0].pBufferInfo = &bufferInfo;
-	descriptorWrites[0].pImageInfo = nullptr;
-	descriptorWrites[0].pTexelBufferView = nullptr;
-
-	mTexture.GenerateDescriptorSetWrite(mDescriptorSet, imageInfo, descriptorWrites[1]);
-
-	vkUpdateDescriptorSets(mDevice, 2, descriptorWrites, 0, nullptr);
 }
 
 void Renderer::CreateTextureImage()
@@ -1052,6 +1040,26 @@ void Renderer::RecreateSwapchain()
 	CreateGraphicsPipeline();
 	CreateFramebuffers();
 	CreateCommandBuffers();
+}
+
+VkDescriptorPool Renderer::GetDescriptorPool()
+{
+	return GetDescriptorPool();
+}
+
+Pipeline& Renderer::GetGeometryPipeline()
+{
+	return mGeometryPipeline;
+}
+
+Pipeline& Renderer::GetLightPipeline()
+{
+	return mLightPipeline;
+}
+
+Pipeline& Renderer::GetDeferredPipeline()
+{
+	return mDeferredPipeline;
 }
 
 uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)

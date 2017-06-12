@@ -2,6 +2,10 @@
 
 #include <glm/glm.hpp>
 #include <string>
+#include <vector>
+#include <map>
+#include <assimp/scene.h>
+#include "Enums.h"
 
 class Texture;
 
@@ -11,19 +15,23 @@ public:
 
 	Material();
 
-	void Destory();
+	void Destroy();
 
+	void Create(const aiMaterial& material,
+				std::map<std::string, Texture>& textures);
+
+	void UpdateDescriptorSets(VkDescriptorSet descriptorSet);
 
 private:
 
+	void SetTexture(std::map<std::string, Texture>& textures,
+		Texture*& texture,
+		std::string name);
+
 	std::string mName;
 
-	glm::vec3 mDiffuseColor;
-	glm::vec3 mSpecularColor;
+	glm::vec4 mDiffuseColor;
+	glm::vec4 mSpecularColor;
 
-	Texture* mDiffuseTexture;
-	Texture* mSpecularTexture;
-	Texture* mNormalTexture;
-	Texture* mReflectiveTexture;
-	Texture* mEmissiveTexture;
+	Texture* mTextures[SLOT_COUNT];
 };
