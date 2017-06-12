@@ -14,19 +14,26 @@ public:
 
 	void Create();
 
+	void Destroy();
+
 	void SetVertexShader(const std::string& path);
 
 	void SetFragmentShader(const std::string& path);
-
-	void AddBlendAttachmentState();
 
 	void BindPipeline(VkCommandBuffer commandBuffer);
 
 	VkDescriptorSetLayout GetDescriptorSetLayout();
 
-	virtual void CreatePipelineLayout() = 0;
+	VkPipelineLayout GetPipelineLayout();
 
 protected:
+
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
+
+	virtual void CreateDescriptorSetLayout() = 0;
+	virtual void CreatePipelineLayout() = 0;
+
+	void AddBlendAttachmentState();
 
 	VkPipeline mPipeline;
 	VkPipelineLayout mPipelineLayout;

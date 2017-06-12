@@ -9,6 +9,7 @@
 #include "Texture.h"
 #include "Actor.h"
 #include "PointLight.h"
+#include "Clock.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -23,6 +24,10 @@ public:
 	void Destroy();
 
 	void Load(const std::string& path);
+
+	void RenderGeometry(VkCommandBuffer commandBuffer);
+
+	void Update();
 
 private:
 
@@ -45,5 +50,11 @@ private:
 	std::vector<Actor> mActors;
 
 	std::vector<PointLight> mPointLights;
+
+	std::vector<Camera> mCameras;
+
+	Camera* mActiveCamera;
+
+	Clock mClock;
 
 };

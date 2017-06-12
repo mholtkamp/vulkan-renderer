@@ -20,3 +20,9 @@ enum ActorDescriptor
 	//AD_TEXTURE_EMISSVE,
 	AD_COUNT
 };
+
+enum class ProjectionMode
+{
+	ORTHOGRAPHIC,
+	PERSPECTIVE
+};

@@ -2,12 +2,22 @@
 
 Scene::Scene()
 {
+	mClock.Start();
 
+	// TODO: Active camera should point to one of the
+	// cameras loaded from the .dae file.
+	mActiveCamera = new Camera();
 }
 
 void Scene::Destroy()
 {
+	for (Actor& actor : mActors)
+	{
+		actor.Destroy();
+	}
 
+	delete mActiveCamera;
+	mActiveCamera = nullptr;
 }
 
 void Scene::Load(const std::string& path)
@@ -47,4 +57,22 @@ void Scene::LoadActors(const aiScene& scene)
 void Scene::LoadPointLights(const aiScene& scene)
 {
 
+}
+
+void Scene::RenderGeometry(VkCommandBuffer commandBuffer)
+{	
+	for (Actor& actor : mActors)
+	{
+		actor.Draw(commandBuffer);
+	}
+}
+
+void Scene::Update()
+{
+	mClock.Update();
+
+	for (Actor& actor : mActors)
+	{
+		actor.Update(mClock->DeltaTime());
+	}
 }

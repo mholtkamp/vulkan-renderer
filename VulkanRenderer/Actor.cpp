@@ -1,6 +1,10 @@
 #include "Actor.h"
 #include "Renderer.h"
+#include "Clock.h"
+#include "Scene.h"
+#include "Camera.h"
 
+#include <glm/glm.hpp>
 #include <exception>
 
 using namespace std;
@@ -9,6 +13,11 @@ Actor::Actor() :
 	mDescriptorSet(VK_NULL_HANDLE),
 	mUniformBuffer(VK_NULL_HANDLE),
 	mUniformBufferMemory(VK_NULL_HANDLE)
+{
+
+}
+
+void Actor::Destroy()
 {
 
 }
@@ -52,4 +61,50 @@ void Actor::CreateDescriptorSet()
 	vkUpdateDescriptorSets(device, 1, descriptorWrites, 0, nullptr);
 
 	mMesh->UpdateDescriptorSets(mDescriptorSet);
+}
+
+void Actor::Draw(VkCommandBuffer commandBuffer)
+{
+	Pipeline& geometryPipeline = Renderer::Get()->GetGeometryPipeline();
+
+	if (mMesh != nullptr)
+	{
+		mMesh->BindBuffers(commandBuffer);
+
+		vkCmdBindDescriptorSets(commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			geometryPipeline.GetPipelineLayout(),
+			0,
+			1,
+			&mDescriptorSet,
+			0,
+			nullptr);
+
+		vkCmdDrawIndexed(commandBuffer,
+			mMesh->GetNumIndices(),
+			1,
+			0,
+			0,
+			0);
+	}
+}
+
+void Actor::Update(Scene* camera,
+	float deltaTime)
+{
+	UpdateUniformBuffer();
+}
+
+void Actor::UpdateUniformBuffer(Camera* scene, float deltaTime)
+{
+	VSUniformBuffer ubo = {};
+	ubo.mModel = glm::rotate(glm::mat4(), deltaTime * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.mView = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.mProjection = glm::perspective(glm::radians(45.0f), ((float)mSwapchainExtent.width) / mSwapchainExtent.height, 0.1f, 100.0f);
+	ubo.mProjection[1][1] *= -1.0f;
+
+	void* data;
+	vkMapMemory(mDevice, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(mDevice, mUniformBufferMemory);
 }

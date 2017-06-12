@@ -63,7 +63,7 @@ public:
 
 	void Render();
 
-	void SetScene(const Scene* scene);
+	void SetScene(Scene* scene);
 
 	void SetAppState(AppState* appState);
 
@@ -91,6 +91,10 @@ public:
 
 	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer);
 
+	VkExtent2D& GetSwapchainExtent();
+
+	VkRenderPass GetRenderPass();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,
@@ -101,8 +105,6 @@ private:
 		const char* layerPrefix,
 		const char* msg,
 		void* userData);
-
-	static std::vector<char> ReadFile(const std::string& filename);
 
 	void CreateInstance();
 
@@ -118,9 +120,7 @@ private:
 
 	void CreateRenderPass();
 
-	void CreateDescriptorSetLayout();
-
-	void CreateGraphicsPipeline();
+	void CreatePipelines();
 
 	void CreateFramebuffers();
 
@@ -141,8 +141,6 @@ private:
 	void CreateTextureImage();
 
 	void DestroySwapchain();
-
-	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
 	bool IsDeviceSuitable(VkPhysicalDevice device);
 

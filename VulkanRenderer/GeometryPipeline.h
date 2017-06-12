@@ -9,5 +9,6 @@ public:
 
 	GeometryPipeline();
 
+	virtual void CreateDescriptorSetLayout() override;
 	virtual void CreatePipelineLayout() override;
 };

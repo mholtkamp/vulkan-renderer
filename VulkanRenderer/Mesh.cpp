@@ -76,6 +76,21 @@ void Mesh::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 	mMaterial->UpdateDescriptorSets(descriptorSet);
 }
 
+uint32_t Mesh::GetNumIndices()
+{
+	return mNumFaces * 3;
+}
+
+uint32_t Mesh::GetNumFaces()
+{
+	return mNumFaces;
+}
+
+uint32_t Mesh::GetNumVertices()
+{
+	return mNumVertices;
+}
+
 void Mesh::CreateVertexBuffer(aiVector3D* positions,
 							  aiVector3D* texcoords,
 							  aiVector3D* normals)

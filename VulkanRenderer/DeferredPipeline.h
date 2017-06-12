@@ -8,5 +8,6 @@ public:
 
 	DeferredPipeline();
 
+	virtual void CreateDescriptorSetLayout() override;
 	virtual void CreatePipelineLayout() override;
 };

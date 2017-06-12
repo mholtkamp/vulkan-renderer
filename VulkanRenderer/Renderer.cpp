@@ -90,8 +90,10 @@ void Renderer::DestroySwapchain()
 
 	vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()), mCommandBuffers.data());
 
-	vkDestroyPipeline(mDevice, mGraphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(mDevice, mPipelineLayout, nullptr);
+	mGeometryPipeline.Destroy();
+	//mLightPipeline.Destroy();
+	//mDeferredPipeline.Destroy();
+
 	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
 
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
@@ -106,11 +108,8 @@ Renderer::~Renderer()
 {
 	DestroySwapchain();
 
-	mTexture.Destroy();
-
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
 
-	vkDestroyDescriptorSetLayout(mDevice, mDescriptorSetLayout, nullptr);
 	vkDestroyBuffer(mDevice, mUniformBuffer, nullptr);
 	vkFreeMemory(mDevice, mUniformBufferMemory, nullptr);
 
@@ -138,8 +137,7 @@ void Renderer::Initialize()
 	CreateSwapchain();
 	CreateImageViews();
 	CreateRenderPass();
-	CreateDescriptorSetLayout();
-	CreateGraphicsPipeline();
+	CreatePipelines();
 	CreateFramebuffers();
 	CreateCommandPool();
 
@@ -280,7 +278,7 @@ void Renderer::Render()
 	vkQueueWaitIdle(mPresentQueue);
 }
 
-void Renderer::SetScene(const Scene* scene)
+void Renderer::SetScene(Scene* scene)
 {
 	if (!mInitialized)
 	{
@@ -289,7 +287,8 @@ void Renderer::SetScene(const Scene* scene)
 
 	if (mScene != scene)
 	{
-		CreateCommandBuffers()
+		mScene = scene;
+		CreateCommandBuffers();
 	}
 }
 
@@ -310,24 +309,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(VkDebugReportFlagsEXT fla
 	OutputDebugString("\n");
 
 	return VK_FALSE;
-}
-
-std::vector<char> Renderer::ReadFile(const std::string& filename)
-{
-	ifstream file(filename, std::ios::ate | std::ios::binary);
-
-	if (!file.is_open())
-	{
-		throw exception("Failed to open file.");
-	}
-
-	size_t fileSize = static_cast<size_t>(file.tellg());
-	std::vector<char> buffer(fileSize);
-	file.seekg(0);
-
-	file.read(buffer.data(), fileSize);
-
-	return buffer;
 }
 
 void Renderer::CreateInstance()
@@ -605,175 +586,6 @@ void Renderer::CreateRenderPass()
 	}
 }
 
-void Renderer::CreateDescriptorSetLayout()
-{
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding, samplerLayoutBinding };
-
-	VkDescriptorSetLayoutCreateInfo ciDescriptorSetLayout = {};
-	ciDescriptorSetLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	ciDescriptorSetLayout.bindingCount = 2;
-	ciDescriptorSetLayout.pBindings = bindings;
-
-	if (vkCreateDescriptorSetLayout(mDevice, &ciDescriptorSetLayout, nullptr, &mDescriptorSetLayout) != VK_SUCCESS)
-	{
-		throw exception("Failed to create descriptor set layout");
-	}
-}
-
-void Renderer::CreateGraphicsPipeline()
-{
-	vector<char> vertShaderCode = ReadFile("Shaders/bin/shader.vert");
-	vector<char> fragShaderCode = ReadFile("Shaders/bin/shader.frag");
-
-	VkShaderModule vertShaderModule;
-	VkShaderModule fragShaderModule;
-
-	vertShaderModule = CreateShaderModule(vertShaderCode);
-	fragShaderModule = CreateShaderModule(fragShaderCode);
-
-	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
-	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	vertShaderStageInfo.module = vertShaderModule;
-	vertShaderStageInfo.pName = "main";
-
-	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
-	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-	fragShaderStageInfo.module = fragShaderModule;
-	fragShaderStageInfo.pName = "main";
-
-	VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
-
-	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
-	auto bindingDescription = Vertex::GetBindingDescription();
-	auto attributeDescription = Vertex::GetAttributeDescriptions();
-	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 1;
-	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
-	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
-	vertexInputInfo.pVertexAttributeDescriptions = attributeDescription.data();
-
-	VkPipelineInputAssemblyStateCreateInfo inputAssembly = {};
-	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-	inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-	VkViewport viewport = {};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = (float)mSwapchainExtent.width;
-	viewport.height = (float)mSwapchainExtent.height;
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-
-	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
-	scissor.extent = mSwapchainExtent;
-
-	VkPipelineViewportStateCreateInfo viewportState = {};
-	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount = 1;
-	viewportState.pViewports = &viewport;
-	viewportState.scissorCount = 1;
-	viewportState.pScissors = &scissor;
-
-	VkPipelineRasterizationStateCreateInfo rasterizer = {};
-	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-	rasterizer.depthClampEnable = VK_FALSE;
-	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
-	rasterizer.lineWidth = 1.0f;
-	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-	rasterizer.depthBiasEnable = VK_FALSE;
-	rasterizer.depthBiasConstantFactor = 0.0f;
-	rasterizer.depthBiasClamp = 0.0f;
-	rasterizer.depthBiasSlopeFactor = 0.0f;
-
-	VkPipelineMultisampleStateCreateInfo multisampling = {};
-	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-	multisampling.minSampleShading = 1.0f;
-	multisampling.pSampleMask = nullptr;
-	multisampling.alphaToCoverageEnable = VK_FALSE;
-	multisampling.alphaToOneEnable = VK_FALSE;
-
-	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
-
-	VkPipelineColorBlendStateCreateInfo colorBlending = {};
-	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-	colorBlending.logicOpEnable = VK_FALSE;
-	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = 1;
-	colorBlending.pAttachments = &colorBlendAttachment;
-	colorBlending.blendConstants[0] = 0.0f;
-	colorBlending.blendConstants[1] = 0.0f;
-	colorBlending.blendConstants[2] = 0.0f;
-	colorBlending.blendConstants[3] = 0.0f;
-
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
-	pipelineLayoutInfo.pPushConstantRanges = 0;
-
-	if (vkCreatePipelineLayout(mDevice, &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create pipeline layout!");
-	}
-
-	VkGraphicsPipelineCreateInfo ciPipeline = {};
-	ciPipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	ciPipeline.stageCount = 2;
-	ciPipeline.pStages = shaderStages;
-	ciPipeline.pVertexInputState = &vertexInputInfo;
-	ciPipeline.pInputAssemblyState = &inputAssembly;
-	ciPipeline.pViewportState = &viewportState;
-	ciPipeline.pRasterizationState = &rasterizer;
-	ciPipeline.pMultisampleState = &multisampling;
-	ciPipeline.pDepthStencilState = nullptr;
-	ciPipeline.pColorBlendState = &colorBlending;
-	ciPipeline.pDynamicState = nullptr;
-	ciPipeline.layout = mPipelineLayout;
-	ciPipeline.renderPass = mRenderPass;
-	ciPipeline.subpass = 0;
-	ciPipeline.basePipelineHandle = VK_NULL_HANDLE;
-	ciPipeline.basePipelineIndex = -1;
-
-	if (vkCreateGraphicsPipelines(mDevice, VK_NULL_HANDLE, 1, &ciPipeline, nullptr, &mGraphicsPipeline) != VK_SUCCESS)
-	{
-throw exception("Failed to create graphics pipeline");
-	}
-
-	vkDestroyShaderModule(mDevice, fragShaderModule, nullptr);
-	vkDestroyShaderModule(mDevice, vertShaderModule, nullptr);
-}
-
 void Renderer::CreateFramebuffers()
 {
 	mSwapchainFramebuffers.resize(mSwapchainImageViews.size());
@@ -865,12 +677,11 @@ void Renderer::CreateCommandBuffers()
 		
 		mGeometryPipeline.BindPipeline(mCommandBuffers[i]);
 
-		mScene->RenderGeometry();
-		mMesh.BindBuffers(mCommandBuffers[i]);
+		mScene->RenderGeometry(mCommandBuffers[i]);
 
-		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPipelineLayout, 0, 1, &mDescriptorSet, 0, nullptr);
+		// Render Lights
 
-		vkCmdDrawIndexed(mCommandBuffers[i], 6, 1, 0, 0, 0);
+		// Render Deferred
 
 		vkCmdEndRenderPass(mCommandBuffers[i]);
 
@@ -919,11 +730,6 @@ void Renderer::CreateDescriptorPool()
 	}
 }
 
-void Renderer::CreateTextureImage()
-{
-	mTexture.Load("Textures/logo.jpg");
-}
-
 VkCommandBuffer Renderer::BeginSingleSubmissionCommands()
 {
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -957,25 +763,6 @@ void Renderer::EndSingleSubmissionCommands(VkCommandBuffer commandBuffer)
 	vkQueueWaitIdle(mGraphicsQueue);
 
 	vkFreeCommandBuffers(mDevice, mCommandPool, 1, &commandBuffer);
-}
-
-void Renderer::UpdateUniformBuffer()
-{
-	static auto startTime = high_resolution_clock::now();
-
-	auto currentTime = high_resolution_clock::now();
-	float time = duration_cast<milliseconds>(currentTime - startTime).count() / 1000.0f;
-
-	VSUniformBuffer ubo = {};
-	ubo.mModel = glm::rotate(glm::mat4(), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.mView = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.mProjection = glm::perspective(glm::radians(45.0f), ((float)mSwapchainExtent.width) / mSwapchainExtent.height, 0.1f, 100.0f);
-	ubo.mProjection[1][1] *= -1.0f;
-
-	void* data;
-	vkMapMemory(mDevice, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(mDevice, mUniformBufferMemory);
 }
 
 void Renderer::CreateBuffer(VkDeviceSize size,
@@ -1037,7 +824,7 @@ void Renderer::RecreateSwapchain()
 	CreateSwapchain();
 	CreateImageViews();
 	CreateRenderPass();
-	CreateGraphicsPipeline();
+	CreatePipelines();
 	CreateFramebuffers();
 	CreateCommandBuffers();
 }
@@ -1077,26 +864,6 @@ uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags pro
 	}
 
 	throw exception("Failed to find suitable memory type");
-}
-
-VkShaderModule Renderer::CreateShaderModule(const std::vector<char>& code)
-{
-	VkShaderModuleCreateInfo ciModule = {};
-	ciModule.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	ciModule.codeSize = code.size();
-
-	vector<uint32_t> codeLong(code.size() / sizeof(uint32_t) + 1);
-	memcpy(codeLong.data(), code.data(), code.size());
-	ciModule.pCode = codeLong.data();
-
-	VkShaderModule module;
-
-	if (vkCreateShaderModule(mDevice, &ciModule, nullptr, &module) != VK_SUCCESS)
-	{
-		throw exception("Failed to create shader module");
-	}
-
-	return module;
 }
 
 bool Renderer::IsDeviceSuitable(VkPhysicalDevice device)
@@ -1324,4 +1091,21 @@ void Renderer::DestroyDebugCallback()
 	{
 		pfnVkDestroyDebugReportCallbackEXT(mInstance, mCallback, nullptr);
 	}
+}
+
+VkExtent2D& Renderer::GetSwapchainExtent()
+{
+	return mSwapchainExtent;
+}
+
+VkRenderPass Renderer::GetRenderPass()
+{
+	return mRenderPass;
+}
+
+void Renderer::CreatePipelines()
+{
+	mGeometryPipeline.Create();
+	//mLightPipeline.Create();
+	//mDeferredPipeline.Create();
 }

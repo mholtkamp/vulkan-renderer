@@ -23,6 +23,12 @@ public:
 
 	void UpdateDescriptorSets(VkDescriptorSet descriptorSet);
 
+	uint32_t GetNumIndices();
+
+	uint32_t GetNumFaces();
+
+	uint32_t GetNumVertices();
+
 private:
 
 	void CreateVertexBuffer(aiVector3D* positions,
