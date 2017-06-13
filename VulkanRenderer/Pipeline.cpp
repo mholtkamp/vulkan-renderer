@@ -21,6 +21,11 @@ Pipeline::Pipeline() :
 
 }
 
+Pipeline::~Pipeline()
+{
+
+}
+
 VkDescriptorSetLayout Pipeline::GetDescriptorSetLayout()
 {
 	return mDescriptorSetLayout;

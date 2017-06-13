@@ -5,6 +5,7 @@
 #include "ApplicationInfo.h"
 #include "ApplicationState.h"
 #include "Renderer.h"
+#include "Scene.h"
 
 static AppState sAppState;
 static bool sQuit = false;
@@ -131,6 +132,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 {
 	Renderer::Create();
 	Renderer* renderer = Renderer::Get();
+	Scene* scene = new Scene();
 
 	sAppState.mConnection = hInstance;
 
@@ -146,14 +148,18 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
 	renderer->Initialize();
 
+	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene.dae");
+
 	while (sQuit == false)
 	{
 		ProcessMessages();
+		scene->Update();
 		renderer->Render();
 	}
 
 	renderer->WaitOnExecutionFinished();
 
+	delete scene;
 	Renderer::Destroy();
 	printf("Done.\n");
 }

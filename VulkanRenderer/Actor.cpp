@@ -10,16 +10,46 @@
 using namespace std;
 
 Actor::Actor() :
+	mName("Actor"),
+	mMesh(nullptr),
 	mDescriptorSet(VK_NULL_HANDLE),
 	mUniformBuffer(VK_NULL_HANDLE),
 	mUniformBufferMemory(VK_NULL_HANDLE)
 {
+	CreateUniformBuffer();
+	CreateDescriptorSet();
+}
 
+void Actor::Create(const aiNode& node, vector<Mesh>& meshes)
+{
+	mName = node.mName.C_Str();
+	memcpy(&mWorldMatrix, &node.mTransformation, sizeof (aiMatrix4x4));
+
+	if (node.mNumMeshes > 0)
+	{
+		if (node.mNumMeshes != 0)
+		{
+			printf("Multiple meshes received by one actor.\n");
+		}
+
+		mMesh = &meshes[node.mMeshes[0]];
+	}
 }
 
 void Actor::Destroy()
 {
+	VkDevice device = Renderer::Get()->GetDevice();
 
+	vkDestroyBuffer(device, mUniformBuffer, nullptr);
+	vkFreeMemory(device, mUniformBufferMemory, nullptr);
+}
+
+void Actor::CreateUniformBuffer()
+{
+	Renderer* renderer = Renderer::Get();
+
+	VkDeviceSize bufferSize = sizeof(VSUniformBuffer);
+	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mUniformBuffer, mUniformBufferMemory);
 }
 
 void Actor::CreateDescriptorSet()
@@ -89,22 +119,21 @@ void Actor::Draw(VkCommandBuffer commandBuffer)
 	}
 }
 
-void Actor::Update(Scene* camera,
+void Actor::Update(Scene* scene,
 	float deltaTime)
 {
-	UpdateUniformBuffer();
+	UpdateUniformBuffer(scene->GetActiveCamera(), deltaTime);
 }
 
-void Actor::UpdateUniformBuffer(Camera* scene, float deltaTime)
+void Actor::UpdateUniformBuffer(Camera* camera, float deltaTime)
 {
-	VSUniformBuffer ubo = {};
-	ubo.mModel = glm::rotate(glm::mat4(), deltaTime * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.mView = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.mProjection = glm::perspective(glm::radians(45.0f), ((float)mSwapchainExtent.width) / mSwapchainExtent.height, 0.1f, 100.0f);
-	ubo.mProjection[1][1] *= -1.0f;
+	VkDevice device = Renderer::Get()->GetDevice();
+
+	GeometryUniformBuffer ubo = {};
+	ubo.mWVPMatrix = camera->GetViewProjectionMatrix() * mWorldMatrix;
 
 	void* data;
-	vkMapMemory(mDevice, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);
+	vkMapMemory(device, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);
 	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(mDevice, mUniformBufferMemory);
+	vkUnmapMemory(device, mUniformBufferMemory);
 }

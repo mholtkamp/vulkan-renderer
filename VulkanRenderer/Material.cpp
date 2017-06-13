@@ -22,7 +22,8 @@ void Material::Destroy()
 
 }
 
-void Material::Create(const aiMaterial& material,
+void Material::Create(const Scene& scene,
+					  const aiMaterial& material,
 					  std::map<std::string, Texture>& textures)
 {
 	aiString name;
@@ -52,7 +53,7 @@ void Material::Create(const aiMaterial& material,
 	aiString diffuseTexture;
 	if (material.GetTextureCount(aiTextureType_DIFFUSE) > 0)
 	{
-		SetTexture(textures, mTextures[SLOT_DIFFUSE], diffuseTexture.C_Str());
+		SetTexture(scene, textures, mTextures[SLOT_DIFFUSE], diffuseTexture.C_Str());
 	}
 
 	//aiString specularTexture;
@@ -84,8 +85,8 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 	for (uint32_t i = 0; i < SLOT_COUNT; ++i)
 	{
 		imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[i].imageView = mTextures[i]->GetImageView();
-		imageInfo[i].sampler = mTextures[i]->GetSampler();
+		imageInfo[i].imageView = (mTextures[i] != nullptr) ? mTextures[i]->GetImageView() : VK_NULL_HANDLE;
+		imageInfo[i].sampler =(mTextures[i] != nullptr) ? mTextures[i]->GetSampler() : VK_NULL_HANDLE;
 
 		descriptorWrite[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite[i].dstSet = descriptorSet;
@@ -99,15 +100,21 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 	vkUpdateDescriptorSets(device, SLOT_COUNT, descriptorWrite, 0, nullptr);
 }
 
-void Material::SetTexture(map<string, Texture>& textures,
+void Material::SetTexture(const Scene& scene,
+	map<string, Texture>& textures,
 	Texture*& texture,
 	string name)
 {
-	if (textures.find(name) != textures.end())
+	if (textures.find(name) == textures.end())
 	{
-		textures.insert(pair<string, Texture>(name, Texture()));
+		auto it = textures.insert(pair<string, Texture>(name, Texture()));
 
 		Texture& texEntry = textures[name];
+
+		texEntry.Load(scene.GetDirectory() + name);
+	}
+	else
+	{
 		
 	}
 }

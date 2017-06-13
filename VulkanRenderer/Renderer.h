@@ -130,15 +130,7 @@ private:
 
 	void CreateSemaphores();
 
-	void CreateUniformBuffer();
-
-	void UpdateUniformBuffer();
-
 	void CreateDescriptorPool();
-
-	void CreateDescriptorSet();
-
-	void CreateTextureImage();
 
 	void DestroySwapchain();
 

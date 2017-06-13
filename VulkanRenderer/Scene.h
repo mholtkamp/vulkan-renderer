@@ -10,6 +10,7 @@
 #include "Actor.h"
 #include "PointLight.h"
 #include "Clock.h"
+#include "Camera.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -23,11 +24,16 @@ public:
 
 	void Destroy();
 
-	void Load(const std::string& path);
+	void Load(const std::string& directory,
+		const std::string& file);
 
 	void RenderGeometry(VkCommandBuffer commandBuffer);
 
 	void Update();
+
+	Camera* GetActiveCamera();
+
+	const std::string& GetDirectory() const;
 
 private:
 
@@ -40,6 +46,8 @@ private:
 	void LoadPointLights(const aiScene& scene);
 
 private:
+
+	std::string mDirectory;
 
 	std::vector<Mesh> mMeshes;
 
@@ -57,4 +65,5 @@ private:
 
 	Clock mClock;
 
+	bool mLoaded;
 };

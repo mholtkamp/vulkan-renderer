@@ -5,6 +5,11 @@
 
 using namespace std;
 
+GeometryPipeline::GeometryPipeline()
+{
+
+}
+
 void GeometryPipeline::CreatePipelineLayout()
 {
 	Renderer* renderer = Renderer::Get();

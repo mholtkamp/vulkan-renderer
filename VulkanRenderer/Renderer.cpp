@@ -1,6 +1,6 @@
 #include "Renderer.h"
 #include "ApplicationInfo.h"
-#include "Util.h"
+#include "Utilities.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -110,11 +110,6 @@ Renderer::~Renderer()
 
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
 
-	vkDestroyBuffer(mDevice, mUniformBuffer, nullptr);
-	vkFreeMemory(mDevice, mUniformBufferMemory, nullptr);
-
-	mMesh.Destroy();
-
 	vkDestroySemaphore(mDevice, mRenderFinishedSemaphore, nullptr);
 	vkDestroySemaphore(mDevice, mImageAvailableSemaphore, nullptr);
 
@@ -140,10 +135,7 @@ void Renderer::Initialize()
 	CreatePipelines();
 	CreateFramebuffers();
 	CreateCommandPool();
-
-	CreateUniformBuffer();
 	CreateDescriptorPool();
-	CreateDescriptorSet();
 	CreateCommandBuffers();
 	CreateSemaphores();
 
@@ -239,8 +231,6 @@ void Renderer::Render()
 	{
 		throw exception("Failed to acquire swapchain image");
 	}
-
-	UpdateUniformBuffer();
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -702,12 +692,6 @@ void Renderer::CreateSemaphores()
 	{
 		throw exception("Failed to create semaphores");
 	}
-}
-
-void Renderer::CreateUniformBuffer()
-{
-	VkDeviceSize bufferSize = sizeof(VSUniformBuffer);
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mUniformBuffer, mUniformBufferMemory);
 }
 
 void Renderer::CreateDescriptorPool()
