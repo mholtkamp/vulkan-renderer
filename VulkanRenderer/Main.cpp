@@ -150,6 +150,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
 	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene.dae");
 
+	renderer->SetScene(scene);
+
 	while (sQuit == false)
 	{
 		ProcessMessages();

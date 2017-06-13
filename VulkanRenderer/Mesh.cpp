@@ -55,6 +55,9 @@ void Mesh::Create(const aiMesh& meshData,
 
 	CreateVertexBuffer(positions, texcoords3D, normals);
 	CreateIndexBuffer(faces);
+
+	// Assign associated material
+	mMaterial = &materials[meshData.mMaterialIndex];
 }
 
 void Mesh::BindBuffers(VkCommandBuffer commandBuffer)

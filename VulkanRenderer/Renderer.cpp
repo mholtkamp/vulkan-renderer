@@ -1,6 +1,7 @@
 #include "Renderer.h"
 #include "ApplicationInfo.h"
 #include "Utilities.h"
+#include "Constants.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -617,6 +618,12 @@ void Renderer::CreateCommandPool()
 
 void Renderer::CreateCommandBuffers()
 {
+	if (mScene == nullptr)
+	{
+		// Cannot create command buffers yet.
+		return;
+	}
+
 	if (mCommandBuffers.size() == 0)
 	{
 		mCommandBuffers.resize(mSwapchainFramebuffers.size());
@@ -698,15 +705,15 @@ void Renderer::CreateDescriptorPool()
 {
 	VkDescriptorPoolSize poolSizes[2] = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 1;
+	poolSizes[0].descriptorCount = RENDERER_MAX_UNIFORM_BUFFER_DESCRIPTORS;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = 1;
+	poolSizes[1].descriptorCount = RENDERER_MAX_SAMPLER_DESCRIPTORS;
 
 	VkDescriptorPoolCreateInfo ciPool = {};
 	ciPool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	ciPool.poolSizeCount = 2;
 	ciPool.pPoolSizes = poolSizes;
-	ciPool.maxSets = 1;
+	ciPool.maxSets = RENDERER_MAX_DESCRIPTOR_SETS;
 
 	if (vkCreateDescriptorPool(mDevice, &ciPool, nullptr, &mDescriptorPool) != VK_SUCCESS)
 	{
@@ -815,7 +822,7 @@ void Renderer::RecreateSwapchain()
 
 VkDescriptorPool Renderer::GetDescriptorPool()
 {
-	return GetDescriptorPool();
+	return mDescriptorPool;
 }
 
 Pipeline& Renderer::GetGeometryPipeline()

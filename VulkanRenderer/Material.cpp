@@ -53,24 +53,28 @@ void Material::Create(const Scene& scene,
 	aiString diffuseTexture;
 	if (material.GetTextureCount(aiTextureType_DIFFUSE) > 0)
 	{
+		material.GetTexture(aiTextureType_DIFFUSE, 0, &diffuseTexture);
 		SetTexture(scene, textures, mTextures[SLOT_DIFFUSE], diffuseTexture.C_Str());
 	}
 
 	//aiString specularTexture;
 	//if (material.GetTextureCount(aiTextureType_SPECULAR) > 0)
 	//{
+	//  material.GetTexture(aiTextureType_SPECULAR, 0, &specularTexture);
 	//	SetTexture(textures, SlotSpecular, specularTexture.C_Str());
 	//}
 
 	//aiString normalTexture;
 	//if (material.GetTextureCount(aiTextureType_NORMALS) > 0)
 	//{
+	//  material.GetTexture(aiTextureType_NORMALS, 0, &normalTexture);
 	//	SetTexture(textures, SlotNormals, normalTexture.C_Str());
 	//}
 
 	//aiString emissiveTexture;
 	//if (material.GetTextureCount(aiTextureType_EMISSIVE) > 0)
 	//{
+	//  material.GetTexture(aiTextureType_EMISSIVE, 0, &emissiveTexture);
 	//	SetTexture(textures, SlotEmissive, emissiveTexture.C_Str());
 	//}
 }
@@ -107,14 +111,13 @@ void Material::SetTexture(const Scene& scene,
 {
 	if (textures.find(name) == textures.end())
 	{
-		auto it = textures.insert(pair<string, Texture>(name, Texture()));
-
+		textures.insert(pair<string, Texture>(name, Texture()));
 		Texture& texEntry = textures[name];
-
 		texEntry.Load(scene.GetDirectory() + name);
+		texture = &texEntry;
 	}
 	else
 	{
-		
+		texture = &textures[name];
 	}
 }

@@ -26,6 +26,16 @@ Pipeline::~Pipeline()
 
 }
 
+void Pipeline::SetVertexShader(const std::string& path)
+{
+	mVertexShaderPath = path;
+}
+
+void Pipeline::SetFragmentShader(const std::string& path)
+{
+	mFragmentShaderPath = path;
+}
+
 VkDescriptorSetLayout Pipeline::GetDescriptorSetLayout()
 {
 	return mDescriptorSetLayout;
@@ -35,6 +45,8 @@ void Pipeline::Create()
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
+
+	CreateDescriptorSetLayout();
 
 	vector<char> vertShaderCode = ReadFile(mVertexShaderPath);
 	vector<char> fragShaderCode = ReadFile(mFragmentShaderPath);

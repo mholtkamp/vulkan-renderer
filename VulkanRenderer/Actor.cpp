@@ -16,8 +16,7 @@ Actor::Actor() :
 	mUniformBuffer(VK_NULL_HANDLE),
 	mUniformBufferMemory(VK_NULL_HANDLE)
 {
-	CreateUniformBuffer();
-	CreateDescriptorSet();
+
 }
 
 void Actor::Create(const aiNode& node, vector<Mesh>& meshes)
@@ -27,12 +26,15 @@ void Actor::Create(const aiNode& node, vector<Mesh>& meshes)
 
 	if (node.mNumMeshes > 0)
 	{
-		if (node.mNumMeshes != 0)
+		if (node.mNumMeshes != 1)
 		{
 			printf("Multiple meshes received by one actor.\n");
 		}
 
 		mMesh = &meshes[node.mMeshes[0]];
+
+		CreateUniformBuffer();
+		CreateDescriptorSet();
 	}
 }
 
