@@ -21,6 +21,14 @@ enum ActorDescriptor
 	AD_COUNT
 };
 
+enum GBufferIndex
+{
+	GB_POSITION,
+	GB_COLOR,
+	GB_DEPTH,
+	GB_COUNT
+};
+
 enum class ProjectionMode
 {
 	ORTHOGRAPHIC,

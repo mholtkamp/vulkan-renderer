@@ -111,6 +111,12 @@ private:
 
 	void CreateImageViews();
 
+	void CreateGBuffer();
+
+	void CreateGBufferImages();
+
+	void CreateGBufferFramebuffers();
+
 	void CreateRenderPass();
 
 	void CreatePipelines();
@@ -173,6 +179,12 @@ private:
 
 	std::vector<VkFramebuffer> mSwapchainFramebuffers;
 	std::vector<VkCommandBuffer> mCommandBuffers;
+
+	std::vector<VkImage> mGBufferImages;
+	std::vector<VkDeviceMemory> mGBufferImageMemory;
+	std::vector<VkImageView> mGBufferImageView;
+	std::vector<VkFramebuffer> mGBuffers;
+
 
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;

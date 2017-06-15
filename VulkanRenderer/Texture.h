@@ -27,11 +27,11 @@ public:
 
 	static void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory);
 
-	static VkImageView CreateImageView(VkImage image, VkFormat format);
-
-private:
+	static VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags);
 
 	static void TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
+
+private:
 
 	static void CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 

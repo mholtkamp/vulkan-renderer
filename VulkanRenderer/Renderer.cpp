@@ -11,7 +11,6 @@
 #include <set>
 #include <fstream>
 
-#define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
@@ -137,6 +136,7 @@ void Renderer::Initialize()
 	CreatePipelines();
 	CreateFramebuffers();
 	CreateCommandPool();
+	CreateGBuffer();
 	CreateDescriptorPool();
 	CreateCommandBuffers();
 	CreateSemaphores();
@@ -176,7 +176,7 @@ void Renderer::CreateSwapchain()
 	ciSwapchain.imageArrayLayers = 1;
 	ciSwapchain.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	// TODO: Replace VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT with
-	//   VK_IMAGE_USAGE_TRANSFER_DST_BIT for deferred renderer output
+	//   VK_IMAGE_USAGE_TRANSFER_DST_BIT for deferred renderer output... Maybe
 
 	QueueFamilyIndices indices = FindQueueFamilies(mPhysicalDevice);
 	uint32_t queueFamilyIndices[] = { (uint32_t)indices.mGraphicsFamily, (uint32_t)indices.mPresentFamily };
@@ -530,7 +530,7 @@ void Renderer::CreateImageViews()
 
 	for (size_t i = 0; i < mSwapchainImages.size(); ++i)
 	{
-		mSwapchainImageViews[i] = Texture::CreateImageView(mSwapchainImages[i], mSwapchainImageFormat);
+		mSwapchainImageViews[i] = Texture::CreateImageView(mSwapchainImages[i], mSwapchainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
 }
 
@@ -599,6 +599,53 @@ void Renderer::CreateFramebuffers()
 		{
 			throw exception("Failed to create framebuffer.");
 		}
+	}
+}
+
+void Renderer::CreateGBuffer()
+{
+	
+
+
+	CreateGBufferImages();
+	CreateGBufferFramebuffers();
+}
+
+void Renderer::CreateGBufferImages()
+{
+	mGBufferImages.resize(GB_COUNT);
+	mGBufferImageMemory.resize(GB_COUNT);
+	mGBufferImageView.resize(GB_COUNT);
+
+	for (uint32_t i = 0; i < GB_COUNT; ++i)
+	{
+		Texture::CreateImage(mSwapchainExtent.width,
+			mSwapchainExtent.height,
+			i == GB_DEPTH ? VK_FORMAT_D24_UNORM_S8_UINT : VK_FORMAT_R8G8B8A8_UNORM,
+			VK_IMAGE_TILING_OPTIMAL,
+			i == GB_DEPTH ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+			mGBufferImages[i],
+			mGBufferImageMemory[i]);
+
+		mGBufferImageView[i] = Texture::CreateImageView(mGBufferImages[i],
+			i == GB_DEPTH ? VK_FORMAT_D24_UNORM_S8_UINT : VK_FORMAT_R8G8B8A8_UNORM,
+			i == GB_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
+
+		Texture::TransitionImageLayout(mGBufferImages[i],
+			i == GB_DEPTH ? VK_FORMAT_D24_UNORM_S8_UINT : VK_FORMAT_R8G8B8A8_UNORM,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			i == GB_DEPTH ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+
+	}
+}
+
+void Renderer::CreateGBufferFramebuffers()
+{
+	for (uint32_t i = 0; i < GB_COUNT; ++i)
+	{
+		
 	}
 }
 
