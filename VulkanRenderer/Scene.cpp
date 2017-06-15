@@ -4,11 +4,10 @@
 Scene::Scene() : 
 	mLoaded(false)
 {
-	mClock.Start();
-
 	// TODO: Active camera should point to one of the
 	// cameras loaded from the .dae file.
 	mActiveCamera = new Camera();
+	mActiveCamera->SetPosition(glm::vec3(0.0f, 0.0f, 10.0f));
 }
 
 void Scene::Destroy()
@@ -103,9 +102,8 @@ void Scene::RenderGeometry(VkCommandBuffer commandBuffer)
 	}
 }
 
-void Scene::Update()
+void Scene::Update(float deltaTime)
 {
-	mClock.Update();
 
 	if (mActiveCamera != nullptr)
 	{
@@ -114,7 +112,7 @@ void Scene::Update()
 
 	for (Actor& actor : mActors)
 	{
-		actor.Update(this, mClock.DeltaTime());
+		actor.Update(this,deltaTime);
 	}
 }
 

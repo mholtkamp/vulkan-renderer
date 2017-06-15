@@ -1,19 +1,17 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(binding = 0) uniform VSUniformBuffer 
+layout(set = 0, binding = 0) uniform GeometryUniformBuffer 
 {
-    mat4 model;
-    mat4 view;
-    mat4 projection;
-} ubo;
+    mat4 WVP;
+} uboGeometry;
 
-layout(location = 0) in vec2 inPosition;
-layout(location = 1) in vec3 inColor;
-layout(location = 2) in vec2 inTexcoord;
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec2 inTexcoord;
+layout(location = 2) in vec3 inNormal;
 
-layout(location = 0) out vec3 fragColor;
-layout(location = 1) out vec2 fragTexcoord;
+layout(location = 0) out vec2 outTexcoord;
+layout(location = 1) out vec3 outNormal;
 
 out gl_PerVertex 
 {
@@ -22,7 +20,9 @@ out gl_PerVertex
 
 void main()
 {
-    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPosition, 0.0, 1.0);
-    fragColor = inColor;
-    fragTexcoord = inTexcoord;
+    gl_Position = uboGeometry.WVP * vec4(inPosition, 1.0);
+    outTexcoord = inTexcoord;
+    
+    // TODO: Multiply with inverse transpose of World matrix
+    outNormal = inNormal;
 }

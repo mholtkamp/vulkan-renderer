@@ -17,13 +17,6 @@
 #include "LightPipeline.h"
 #include "DeferredPipeline.h"
 
-struct VSUniformBuffer
-{
-	glm::mat4 mModel;
-	glm::mat4 mView;
-	glm::mat4 mProjection;
-};
-
 struct QueueFamilyIndices
 {
 	int32_t mGraphicsFamily = -1;

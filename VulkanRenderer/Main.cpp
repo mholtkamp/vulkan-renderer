@@ -6,9 +6,12 @@
 #include "ApplicationState.h"
 #include "Renderer.h"
 #include "Scene.h"
+#include "CameraController.h"
 
 static AppState sAppState;
 static bool sQuit = false;
+static CameraController sCameraController;
+static Clock sClock;
 
 // MS-Windows event handling function:
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
@@ -148,14 +151,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
 	renderer->Initialize();
 
-	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene.dae");
+	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene2.dae");
+
+	sCameraController.SetCamera(scene->GetActiveCamera());
+	sClock.Start();
 
 	renderer->SetScene(scene);
 
 	while (sQuit == false)
 	{
 		ProcessMessages();
-		scene->Update();
+		sClock.Update();
+		sCameraController.Update(sClock.DeltaTime());
+		scene->Update(sClock.DeltaTime());
 		renderer->Render();
 	}
 

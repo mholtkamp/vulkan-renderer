@@ -12,10 +12,10 @@ struct OrthoSettings
 	float mFar;
 
 	OrthoSettings() :
-		mWidth(5.0f),
-		mHeight(3.6f),
-		mNear(0.1f),
-		mFar(1024.0f)
+		mWidth(10.0f),
+		mHeight(6.6f),
+		mNear(0.0f),
+		mFar(30.0f)
 	{
 
 	}
@@ -63,6 +63,10 @@ public:
 	void SetPosition(glm::vec3 position);
 
 	void SetRotation(glm::vec3 rotation);
+
+	glm::vec3 GetPosition();
+
+	glm::vec3 GetRotation();
 
 private:
 

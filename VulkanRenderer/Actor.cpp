@@ -22,7 +22,9 @@ Actor::Actor() :
 void Actor::Create(const aiNode& node, vector<Mesh>& meshes)
 {
 	mName = node.mName.C_Str();
-	memcpy(&mWorldMatrix, &node.mTransformation, sizeof (aiMatrix4x4));
+	aiMatrix4x4 invTransform = node.mTransformation;
+	invTransform.Transpose();
+	memcpy(&mWorldMatrix, &invTransform, sizeof (aiMatrix4x4));
 
 	if (node.mNumMeshes > 0)
 	{
@@ -50,7 +52,7 @@ void Actor::CreateUniformBuffer()
 {
 	Renderer* renderer = Renderer::Get();
 
-	VkDeviceSize bufferSize = sizeof(VSUniformBuffer);
+	VkDeviceSize bufferSize = sizeof(GeometryUniformBuffer);
 	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mUniformBuffer, mUniformBufferMemory);
 }
 

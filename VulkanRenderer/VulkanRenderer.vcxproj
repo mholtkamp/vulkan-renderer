@@ -128,6 +128,7 @@
   <ItemGroup>
     <ClCompile Include="Actor.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DeferredPipeline.cpp" />
     <ClCompile Include="GeometryPipeline.cpp" />
@@ -148,6 +149,7 @@
     <ClInclude Include="ApplicationInfo.h" />
     <ClInclude Include="ApplicationState.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="CameraController.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DeferredPipeline.h" />

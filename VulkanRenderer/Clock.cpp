@@ -24,7 +24,7 @@ void Clock::Start()
 void Clock::Update()
 {
 	mCurrentTime = high_resolution_clock::now();
-	mDeltaTime = duration_cast<milliseconds>(mCurrentTime - mPreviousTime).count() / 1000.0f;
+	mDeltaTime = duration_cast<microseconds>(mCurrentTime - mPreviousTime).count() / 1000000.0f;
 	mPreviousTime = mCurrentTime;
 }
 

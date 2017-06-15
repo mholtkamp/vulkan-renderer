@@ -90,6 +90,7 @@ void Renderer::DestroySwapchain()
 	}
 
 	vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()), mCommandBuffers.data());
+	mCommandBuffers.clear();
 
 	mGeometryPipeline.Destroy();
 	//mLightPipeline.Destroy();

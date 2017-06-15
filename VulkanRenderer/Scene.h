@@ -29,7 +29,7 @@ public:
 
 	void RenderGeometry(VkCommandBuffer commandBuffer);
 
-	void Update();
+	void Update(float deltaTime);
 
 	Camera* GetActiveCamera();
 
@@ -62,8 +62,6 @@ private:
 	std::vector<Camera> mCameras;
 
 	Camera* mActiveCamera;
-
-	Clock mClock;
 
 	bool mLoaded;
 };

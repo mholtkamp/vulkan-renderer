@@ -83,8 +83,8 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 {
 	VkDevice device = Renderer::Get()->GetDevice();
 
-	VkDescriptorImageInfo imageInfo[SLOT_COUNT];
-	VkWriteDescriptorSet descriptorWrite[SLOT_COUNT];
+	VkDescriptorImageInfo imageInfo[SLOT_COUNT] = {};
+	VkWriteDescriptorSet descriptorWrite[SLOT_COUNT] = {};
 
 	for (uint32_t i = 0; i < SLOT_COUNT; ++i)
 	{
