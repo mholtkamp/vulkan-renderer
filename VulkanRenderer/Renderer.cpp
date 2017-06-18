@@ -47,7 +47,9 @@ Renderer::Renderer() :
 	mScene(nullptr),
 	mInitialized(false)
 {
-	
+	mDeferredUniformData.mLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	mDeferredUniformData.mLightDirection = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	mDeferredUniformData.mVisualizationMode = -1;
 }
 
 void Renderer::Create()
@@ -852,18 +854,9 @@ void Renderer::CreateDeferredUniformBuffer()
 
 void Renderer::UpdateDeferredUniformBuffer()
 {
-	// Find a normalized light direction
-	glm::vec3 lightDirection = glm::vec3(1.0f, 0.0f, 0.0f);//glm::vec3(2.0f, 10.0f, -5.0f);
-	lightDirection = glm::normalize(lightDirection);
-
-	// Create a temporary ubo object to copy to the buffer memory
-	DeferredUniformBuffer ubo = {};
-	ubo.mLightDirection = glm::vec4(lightDirection, 1.0f);
-	ubo.mLightColor = glm::vec4(1.0, 1.0f, 1.0f, 1.0f);
-
 	void* data;
 	vkMapMemory(mDevice, mDeferredUniformBufferMemory, 0, sizeof(DeferredUniformBuffer), 0, &data);
-	memcpy(data, &ubo, sizeof(DeferredUniformBuffer));
+	memcpy(data, &mDeferredUniformData, sizeof(DeferredUniformBuffer));
 	vkUnmapMemory(mDevice, mDeferredUniformBufferMemory);
 }
 
@@ -1470,6 +1463,27 @@ VkExtent2D& Renderer::GetSwapchainExtent()
 VkRenderPass Renderer::GetRenderPass()
 {
 	return mRenderPass;
+}
+
+void Renderer::SetVisualizationMode(int32_t mode)
+{
+	assert(mode >= -1);
+	assert(mode < GB_COUNT);
+	mDeferredUniformData.mVisualizationMode = mode;
+	UpdateDeferredUniformBuffer();
+}
+
+void Renderer::SetDirectionalLightColor(glm::vec4 color)
+{
+	mDeferredUniformData.mLightColor = color;
+	UpdateDeferredUniformBuffer();
+}
+
+void Renderer::SetDirectionalLightDirection(glm::vec3 direction)
+{
+	direction = glm::normalize(direction);
+	mDeferredUniformData.mLightDirection = glm::vec4(direction, 0.0);
+	UpdateDeferredUniformBuffer();
 }
 
 void Renderer::CreatePipelines()

@@ -22,6 +22,7 @@ struct DeferredUniformBuffer
 {
 	glm::vec4 mLightDirection;
 	glm::vec4 mLightColor;
+	int32_t mVisualizationMode;
 };
 
 struct QueueFamilyIndices
@@ -94,6 +95,12 @@ public:
 	VkExtent2D& GetSwapchainExtent();
 
 	VkRenderPass GetRenderPass();
+
+	void SetVisualizationMode(int32_t mode);
+
+	void SetDirectionalLightColor(glm::vec4 color);
+
+	void SetDirectionalLightDirection(glm::vec3 direction);
 
 private:
 
@@ -222,6 +229,8 @@ private:
 	VkDescriptorSet mDeferredDescriptorSet;
 	VkBuffer mDeferredUniformBuffer;
 	VkDeviceMemory mDeferredUniformBufferMemory;
+
+	DeferredUniformBuffer mDeferredUniformData;
 
 	Scene* mScene;
 

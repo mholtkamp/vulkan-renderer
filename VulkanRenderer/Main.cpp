@@ -7,10 +7,12 @@
 #include "Renderer.h"
 #include "Scene.h"
 #include "CameraController.h"
+#include "DebugActionHandler.h"
 
 static AppState sAppState;
 static bool sQuit = false;
 static CameraController sCameraController;
+static DebugActionHandler sDebugHandler;
 static Clock sClock;
 
 // MS-Windows event handling function:
@@ -162,6 +164,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 	{
 		ProcessMessages();
 		sClock.Update();
+		sDebugHandler.Update();
 		sCameraController.Update(sClock.DeltaTime());
 		scene->Update(sClock.DeltaTime());
 		renderer->Render();

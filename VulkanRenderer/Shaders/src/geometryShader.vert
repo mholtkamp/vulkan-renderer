@@ -26,5 +26,5 @@ void main()
     
     outPosition = inPosition;    
     outTexcoord = inTexcoord;    
-    outNormal = uboGeometry.NormalMatrix * vec4(inNormal, 0.0);
+    outNormal = (uboGeometry.NormalMatrix * vec4(inNormal, 0.0)).xyz;
 }

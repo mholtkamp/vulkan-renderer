@@ -10,6 +10,7 @@ layout (set = 0, binding = 3) uniform DeferredUniformBuffer
 {
     vec4 mLightDirection;
     vec4 mLightColor;
+    int mVisualizationMode;
 } ubo;
 
 layout (location = 0) in vec2 inTexcoord;
@@ -18,8 +19,30 @@ layout (location = 0) out vec4 outFinalColor;
 
 void main()
 {
-    vec4 color = texture(samplerColor, inTexcoord);
+    vec3 position = texture(samplerPosition, inTexcoord).rgb;
     vec3 normal = texture(samplerNormal, inTexcoord).rgb;
+    vec4 color = texture(samplerColor, inTexcoord);
+    
     float diffuseFactor = clamp(dot(normal, -1.0 * ubo.mLightDirection.rgb), 0.0, 1.0);
-    outFinalColor = diffuseFactor *  color;
+    
+    if (ubo.mVisualizationMode == -1)
+    {
+        // Output final, lit image.
+        outFinalColor = diffuseFactor *  color;
+    }
+    else if (ubo.mVisualizationMode == 0)
+    {
+        // POSITION
+        outFinalColor = vec4(position, 1.0);
+    }
+    else if (ubo.mVisualizationMode == 1)
+    {
+        // NORMAL
+        outFinalColor = vec4(normal, 0.0);
+    }
+    else if (ubo.mVisualizationMode == 2)
+    {
+        // COLOR
+        outFinalColor = color;
+    }
 }

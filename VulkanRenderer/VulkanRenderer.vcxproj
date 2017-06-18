@@ -132,6 +132,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="DebugActionHandler.cpp" />
     <ClCompile Include="DeferredPipeline.cpp" />
     <ClCompile Include="EarlyDepthPipeline.cpp" />
     <ClCompile Include="GeometryPipeline.cpp" />
@@ -155,6 +156,7 @@
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="DebugActionHandler.h" />
     <ClInclude Include="DeferredPipeline.h" />
     <ClInclude Include="EarlyDepthPipeline.h" />
     <ClInclude Include="Enums.h" />
