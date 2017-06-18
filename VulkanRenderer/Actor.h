@@ -8,6 +8,7 @@
 struct GeometryUniformBuffer
 {
 	glm::mat4 mWVPMatrix;
+	glm::mat4 mNormalMatrix;
 };
 
 class Actor

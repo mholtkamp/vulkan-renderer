@@ -98,6 +98,8 @@ void Renderer::DestroySwapchain()
 
 	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
 
+	vkDestroyBuffer(mDevice, mDeferredUniformBuffer, nullptr);
+	vkFreeMemory(mDevice, mDeferredUniformBufferMemory, nullptr);
 	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mDeferredDescriptorSet);
 
 	vkDestroyImage(mDevice, mDepthImage, nullptr);
@@ -841,8 +843,34 @@ void Renderer::CreateGBufferSampler()
 	}
 }
 
+void Renderer::CreateDeferredUniformBuffer()
+{
+	VkDeviceSize bufferSize = sizeof(DeferredUniformBuffer);
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mDeferredUniformBuffer, mDeferredUniformBufferMemory);
+	UpdateDeferredUniformBuffer();
+}
+
+void Renderer::UpdateDeferredUniformBuffer()
+{
+	// Find a normalized light direction
+	glm::vec3 lightDirection = glm::vec3(1.0f, 0.0f, 0.0f);//glm::vec3(2.0f, 10.0f, -5.0f);
+	lightDirection = glm::normalize(lightDirection);
+
+	// Create a temporary ubo object to copy to the buffer memory
+	DeferredUniformBuffer ubo = {};
+	ubo.mLightDirection = glm::vec4(lightDirection, 1.0f);
+	ubo.mLightColor = glm::vec4(1.0, 1.0f, 1.0f, 1.0f);
+
+	void* data;
+	vkMapMemory(mDevice, mDeferredUniformBufferMemory, 0, sizeof(DeferredUniformBuffer), 0, &data);
+	memcpy(data, &ubo, sizeof(DeferredUniformBuffer));
+	vkUnmapMemory(mDevice, mDeferredUniformBufferMemory);
+}
+
 void Renderer::CreateDeferredDescriptorSet()
 {
+	CreateDeferredUniformBuffer();
+
 	VkDescriptorSetLayout layouts[] = { mDeferredPipeline.GetDescriptorSetLayout() };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -855,6 +883,7 @@ void Renderer::CreateDeferredDescriptorSet()
 		throw exception("Failed to create descriptor set");
 	}
 
+	// Update image descriptors (for each gbuffer output)
 	VkDescriptorImageInfo imageInfo[GB_COUNT] = {};
 	VkWriteDescriptorSet descriptorWrite[GB_COUNT] = {};
 
@@ -874,6 +903,25 @@ void Renderer::CreateDeferredDescriptorSet()
 	}
 
 	vkUpdateDescriptorSets(mDevice, 3, descriptorWrite, 0, nullptr);
+
+	// Update the uniform buffer descriptor
+	VkDescriptorBufferInfo bufferInfo = {};
+	bufferInfo.buffer = mDeferredUniformBuffer;
+	bufferInfo.range = sizeof(DeferredUniformBuffer);
+	bufferInfo.offset = 0;
+
+	VkWriteDescriptorSet bufferWrite = {};
+	bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	bufferWrite.dstSet = mDeferredDescriptorSet;
+	bufferWrite.dstBinding = DD_UNIFORM_BUFFER;
+	bufferWrite.dstArrayElement = 0;
+	bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	bufferWrite.descriptorCount = 1;
+	bufferWrite.pBufferInfo = &bufferInfo;
+	bufferWrite.pImageInfo = nullptr;
+	bufferWrite.pTexelBufferView = nullptr;
+
+	vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
 }
 
 void Renderer::CreateGBufferAttachment(GBufferIndex index, VkFormat format)
@@ -1040,6 +1088,7 @@ void Renderer::CreateDescriptorPool()
 	ciPool.poolSizeCount = 2;
 	ciPool.pPoolSizes = poolSizes;
 	ciPool.maxSets = RENDERER_MAX_DESCRIPTOR_SETS;
+	ciPool.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
 	if (vkCreateDescriptorPool(mDevice, &ciPool, nullptr, &mDescriptorPool) != VK_SUCCESS)
 	{

@@ -18,6 +18,12 @@
 #include "LightPipeline.h"
 #include "DeferredPipeline.h"
 
+struct DeferredUniformBuffer
+{
+	glm::vec4 mLightDirection;
+	glm::vec4 mLightColor;
+};
+
 struct QueueFamilyIndices
 {
 	int32_t mGraphicsFamily = -1;
@@ -120,6 +126,10 @@ private:
 
 	void CreateGBufferSampler();
 
+	void CreateDeferredUniformBuffer();
+
+	void UpdateDeferredUniformBuffer();
+
 	void CreateDeferredDescriptorSet();
 
 	void CreateRenderPass();
@@ -210,6 +220,8 @@ private:
 	DeferredPipeline mDeferredPipeline;
 
 	VkDescriptorSet mDeferredDescriptorSet;
+	VkBuffer mDeferredUniformBuffer;
+	VkDeviceMemory mDeferredUniformBufferMemory;
 
 	Scene* mScene;
 

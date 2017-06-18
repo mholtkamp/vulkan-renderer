@@ -21,6 +21,15 @@ enum ActorDescriptor
 	AD_COUNT
 };
 
+enum DeferredDescriptor
+{
+	DD_TEXTURE_POSITION,
+	DD_TEXTURE_NORMAL,
+	DD_TEXTURE_COLOR,
+	DD_UNIFORM_BUFFER,
+	DD_COUNT
+};
+
 enum GBufferIndex
 {
 	GB_POSITION,

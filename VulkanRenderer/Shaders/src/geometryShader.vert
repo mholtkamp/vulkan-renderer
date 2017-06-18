@@ -4,6 +4,7 @@
 layout(set = 0, binding = 0) uniform GeometryUniformBuffer 
 {
     mat4 WVP;
+    mat4 NormalMatrix;
 } uboGeometry;
 
 layout(location = 0) in vec3 inPosition;
@@ -25,6 +26,5 @@ void main()
     
     outPosition = inPosition;    
     outTexcoord = inTexcoord;    
-    // TODO: Multiply with inverse transpose of World matrix
-    outNormal = inNormal;
+    outNormal = uboGeometry.NormalMatrix * vec4(inNormal, 0.0);
 }

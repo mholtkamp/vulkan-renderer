@@ -135,6 +135,7 @@ void Actor::UpdateUniformBuffer(Camera* camera, float deltaTime)
 
 	GeometryUniformBuffer ubo = {};
 	ubo.mWVPMatrix = camera->GetViewProjectionMatrix() * mWorldMatrix;
+	ubo.mNormalMatrix = glm::transpose(glm::inverse(mWorldMatrix));
 
 	void* data;
 	vkMapMemory(device, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);
