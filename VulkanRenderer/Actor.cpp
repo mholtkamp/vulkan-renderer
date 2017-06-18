@@ -76,7 +76,7 @@ void Actor::CreateDescriptorSet()
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = mUniformBuffer;
 	bufferInfo.offset = 0;
-	bufferInfo.range = sizeof(mUniformBuffer);
+	bufferInfo.range = sizeof(GeometryUniformBuffer);
 
 	VkDescriptorImageInfo imageInfo = {};
 
@@ -135,6 +135,7 @@ void Actor::UpdateUniformBuffer(Camera* camera, float deltaTime)
 
 	GeometryUniformBuffer ubo = {};
 	ubo.mWVPMatrix = camera->GetViewProjectionMatrix() * mWorldMatrix;
+	ubo.mWorldMatrix = mWorldMatrix;
 	ubo.mNormalMatrix = glm::transpose(glm::inverse(mWorldMatrix));
 
 	void* data;

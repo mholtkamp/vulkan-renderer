@@ -48,7 +48,7 @@ Renderer::Renderer() :
 	mInitialized(false)
 {
 	mDeferredUniformData.mLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	mDeferredUniformData.mLightDirection = glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
+	mDeferredUniformData.mLightDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
 	mDeferredUniformData.mVisualizationMode = -1;
 }
 

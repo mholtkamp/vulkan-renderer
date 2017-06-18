@@ -3,8 +3,9 @@
 
 layout(set = 0, binding = 0) uniform GeometryUniformBuffer 
 {
-    mat4 WVP;
-    mat4 NormalMatrix;
+    mat4 mWVP;
+    mat4 mWorldMatrix;
+    mat4 mNormalMatrix;
 } uboGeometry;
 
 layout(location = 0) in vec3 inPosition;
@@ -22,9 +23,9 @@ out gl_PerVertex
 
 void main()
 {
-    gl_Position = uboGeometry.WVP * vec4(inPosition, 1.0);
+    gl_Position = uboGeometry.mWVP * vec4(inPosition, 1.0);
     
-    outPosition = inPosition;    
+    outPosition = (uboGeometry.mWorldMatrix * vec4(inPosition, 1.0)).xyz;    
     outTexcoord = inTexcoord;    
-    outNormal = (uboGeometry.NormalMatrix * vec4(inNormal, 0.0)).xyz;
+    outNormal = (uboGeometry.mNormalMatrix * vec4(inNormal, 0.0)).xyz;
 }

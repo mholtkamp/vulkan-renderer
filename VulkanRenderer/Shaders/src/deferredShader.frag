@@ -23,7 +23,8 @@ void main()
     vec3 normal = texture(samplerNormal, inTexcoord).rgb;
     vec4 color = texture(samplerColor, inTexcoord);
     
-    float diffuseFactor = clamp(dot(normal, -1.0 * ubo.mLightDirection.rgb), 0.0, 1.0);
+    vec3 lightVector = -1.0 * normalize(ubo.mLightDirection.rgb);
+    float diffuseFactor = clamp(dot(normal, lightVector), 0.0, 1.0);
     
     if (ubo.mVisualizationMode == -1)
     {
