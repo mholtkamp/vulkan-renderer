@@ -8,8 +8,7 @@ using namespace std;
 GeometryPipeline::GeometryPipeline()
 {
 	mSubpass = PASS_GEOMETRY;
-	//mDepthCompareOp = VK_COMPARE_OP_EQUAL;
-	mDepthCompareOp = VK_COMPARE_OP_ALWAYS;
+	mDepthCompareOp = VK_COMPARE_OP_EQUAL;
 
 	// Add blend states for each attachment (1 already created).
 	AddBlendAttachmentState();

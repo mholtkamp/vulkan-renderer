@@ -91,11 +91,25 @@ void Renderer::DestroySwapchain()
 	vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()), mCommandBuffers.data());
 	mCommandBuffers.clear();
 
+	mEarlyDepthPipeline.Destroy();
 	mGeometryPipeline.Destroy();
 	//mLightPipeline.Destroy();
-	//mDeferredPipeline.Destroy();
+	mDeferredPipeline.Destroy();
 
 	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
+
+	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mDeferredDescriptorSet);
+
+	vkDestroyImage(mDevice, mDepthImage, nullptr);
+	vkDestroyImageView(mDevice, mDepthImageView, nullptr);
+	vkFreeMemory(mDevice, mDepthImageMemory, nullptr);
+
+	for (size_t i = 0; i < mGBufferImages.size(); ++i)
+	{
+		vkDestroyImage(mDevice, mGBufferImages[i], nullptr);
+		vkDestroyImageView(mDevice, mGBufferImageViews[i], nullptr);
+		vkFreeMemory(mDevice, mGBufferImageMemory[i], nullptr);
+	}
 
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
 	{
@@ -179,8 +193,6 @@ void Renderer::CreateSwapchain()
 	ciSwapchain.imageExtent = extent;
 	ciSwapchain.imageArrayLayers = 1;
 	ciSwapchain.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	// TODO: Replace VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT with
-	//   VK_IMAGE_USAGE_TRANSFER_DST_BIT for deferred renderer output... Maybe
 
 	QueueFamilyIndices indices = FindQueueFamilies(mPhysicalDevice);
 	uint32_t queueFamilyIndices[] = { (uint32_t)indices.mGraphicsFamily, (uint32_t)indices.mPresentFamily };
@@ -548,7 +560,7 @@ void Renderer::CreateRenderPass()
 		0,
 		mSwapchainImageFormat,
 		VK_SAMPLE_COUNT_1_BIT,
-		VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		VK_ATTACHMENT_LOAD_OP_CLEAR,
 		VK_ATTACHMENT_STORE_OP_STORE,
 		VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 		VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -580,7 +592,7 @@ void Renderer::CreateRenderPass()
 				0,
 				mGBufferFormats[i],
 				VK_SAMPLE_COUNT_1_BIT,
-				VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+				VK_ATTACHMENT_LOAD_OP_CLEAR,
 				VK_ATTACHMENT_STORE_OP_DONT_CARE,
 				VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 				VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -791,6 +803,11 @@ void Renderer::CreateGBuffer()
 
 void Renderer::CreateGBufferImages()
 {
+	if (mGBufferImages.size() != 0)
+	{
+		
+	}
+
 	mGBufferImages.resize(GB_COUNT);
 	mGBufferImageMemory.resize(GB_COUNT);
 	mGBufferImageViews.resize(GB_COUNT);
@@ -960,10 +977,10 @@ void Renderer::CreateCommandBuffers()
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = mSwapchainExtent;
 
-		VkClearValue clearValues[2] = {};
+		VkClearValue clearValues[GB_COUNT + 2] = {};
 		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		clearValues[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = 2;
+		renderPassInfo.clearValueCount = 5;
 		renderPassInfo.pClearValues = clearValues;
 
 		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1123,9 +1140,12 @@ void Renderer::RecreateSwapchain()
 
 	CreateSwapchain();
 	CreateImageViews();
+	CreateDepthImage();
+	CreateGBufferImages();
 	CreateRenderPass();
 	CreatePipelines();
 	CreateFramebuffers();
+	CreateDeferredDescriptorSet();
 	CreateCommandBuffers();
 }
 

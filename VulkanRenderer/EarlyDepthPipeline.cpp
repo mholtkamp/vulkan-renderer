@@ -6,9 +6,11 @@ using namespace std;
 
 EarlyDepthPipeline::EarlyDepthPipeline()
 {
-	mRasterizerDiscard = VK_TRUE;
+	mRasterizerDiscard = VK_FALSE;
 	mFragmentShaderPath = "";
 	mSubpass = PASS_DEPTH;
+
+	mBlendAttachments.clear();
 }
 
 void EarlyDepthPipeline::CreatePipelineLayout()
