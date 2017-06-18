@@ -132,12 +132,16 @@ void Renderer::Initialize()
 	CreateLogicalDevice();
 	CreateSwapchain();
 	CreateImageViews();
+	CreateCommandPool();
+	CreateDepthImage();
+	CreateDescriptorPool();
+	CreateGBuffer();
 	CreateRenderPass();
 	CreatePipelines();
+	CreateGBufferSampler();
+	CreateDeferredDescriptorSet();
 	CreateFramebuffers();
-	CreateCommandPool();
-	CreateGBuffer();
-	CreateDescriptorPool();
+	
 	CreateCommandBuffers();
 	CreateSemaphores();
 
@@ -536,45 +540,193 @@ void Renderer::CreateImageViews()
 
 void Renderer::CreateRenderPass()
 {
-	VkAttachmentDescription colorAttachment = {};
-	colorAttachment.format = mSwapchainImageFormat;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	std::vector<VkAttachmentDescription> attachments;
 
-	VkAttachmentReference colorAttachmentRef = {};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	attachments.push_back(
+		// Back buffer
+	{
+		0,
+		mSwapchainImageFormat,
+		VK_SAMPLE_COUNT_1_BIT,
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		VK_ATTACHMENT_STORE_OP_STORE,
+		VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+		VK_ATTACHMENT_STORE_OP_DONT_CARE,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	}
+	);
 
-	VkSubpassDependency dependency = {};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
+	attachments.push_back(
+		//Depth Buffer
+		{
+			0,
+			VK_FORMAT_D24_UNORM_S8_UINT,
+			VK_SAMPLE_COUNT_1_BIT,
+			VK_ATTACHMENT_LOAD_OP_CLEAR,
+			VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_UNDEFINED
+		}
+	);
 
-	VkSubpassDescription subpass = {};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
+	for (uint32_t i = 0; i < GB_COUNT; ++i)
+	{
+		attachments.push_back(
+			// GBuffer[0] - Position
+			{
+				0,
+				mGBufferFormats[i],
+				VK_SAMPLE_COUNT_1_BIT,
+				VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+				VK_ATTACHMENT_STORE_OP_DONT_CARE,
+				VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+				VK_ATTACHMENT_STORE_OP_DONT_CARE,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_UNDEFINED
+			}
+		);
+	}
 
-	VkRenderPassCreateInfo ciRenderPass = {};
-	ciRenderPass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	ciRenderPass.attachmentCount = 1;
-	ciRenderPass.pAttachments = &colorAttachment;
-	ciRenderPass.subpassCount = 1;
-	ciRenderPass.pSubpasses = &subpass;
-	ciRenderPass.dependencyCount = 1;
-	ciRenderPass.pDependencies = &dependency;
+	// Early Depth Pass 
+	VkAttachmentReference depthAttachmentReference =
+	{
+		ATTACHMENT_DEPTH,
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL
+	};
+
+	std::vector<VkAttachmentReference> geometryAttachmentReference;
+
+	for (uint32_t i = 0; i < GB_COUNT; ++i)
+	{
+		geometryAttachmentReference.push_back(
+			{
+				ATTACHMENT_GBUFFER_POSITION + i,
+				VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			}
+		);
+	}
+
+	// Lighting input attachment references
+	std::vector<VkAttachmentReference> geometryInputAttachmentReference;
+
+	//depthGeometryAttachmentReference.push_back(
+	//	{
+	//		ATTACHMENT_DEPTH,
+	//		VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
+	//	}
+	//);
+
+	for (uint32_t i = 0; i < GB_COUNT; ++i)
+	{
+		geometryInputAttachmentReference.push_back(
+			// Read from gbuffer
+			{
+				ATTACHMENT_GBUFFER_POSITION + i,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+			}
+		);
+	}
+
+	// Final Pass
+	VkAttachmentReference backAttachmentReference[] =
+	{
+		{
+			ATTACHMENT_BACK,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+		}
+	};
+
+	uint32_t backReferenceCount = ARRAYSIZE(backAttachmentReference);
+
+	VkSubpassDescription subpasses[] =
+	{
+		// Subpass 1 - depth prepass
+		{
+			0, // flags
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			0, // input attachments
+			nullptr,
+			0, // color attachments
+			nullptr,
+			nullptr,
+			&depthAttachmentReference, // depth attachment
+			0,
+			nullptr
+		},
+
+		// Subpass 2 - gbuffer creation
+		{
+			0,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			0, // input attachments
+			nullptr,
+			geometryAttachmentReference.size(),
+			geometryAttachmentReference.data(),
+			nullptr,
+			&depthAttachmentReference,
+			0, // preserve attachments
+			nullptr
+		},
+
+		// Subpass 3 - lighting
+		{
+			0,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			geometryInputAttachmentReference.size(), // input attachments
+			geometryInputAttachmentReference.data(),
+			backReferenceCount,
+			backAttachmentReference,
+			nullptr, // resolve attachments
+			nullptr, // depth attachment
+			0, // preserve attachments
+			nullptr
+		}
+	};
+
+	VkSubpassDependency dependencies[] =
+	{
+		// GBuffer generation depends on early z pass
+		{
+			PASS_DEPTH,
+			PASS_GEOMETRY,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_DEPENDENCY_BY_REGION_BIT
+		},
+
+		// Final lighting pass depends on gbuffer generation
+		{
+			PASS_GEOMETRY,
+			PASS_DEFERRED,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_DEPENDENCY_BY_REGION_BIT
+		}
+	};
+
+	VkRenderPassCreateInfo ciRenderPass =
+	{
+		VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+		nullptr,
+		0,
+		attachments.size(),
+		attachments.data(),
+		ARRAYSIZE(subpasses),
+		subpasses,
+		ARRAYSIZE(dependencies),
+		dependencies
+	};
 
 	if (vkCreateRenderPass(mDevice, &ciRenderPass, nullptr, &mRenderPass) != VK_SUCCESS)
 	{
-		throw exception("Failed to create render pass");
+		throw std::exception("Failed to create renderpass");
 	}
 }
 
@@ -584,13 +736,20 @@ void Renderer::CreateFramebuffers()
 
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
 	{
-		VkImageView attachments[] = { mSwapchainImageViews[i] };
+		std::vector<VkImageView> attachments;
+		attachments.push_back(mSwapchainImageViews[i]);
+		attachments.push_back(mDepthImageView);
+
+		for (uint32_t j = 0; j < mGBufferImageViews.size(); ++j)
+		{
+			attachments.push_back(mGBufferImageViews[j]);
+		}
 
 		VkFramebufferCreateInfo ciFramebuffer = {};
 		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		ciFramebuffer.renderPass = mRenderPass;
-		ciFramebuffer.attachmentCount = 1;
-		ciFramebuffer.pAttachments = attachments;
+		ciFramebuffer.attachmentCount = attachments.size();
+		ciFramebuffer.pAttachments = attachments.data();
 		ciFramebuffer.width = mSwapchainExtent.width;
 		ciFramebuffer.height = mSwapchainExtent.height;
 		ciFramebuffer.layers = 1;
@@ -602,51 +761,138 @@ void Renderer::CreateFramebuffers()
 	}
 }
 
+void Renderer::CreateDepthImage()
+{
+	Texture::CreateImage(mSwapchainExtent.width,
+		mSwapchainExtent.height,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		mDepthImage,
+		mDepthImageMemory);
+
+	mDepthImageView = Texture::CreateImageView(mDepthImage,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_IMAGE_ASPECT_DEPTH_BIT);
+
+	Texture::TransitionImageLayout(mDepthImage,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+	vkDeviceWaitIdle(mDevice);
+}
+
 void Renderer::CreateGBuffer()
 {
-	
-
-
 	CreateGBufferImages();
-	CreateGBufferFramebuffers();
 }
 
 void Renderer::CreateGBufferImages()
 {
 	mGBufferImages.resize(GB_COUNT);
 	mGBufferImageMemory.resize(GB_COUNT);
-	mGBufferImageView.resize(GB_COUNT);
+	mGBufferImageViews.resize(GB_COUNT);
+	mGBufferFormats.resize(GB_COUNT);
 
-	for (uint32_t i = 0; i < GB_COUNT; ++i)
+	CreateGBufferAttachment(GB_POSITION, VK_FORMAT_R16G16B16A16_SFLOAT);
+	CreateGBufferAttachment(GB_NORMAL, VK_FORMAT_R16G16B16A16_SFLOAT);
+	CreateGBufferAttachment(GB_COLOR, VK_FORMAT_R8G8B8A8_UNORM);
+}
+
+void Renderer::CreateGBufferSampler()
+{
+	// Create sampler to sample from the color attachments
+	VkSamplerCreateInfo ciSampler = {};
+	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	ciSampler.magFilter = VK_FILTER_NEAREST;
+	ciSampler.minFilter = VK_FILTER_NEAREST;
+	ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	ciSampler.addressModeV = ciSampler.addressModeU;
+	ciSampler.addressModeW = ciSampler.addressModeU;
+	ciSampler.mipLodBias = 0.0f;
+	ciSampler.maxAnisotropy = 1.0f;
+	ciSampler.minLod = 0.0f;
+	ciSampler.maxLod = 1.0f;
+	ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+
+	if (vkCreateSampler(mDevice, &ciSampler, nullptr, &mGBufferSampler) != VK_SUCCESS)
 	{
-		Texture::CreateImage(mSwapchainExtent.width,
-			mSwapchainExtent.height,
-			i == GB_DEPTH ? VK_FORMAT_D24_UNORM_S8_UINT : VK_FORMAT_R8G8B8A8_UNORM,
-			VK_IMAGE_TILING_OPTIMAL,
-			i == GB_DEPTH ? VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT : VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-			mGBufferImages[i],
-			mGBufferImageMemory[i]);
-
-		mGBufferImageView[i] = Texture::CreateImageView(mGBufferImages[i],
-			i == GB_DEPTH ? VK_FORMAT_D24_UNORM_S8_UINT : VK_FORMAT_R8G8B8A8_UNORM,
-			i == GB_DEPTH ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT);
-
-		Texture::TransitionImageLayout(mGBufferImages[i],
-			i == GB_DEPTH ? VK_FORMAT_D24_UNORM_S8_UINT : VK_FORMAT_R8G8B8A8_UNORM,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			i == GB_DEPTH ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
-
+		throw exception("Failed to create GBuffer sampler");
 	}
 }
 
-void Renderer::CreateGBufferFramebuffers()
+void Renderer::CreateDeferredDescriptorSet()
 {
+	VkDescriptorSetLayout layouts[] = { mDeferredPipeline.GetDescriptorSetLayout() };
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = mDescriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = layouts;
+
+	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mDeferredDescriptorSet) != VK_SUCCESS)
+	{
+		throw exception("Failed to create descriptor set");
+	}
+
+	VkDescriptorImageInfo imageInfo[GB_COUNT] = {};
+	VkWriteDescriptorSet descriptorWrite[GB_COUNT] = {};
+
 	for (uint32_t i = 0; i < GB_COUNT; ++i)
 	{
-		
+		imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo[i].imageView = mGBufferImageViews[i];
+		imageInfo[i].sampler = mGBufferSampler;
+
+		descriptorWrite[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite[i].dstSet = mDeferredDescriptorSet;
+		descriptorWrite[i].dstBinding = i;
+		descriptorWrite[i].dstArrayElement = 0;
+		descriptorWrite[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite[i].descriptorCount = 1;
+		descriptorWrite[i].pImageInfo = &imageInfo[i];
 	}
+
+	vkUpdateDescriptorSets(mDevice, 3, descriptorWrite, 0, nullptr);
+}
+
+void Renderer::CreateGBufferAttachment(GBufferIndex index, VkFormat format)
+{
+	VkImage& image = mGBufferImages[index];
+	VkDeviceMemory& imageMemory = mGBufferImageMemory[index];
+	VkImageView& imageView = mGBufferImageViews[index];
+
+	// Save the format in case it is needed later.
+	mGBufferFormats[index] = format;
+
+	VkImageUsageFlags usage;
+	VkImageAspectFlags aspect;
+	VkImageLayout layout;
+
+	usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+	layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	Texture::CreateImage(mSwapchainExtent.width,
+		mSwapchainExtent.height,
+		format,
+		VK_IMAGE_TILING_OPTIMAL,
+		usage,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		image,
+		imageMemory);
+
+	imageView = Texture::CreateImageView(image,
+		format,
+		aspect);
+
+	Texture::TransitionImageLayout(image,
+		format,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		layout);
 }
 
 void Renderer::CreateCommandPool()
@@ -714,19 +960,34 @@ void Renderer::CreateCommandBuffers()
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = mSwapchainExtent;
 
-		VkClearValue clearColor = { 0.2f, 0.2f, 0.2f, 1.0f };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		VkClearValue clearValues[2] = {};
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+		renderPassInfo.clearValueCount = 2;
+		renderPassInfo.pClearValues = clearValues;
 
 		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		
-		mGeometryPipeline.BindPipeline(mCommandBuffers[i]);
 
+		// ******************
+		//  Early Depth Pass
+		// ******************
+		mEarlyDepthPipeline.BindPipeline(mCommandBuffers[i]);
 		mScene->RenderGeometry(mCommandBuffers[i]);
+		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
 
-		// Render Lights
+		// ******************
+		//  Geometry Pass
+		// ******************
+		mGeometryPipeline.BindPipeline(mCommandBuffers[i]);
+		mScene->RenderGeometry(mCommandBuffers[i]);
+		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
 
-		// Render Deferred
+		// ******************
+		//  Deferred Pass
+		// ******************
+		mDeferredPipeline.BindPipeline(mCommandBuffers[i]);
+		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mDeferredPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
+		vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
 
 		vkCmdEndRenderPass(mCommandBuffers[i]);
 
@@ -1144,7 +1405,8 @@ VkRenderPass Renderer::GetRenderPass()
 
 void Renderer::CreatePipelines()
 {
+	mEarlyDepthPipeline.Create();
 	mGeometryPipeline.Create();
 	//mLightPipeline.Create();
-	//mDeferredPipeline.Create();
+	mDeferredPipeline.Create();
 }

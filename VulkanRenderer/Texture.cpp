@@ -226,7 +226,7 @@ void Texture::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayou
 	}
 	else
 	{
-			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	}
 
 	if (oldLayout == VK_IMAGE_LAYOUT_PREINITIALIZED && 

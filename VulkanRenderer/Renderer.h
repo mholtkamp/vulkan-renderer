@@ -13,6 +13,7 @@
 #include "Scene.h"
 
 #include "Pipeline.h"
+#include "EarlyDepthPipeline.h"
 #include "GeometryPipeline.h"
 #include "LightPipeline.h"
 #include "DeferredPipeline.h"
@@ -115,7 +116,11 @@ private:
 
 	void CreateGBufferImages();
 
-	void CreateGBufferFramebuffers();
+	void CreateGBufferAttachment(GBufferIndex index, VkFormat format);
+
+	void CreateGBufferSampler();
+
+	void CreateDeferredDescriptorSet();
 
 	void CreateRenderPass();
 
@@ -130,6 +135,8 @@ private:
 	void CreateSemaphores();
 
 	void CreateDescriptorPool();
+
+	void CreateDepthImage();
 
 	void DestroySwapchain();
 
@@ -171,6 +178,7 @@ private:
 	VkRenderPass mRenderPass;
 	VkCommandPool mCommandPool;
 
+	// Swapchain images
 	VkSwapchainKHR mSwapchain;
 	std::vector<VkImage> mSwapchainImages;
 	std::vector<VkImageView> mSwapchainImageViews;
@@ -180,18 +188,28 @@ private:
 	std::vector<VkFramebuffer> mSwapchainFramebuffers;
 	std::vector<VkCommandBuffer> mCommandBuffers;
 
+	// Depth image
+	VkImage mDepthImage;
+	VkDeviceMemory mDepthImageMemory;
+	VkImageView mDepthImageView;
+
+	// GBuffer images
 	std::vector<VkImage> mGBufferImages;
 	std::vector<VkDeviceMemory> mGBufferImageMemory;
-	std::vector<VkImageView> mGBufferImageView;
-	std::vector<VkFramebuffer> mGBuffers;
-
+	std::vector<VkImageView> mGBufferImageViews;
+	std::vector<VkFormat> mGBufferFormats;
+	VkFramebuffer mGBuffer;
+	VkSampler mGBufferSampler;
 
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;
 
+	EarlyDepthPipeline mEarlyDepthPipeline;
 	GeometryPipeline mGeometryPipeline;
 	LightPipeline mLightPipeline;
 	DeferredPipeline mDeferredPipeline;
+
+	VkDescriptorSet mDeferredDescriptorSet;
 
 	Scene* mScene;
 

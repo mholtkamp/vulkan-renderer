@@ -101,7 +101,7 @@ void Mesh::CreateVertexBuffer(aiVector3D* positions,
 	Vertex* vertices = static_cast<Vertex*>(malloc(sizeof(Vertex) * mNumVertices));
 
 	// Create an interleaved VBO
-	for (int i = 0; i < mNumVertices; ++i)
+	for (uint32_t i = 0; i < mNumVertices; ++i)
 	{
 		vertices[i].mPosition = glm::vec3(positions[i].x,
 										  positions[i].y,
@@ -141,7 +141,7 @@ void Mesh::CreateIndexBuffer(aiFace* faces)
 {
 	uint32_t* indices = static_cast<uint32_t*>(malloc(mNumFaces * 3 * sizeof(uint32_t)));
 
-	for (int i = 0; i < mNumFaces; ++i)
+	for (uint32_t i = 0; i < mNumFaces; ++i)
 	{
 		// Enforce triangulated faces
 		assert(faces[i].mNumIndices == 3);

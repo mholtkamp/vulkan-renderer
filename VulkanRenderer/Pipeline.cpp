@@ -9,16 +9,21 @@ Pipeline::Pipeline() :
 	mPipeline(VK_NULL_HANDLE),
 	mPipelineLayout(VK_NULL_HANDLE),
 	mDescriptorSetLayout(VK_NULL_HANDLE),
-	mVertexShaderPath("Shaders/bin/shader.vert"),
-	mFragmentShaderPath("Shaders/bin/shader.frag"),
+	mSubpass(0),
+	mVertexShaderPath("Shaders/bin/geometryShader.vert"),
+	mFragmentShaderPath("Shaders/bin/geometryShader.frag"),
+	mRasterizerDiscard(VK_FALSE),
 	mPrimitiveTopology(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST),
 	mPolygonMode(VK_POLYGON_MODE_FILL),
 	mLineWidth(1.0f),
 	mCullMode(VK_CULL_MODE_BACK_BIT),
 	mFrontFace(VK_FRONT_FACE_COUNTER_CLOCKWISE),
+	mDepthTestEnabled(VK_TRUE),
+	mDepthWriteEnabled(VK_TRUE),
+	mDepthCompareOp(VK_COMPARE_OP_LESS),
 	mBlendEnabled(VK_FALSE)
 {
-
+	AddBlendAttachmentState();
 }
 
 Pipeline::~Pipeline()
@@ -49,19 +54,24 @@ void Pipeline::Create()
 	CreateDescriptorSetLayout();
 
 	vector<char> vertShaderCode = ReadFile(mVertexShaderPath);
-	vector<char> fragShaderCode = ReadFile(mFragmentShaderPath);
 
 	VkShaderModule vertShaderModule;
-	VkShaderModule fragShaderModule;
 
 	vertShaderModule = CreateShaderModule(vertShaderCode);
-	fragShaderModule = CreateShaderModule(fragShaderCode);
 
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo = {};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
 	vertShaderStageInfo.module = vertShaderModule;
 	vertShaderStageInfo.pName = "main";
+
+	VkShaderModule fragShaderModule = VK_NULL_HANDLE;
+
+	if (mFragmentShaderPath != "")
+	{
+		vector<char> fragShaderCode = ReadFile(mFragmentShaderPath);
+		fragShaderModule = CreateShaderModule(fragShaderCode);
+	}
 
 	VkPipelineShaderStageCreateInfo fragShaderStageInfo = {};
 	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -109,7 +119,7 @@ void Pipeline::Create()
 	VkPipelineRasterizationStateCreateInfo rasterizer = {};
 	rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
-	rasterizer.rasterizerDiscardEnable = VK_FALSE;
+	rasterizer.rasterizerDiscardEnable = mRasterizerDiscard;
 	rasterizer.polygonMode = mPolygonMode;
 	rasterizer.lineWidth = mLineWidth;
 	rasterizer.cullMode = mCullMode;
@@ -128,22 +138,24 @@ void Pipeline::Create()
 	multisampling.alphaToCoverageEnable = VK_FALSE;
 	multisampling.alphaToOneEnable = VK_FALSE;
 
-	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
-	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = mBlendEnabled;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = mDepthTestEnabled;
+	depthStencil.depthWriteEnable = mDepthWriteEnabled;
+	depthStencil.depthCompareOp = mDepthCompareOp;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f;
+	depthStencil.maxDepthBounds = 1.0f;
+	depthStencil.stencilTestEnable = VK_FALSE;
+	depthStencil.front = {};
+	depthStencil.back = {};
 
 	VkPipelineColorBlendStateCreateInfo colorBlending = {};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = 1;
-	colorBlending.pAttachments = &colorBlendAttachment;
+	colorBlending.attachmentCount = mBlendAttachments.size();
+	colorBlending.pAttachments = mBlendAttachments.data();
 	colorBlending.blendConstants[0] = 0.0f;
 	colorBlending.blendConstants[1] = 0.0f;
 	colorBlending.blendConstants[2] = 0.0f;
@@ -153,19 +165,19 @@ void Pipeline::Create()
 
 	VkGraphicsPipelineCreateInfo ciPipeline = {};
 	ciPipeline.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	ciPipeline.stageCount = 2;
+	ciPipeline.stageCount = (mFragmentShaderPath == "") ? 1 : 2;
 	ciPipeline.pStages = shaderStages;
 	ciPipeline.pVertexInputState = &vertexInputInfo;
 	ciPipeline.pInputAssemblyState = &inputAssembly;
 	ciPipeline.pViewportState = &viewportState;
 	ciPipeline.pRasterizationState = &rasterizer;
 	ciPipeline.pMultisampleState = &multisampling;
-	ciPipeline.pDepthStencilState = nullptr;
+	ciPipeline.pDepthStencilState = &depthStencil;
 	ciPipeline.pColorBlendState = &colorBlending;
 	ciPipeline.pDynamicState = nullptr;
 	ciPipeline.layout = mPipelineLayout;
 	ciPipeline.renderPass = renderer->GetRenderPass();
-	ciPipeline.subpass = 0;
+	ciPipeline.subpass = mSubpass;
 	ciPipeline.basePipelineHandle = VK_NULL_HANDLE;
 	ciPipeline.basePipelineIndex = -1;
 
@@ -179,7 +191,11 @@ void Pipeline::Create()
 		throw exception("Failed to create graphics pipeline");
 	}
 
-	vkDestroyShaderModule(device, fragShaderModule, nullptr);
+	if (mFragmentShaderPath != "")
+	{
+		vkDestroyShaderModule(device, fragShaderModule, nullptr);
+	}
+
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
@@ -222,4 +238,19 @@ VkShaderModule Pipeline::CreateShaderModule(const std::vector<char>& code)
 	}
 
 	return module;
+}
+
+void Pipeline::AddBlendAttachmentState()
+{
+	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
+	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	colorBlendAttachment.blendEnable = mBlendEnabled;
+	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+
+	mBlendAttachments.push_back(colorBlendAttachment);
 }

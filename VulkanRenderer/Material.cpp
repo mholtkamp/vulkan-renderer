@@ -99,9 +99,9 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 		descriptorWrite[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorWrite[i].descriptorCount = 1;
 		descriptorWrite[i].pImageInfo = &imageInfo[i];
-	}
 
-	vkUpdateDescriptorSets(device, SLOT_COUNT, descriptorWrite, 0, nullptr);
+		vkUpdateDescriptorSets(device, SLOT_COUNT, descriptorWrite, 0, nullptr);
+	}
 }
 
 void Material::SetTexture(const Scene& scene,

@@ -10,8 +10,9 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexcoord;
 layout(location = 2) in vec3 inNormal;
 
-layout(location = 0) out vec2 outTexcoord;
-layout(location = 1) out vec3 outNormal;
+layout(location = 0) out vec3 outPosition;
+layout(location = 1) out vec2 outTexcoord;
+layout(location = 2) out vec3 outNormal;
 
 out gl_PerVertex 
 {
@@ -21,8 +22,9 @@ out gl_PerVertex
 void main()
 {
     gl_Position = uboGeometry.WVP * vec4(inPosition, 1.0);
-    outTexcoord = inTexcoord;
     
+    outPosition = inPosition;    
+    outTexcoord = inTexcoord;    
     // TODO: Multiply with inverse transpose of World matrix
     outNormal = inNormal;
 }

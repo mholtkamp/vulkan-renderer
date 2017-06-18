@@ -39,20 +39,26 @@ protected:
 	VkPipeline mPipeline;
 	VkPipelineLayout mPipelineLayout;
 	VkDescriptorSetLayout mDescriptorSetLayout;
+	uint32_t mSubpass;
 
 	// Shader stages
 	std::string mVertexShaderPath;
 	std::string mFragmentShaderPath;
 
 	// Rasterizer stage
+	VkBool32 mRasterizerDiscard;
 	VkPrimitiveTopology mPrimitiveTopology;
 	VkPolygonMode mPolygonMode;
 	float mLineWidth;
 	VkCullModeFlags mCullMode;
 	VkFrontFace mFrontFace;
 
+	// Depth Stencil state
+	VkBool32 mDepthTestEnabled;
+	VkBool32 mDepthWriteEnabled;
+	VkCompareOp mDepthCompareOp;
+
 	// Color Blend State
 	VkBool32 mBlendEnabled;
-
-	
+	std::vector<VkPipelineColorBlendAttachmentState> mBlendAttachments;
 };

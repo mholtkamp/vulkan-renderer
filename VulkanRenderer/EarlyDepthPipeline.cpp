@@ -1,22 +1,17 @@
-#include "GeometryPipeline.h"
+#include "EarlyDepthPipeline.h"
 #include "Renderer.h"
-
 #include <exception>
 
 using namespace std;
 
-GeometryPipeline::GeometryPipeline()
+EarlyDepthPipeline::EarlyDepthPipeline()
 {
-	mSubpass = PASS_GEOMETRY;
-	//mDepthCompareOp = VK_COMPARE_OP_EQUAL;
-	mDepthCompareOp = VK_COMPARE_OP_ALWAYS;
-
-	// Add blend states for each attachment (1 already created).
-	AddBlendAttachmentState();
-	AddBlendAttachmentState();
+	mRasterizerDiscard = VK_TRUE;
+	mFragmentShaderPath = "";
+	mSubpass = PASS_DEPTH;
 }
 
-void GeometryPipeline::CreatePipelineLayout()
+void EarlyDepthPipeline::CreatePipelineLayout()
 {
 	Renderer* renderer = Renderer::Get();
 
@@ -33,7 +28,7 @@ void GeometryPipeline::CreatePipelineLayout()
 	}
 }
 
-void GeometryPipeline::CreateDescriptorSetLayout()
+void EarlyDepthPipeline::CreateDescriptorSetLayout()
 {
 	Renderer* renderer = Renderer::Get();
 
