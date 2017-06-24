@@ -17,6 +17,7 @@
 #include "GeometryPipeline.h"
 #include "LightPipeline.h"
 #include "DeferredPipeline.h"
+#include "GBuffer.h"
 
 struct DeferredUniformBuffer
 {
@@ -127,12 +128,6 @@ private:
 
 	void CreateGBuffer();
 
-	void CreateGBufferImages();
-
-	void CreateGBufferAttachment(GBufferIndex index, VkFormat format);
-
-	void CreateGBufferSampler();
-
 	void CreateDeferredUniformBuffer();
 
 	void UpdateDeferredUniformBuffer();
@@ -211,13 +206,6 @@ private:
 	VkImageView mDepthImageView;
 
 	// GBuffer images
-	std::vector<VkImage> mGBufferImages;
-	std::vector<VkDeviceMemory> mGBufferImageMemory;
-	std::vector<VkImageView> mGBufferImageViews;
-	std::vector<VkFormat> mGBufferFormats;
-	VkFramebuffer mGBuffer;
-	VkSampler mGBufferSampler;
-
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;
 
@@ -231,6 +219,8 @@ private:
 	VkDeviceMemory mDeferredUniformBufferMemory;
 
 	DeferredUniformBuffer mDeferredUniformData;
+
+	GBuffer mGBuffer;
 
 	Scene* mScene;
 

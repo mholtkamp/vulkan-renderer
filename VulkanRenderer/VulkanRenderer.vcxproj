@@ -80,7 +80,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>vulkan-1.lib;assimpd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(VULKAN_SDK)/Bin32;$(SolutionDir)External/lib/x86/;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(VULKAN_SDK)/Bin32;$(SolutionDir)External/lib/x86/;$(VULKAN_SDK)/Lib32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
     </Link>
   </ItemDefinitionGroup>
@@ -135,6 +135,7 @@
     <ClCompile Include="DebugActionHandler.cpp" />
     <ClCompile Include="DeferredPipeline.cpp" />
     <ClCompile Include="EarlyDepthPipeline.cpp" />
+    <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="GeometryPipeline.cpp" />
     <ClCompile Include="LightPipeline.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="DeferredPipeline.h" />
     <ClInclude Include="EarlyDepthPipeline.h" />
     <ClInclude Include="Enums.h" />
+    <ClInclude Include="GBuffer.h" />
     <ClInclude Include="GeometryPipeline.h" />
     <ClInclude Include="LightPipeline.h" />
     <ClInclude Include="Material.h" />

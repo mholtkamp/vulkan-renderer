@@ -98,22 +98,17 @@ void Renderer::DestroySwapchain()
 	//mLightPipeline.Destroy();
 	mDeferredPipeline.Destroy();
 
-	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
+	mGBuffer.Destroy();
 
-	vkDestroyBuffer(mDevice, mDeferredUniformBuffer, nullptr);
-	vkFreeMemory(mDevice, mDeferredUniformBufferMemory, nullptr);
-	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mDeferredDescriptorSet);
+	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
 
 	vkDestroyImage(mDevice, mDepthImage, nullptr);
 	vkDestroyImageView(mDevice, mDepthImageView, nullptr);
 	vkFreeMemory(mDevice, mDepthImageMemory, nullptr);
 
-	for (size_t i = 0; i < mGBufferImages.size(); ++i)
-	{
-		vkDestroyImage(mDevice, mGBufferImages[i], nullptr);
-		vkDestroyImageView(mDevice, mGBufferImageViews[i], nullptr);
-		vkFreeMemory(mDevice, mGBufferImageMemory[i], nullptr);
-	}
+	vkDestroyBuffer(mDevice, mDeferredUniformBuffer, nullptr);
+	vkFreeMemory(mDevice, mDeferredUniformBufferMemory, nullptr);
+	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mDeferredDescriptorSet);
 
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
 	{
@@ -156,7 +151,7 @@ void Renderer::Initialize()
 	CreateGBuffer();
 	CreateRenderPass();
 	CreatePipelines();
-	CreateGBufferSampler();
+	mGBuffer.CreateSampler();
 	CreateDeferredDescriptorSet();
 	CreateFramebuffers();
 	
@@ -594,7 +589,7 @@ void Renderer::CreateRenderPass()
 			// GBuffer[0] - Position
 			{
 				0,
-				mGBufferFormats[i],
+				mGBuffer.GetFormats()[i],
 				VK_SAMPLE_COUNT_1_BIT,
 				VK_ATTACHMENT_LOAD_OP_CLEAR,
 				VK_ATTACHMENT_STORE_OP_DONT_CARE,
@@ -756,9 +751,9 @@ void Renderer::CreateFramebuffers()
 		attachments.push_back(mSwapchainImageViews[i]);
 		attachments.push_back(mDepthImageView);
 
-		for (uint32_t j = 0; j < mGBufferImageViews.size(); ++j)
+		for (uint32_t j = 0; j < mGBuffer.GetImageViews().size(); ++j)
 		{
-			attachments.push_back(mGBufferImageViews[j]);
+			attachments.push_back(mGBuffer.GetImageViews()[j]);
 		}
 
 		VkFramebufferCreateInfo ciFramebuffer = {};
@@ -802,47 +797,7 @@ void Renderer::CreateDepthImage()
 
 void Renderer::CreateGBuffer()
 {
-	CreateGBufferImages();
-}
-
-void Renderer::CreateGBufferImages()
-{
-	if (mGBufferImages.size() != 0)
-	{
-		
-	}
-
-	mGBufferImages.resize(GB_COUNT);
-	mGBufferImageMemory.resize(GB_COUNT);
-	mGBufferImageViews.resize(GB_COUNT);
-	mGBufferFormats.resize(GB_COUNT);
-
-	CreateGBufferAttachment(GB_POSITION, VK_FORMAT_R16G16B16A16_SFLOAT);
-	CreateGBufferAttachment(GB_NORMAL, VK_FORMAT_R16G16B16A16_SFLOAT);
-	CreateGBufferAttachment(GB_COLOR, VK_FORMAT_R8G8B8A8_UNORM);
-}
-
-void Renderer::CreateGBufferSampler()
-{
-	// Create sampler to sample from the color attachments
-	VkSamplerCreateInfo ciSampler = {};
-	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	ciSampler.magFilter = VK_FILTER_NEAREST;
-	ciSampler.minFilter = VK_FILTER_NEAREST;
-	ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	ciSampler.addressModeV = ciSampler.addressModeU;
-	ciSampler.addressModeW = ciSampler.addressModeU;
-	ciSampler.mipLodBias = 0.0f;
-	ciSampler.maxAnisotropy = 1.0f;
-	ciSampler.minLod = 0.0f;
-	ciSampler.maxLod = 1.0f;
-	ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-
-	if (vkCreateSampler(mDevice, &ciSampler, nullptr, &mGBufferSampler) != VK_SUCCESS)
-	{
-		throw exception("Failed to create GBuffer sampler");
-	}
+	mGBuffer.Create();
 }
 
 void Renderer::CreateDeferredUniformBuffer()
@@ -883,8 +838,8 @@ void Renderer::CreateDeferredDescriptorSet()
 	for (uint32_t i = 0; i < GB_COUNT; ++i)
 	{
 		imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[i].imageView = mGBufferImageViews[i];
-		imageInfo[i].sampler = mGBufferSampler;
+		imageInfo[i].imageView = mGBuffer.GetImageViews()[i];
+		imageInfo[i].sampler = mGBuffer.GetSampler();
 
 		descriptorWrite[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite[i].dstSet = mDeferredDescriptorSet;
@@ -915,42 +870,6 @@ void Renderer::CreateDeferredDescriptorSet()
 	bufferWrite.pTexelBufferView = nullptr;
 
 	vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
-}
-
-void Renderer::CreateGBufferAttachment(GBufferIndex index, VkFormat format)
-{
-	VkImage& image = mGBufferImages[index];
-	VkDeviceMemory& imageMemory = mGBufferImageMemory[index];
-	VkImageView& imageView = mGBufferImageViews[index];
-
-	// Save the format in case it is needed later.
-	mGBufferFormats[index] = format;
-
-	VkImageUsageFlags usage;
-	VkImageAspectFlags aspect;
-	VkImageLayout layout;
-
-	usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	aspect = VK_IMAGE_ASPECT_COLOR_BIT;
-	layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-	Texture::CreateImage(mSwapchainExtent.width,
-		mSwapchainExtent.height,
-		format,
-		VK_IMAGE_TILING_OPTIMAL,
-		usage,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		image,
-		imageMemory);
-
-	imageView = Texture::CreateImageView(image,
-		format,
-		aspect);
-
-	Texture::TransitionImageLayout(image,
-		format,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		layout);
 }
 
 void Renderer::CreateCommandPool()
@@ -1183,7 +1102,7 @@ void Renderer::RecreateSwapchain()
 	CreateSwapchain();
 	CreateImageViews();
 	CreateDepthImage();
-	CreateGBufferImages();
+	mGBuffer.CreateImages();
 	CreateRenderPass();
 	CreatePipelines();
 	CreateFramebuffers();
