@@ -95,8 +95,8 @@ void Renderer::DestroySwapchain()
 
 	mEarlyDepthPipeline.Destroy();
 	mGeometryPipeline.Destroy();
-	//mLightPipeline.Destroy();
-	mDeferredPipeline.Destroy();
+	mLightPipeline.Destroy();
+	//mDeferredPipeline.Destroy();
 
 	mGBuffer.Destroy();
 
@@ -120,6 +120,8 @@ void Renderer::DestroySwapchain()
 
 Renderer::~Renderer()
 {
+	PointLight::DestroySphereMesh();
+
 	DestroySwapchain();
 
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
@@ -157,6 +159,8 @@ void Renderer::Initialize()
 	
 	CreateCommandBuffers();
 	CreateSemaphores();
+
+	PointLight::LoadSphereMesh();
 
 	mInitialized = true;
 }
@@ -819,7 +823,7 @@ void Renderer::CreateDeferredDescriptorSet()
 {
 	CreateDeferredUniformBuffer();
 
-	VkDescriptorSetLayout layouts[] = { mDeferredPipeline.GetDescriptorSetLayout() };
+	VkDescriptorSetLayout layouts[] = { mLightPipeline.GetDescriptorSetLayout() };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = mDescriptorPool;
@@ -853,23 +857,23 @@ void Renderer::CreateDeferredDescriptorSet()
 	vkUpdateDescriptorSets(mDevice, 3, descriptorWrite, 0, nullptr);
 
 	// Update the uniform buffer descriptor
-	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = mDeferredUniformBuffer;
-	bufferInfo.range = sizeof(DeferredUniformBuffer);
-	bufferInfo.offset = 0;
+	//VkDescriptorBufferInfo bufferInfo = {};
+	//bufferInfo.buffer = mDeferredUniformBuffer;
+	//bufferInfo.range = sizeof(DeferredUniformBuffer);
+	//bufferInfo.offset = 0;
 
-	VkWriteDescriptorSet bufferWrite = {};
-	bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	bufferWrite.dstSet = mDeferredDescriptorSet;
-	bufferWrite.dstBinding = DD_UNIFORM_BUFFER;
-	bufferWrite.dstArrayElement = 0;
-	bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	bufferWrite.descriptorCount = 1;
-	bufferWrite.pBufferInfo = &bufferInfo;
-	bufferWrite.pImageInfo = nullptr;
-	bufferWrite.pTexelBufferView = nullptr;
+	//VkWriteDescriptorSet bufferWrite = {};
+	//bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	//bufferWrite.dstSet = mDeferredDescriptorSet;
+	//bufferWrite.dstBinding = DD_UNIFORM_BUFFER;
+	//bufferWrite.dstArrayElement = 0;
+	//bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	//bufferWrite.descriptorCount = 1;
+	//bufferWrite.pBufferInfo = &bufferInfo;
+	//bufferWrite.pImageInfo = nullptr;
+	//bufferWrite.pTexelBufferView = nullptr;
 
-	vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
+	//vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
 }
 
 void Renderer::CreateCommandPool()
@@ -962,10 +966,12 @@ void Renderer::CreateCommandBuffers()
 		// ******************
 		//  Deferred Pass
 		// ******************
-		mDeferredPipeline.BindPipeline(mCommandBuffers[i]);
-		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mDeferredPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
-		vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-
+		//mDeferredPipeline.BindPipeline(mCommandBuffers[i]);
+		mLightPipeline.BindPipeline(mCommandBuffers[i]);
+		// Bind the common deferred descriptor set
+		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
+		// Render each light
+		mScene->RenderLightVolumes(mCommandBuffers[i]);
 		vkCmdEndRenderPass(mCommandBuffers[i]);
 
 		if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
@@ -1115,19 +1121,20 @@ VkDescriptorPool Renderer::GetDescriptorPool()
 	return mDescriptorPool;
 }
 
-Pipeline& Renderer::GetGeometryPipeline()
+GeometryPipeline& Renderer::GetGeometryPipeline()
 {
 	return mGeometryPipeline;
 }
 
-Pipeline& Renderer::GetLightPipeline()
+LightPipeline& Renderer::GetLightPipeline()
 {
 	return mLightPipeline;
 }
 
 Pipeline& Renderer::GetDeferredPipeline()
 {
-	return mDeferredPipeline;
+	return mLightPipeline;
+	//return mDeferredPipeline;
 }
 
 uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -1409,6 +1416,6 @@ void Renderer::CreatePipelines()
 {
 	mEarlyDepthPipeline.Create();
 	mGeometryPipeline.Create();
-	//mLightPipeline.Create();
-	mDeferredPipeline.Create();
+	mLightPipeline.Create();
+	//mDeferredPipeline.Create();
 }

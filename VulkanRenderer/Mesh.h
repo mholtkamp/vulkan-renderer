@@ -15,13 +15,15 @@ public:
 	void Destroy();
 
 	void Create(const aiMesh& meshData,
-		std::vector<Material>& materials);
+		std::vector<Material>* materials = nullptr);
 
 	void BindBuffers(VkCommandBuffer commandBuffer);
 
 	class Material* GetMaterial();
 
 	void UpdateDescriptorSets(VkDescriptorSet descriptorSet);
+
+	void LoadMesh(const std::string& path);
 
 	uint32_t GetNumIndices();
 
@@ -38,6 +40,7 @@ private:
 	void CreateIndexBuffer(aiFace* faces);
 
 	std::string mName;
+	bool mOwnsMaterial;
 	class Material* mMaterial;
 
 	uint32_t mNumVertices;

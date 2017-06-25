@@ -3,19 +3,14 @@
 #include "Vertex.h"
 #include <assimp/scene.h>
 
-// Temp mesh data
-//const Vertex sVertices[] = { {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}, {1.0f, 0.0f}},
-//							 {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-//							 {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-//							 {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}} };
-//
-//const uint32_t sIndices[] = { 0, 1, 2, 2, 3, 0 };
+using namespace std;
 
 Mesh::Mesh() :
 	mName("Mesh"),
 	mMaterial(nullptr),
 	mNumVertices(0),
 	mNumFaces(0),
+	mOwnsMaterial(false),
 	mVertexBuffer(VK_NULL_HANDLE),
 	mVertexBufferMemory(VK_NULL_HANDLE),
 	mIndexBuffer(VK_NULL_HANDLE),
@@ -32,10 +27,21 @@ void Mesh::Destroy()
 	vkFreeMemory(device, mIndexBufferMemory, nullptr);
 	vkDestroyBuffer(device, mVertexBuffer, nullptr);
 	vkFreeMemory(device, mVertexBufferMemory, nullptr);
+
+	mIndexBuffer = VK_NULL_HANDLE;
+	mIndexBufferMemory = VK_NULL_HANDLE;
+	mVertexBuffer = VK_NULL_HANDLE;
+	mVertexBufferMemory = VK_NULL_HANDLE;
+
+	if (mOwnsMaterial)
+	{
+		mMaterial->Destroy();
+		mMaterial = nullptr;
+	}
 }
 
 void Mesh::Create(const aiMesh& meshData,
-	std::vector<Material>& materials)
+	std::vector<Material>* materials)
 {
 	mNumVertices = meshData.mNumVertices;
 	mNumFaces = meshData.mNumFaces;
@@ -57,7 +63,10 @@ void Mesh::Create(const aiMesh& meshData,
 	CreateIndexBuffer(faces);
 
 	// Assign associated material
-	mMaterial = &materials[meshData.mMaterialIndex];
+	if (materials != nullptr)
+	{
+		mMaterial = &(*materials)[meshData.mMaterialIndex];
+	}
 }
 
 void Mesh::BindBuffers(VkCommandBuffer commandBuffer)
@@ -77,6 +86,33 @@ Material* Mesh::GetMaterial()
 void Mesh::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 {
 	mMaterial->UpdateDescriptorSets(descriptorSet);
+}
+
+void Mesh::LoadMesh(const std::string& path)
+{
+	// Loads a .DAE file and loads the first mesh in the mesh library.
+	if (mVertexBuffer == VK_NULL_HANDLE)
+	{
+		Assimp::Importer importer;
+
+		const aiScene* scene = importer.ReadFile(path.c_str(),
+			aiProcess_CalcTangentSpace |
+			aiProcess_Triangulate |
+			aiProcess_JoinIdenticalVertices |
+			aiProcess_SortByPType);
+
+		if (scene == nullptr)
+		{
+			throw exception("Failed to load dae file");
+		}
+
+		if (scene->mNumMeshes < 1)
+		{
+			throw exception("Failed to find any meshes in dae file");
+		}
+
+		Create(*scene->mMeshes[0]);
+	}
 }
 
 uint32_t Mesh::GetNumIndices()

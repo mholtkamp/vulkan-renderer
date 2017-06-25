@@ -29,6 +29,8 @@ public:
 
 	void RenderGeometry(VkCommandBuffer commandBuffer);
 
+	void RenderLightVolumes(VkCommandBuffer commandBuffer);
+
 	void Update(float deltaTime);
 
 	Camera* GetActiveCamera();
@@ -43,7 +45,8 @@ private:
 
 	void LoadActors(const aiScene& scene);
 
-	void LoadPointLights(const aiScene& scene);
+	void PopulateLightLookupMap(const aiScene& scene, 
+		std::map<std::string, aiLight>& lightMap);
 
 private:
 

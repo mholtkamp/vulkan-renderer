@@ -1,5 +1,8 @@
 #include "Scene.h"
 #include "Camera.h"
+#include <map>
+
+using namespace std;
 
 Scene::Scene() : 
 	mLoaded(false)
@@ -40,7 +43,6 @@ void Scene::Load(const std::string& directory,
 		LoadMaterials(*scene);
 		LoadMeshes(*scene);
 		LoadActors(*scene);
-		//LoadLights(*scene);
 		//LoadCameras(*scene);
 
 		mLoaded = true;
@@ -67,7 +69,7 @@ void Scene::LoadMeshes(const aiScene& scene)
 
 	for (int i = 0; i < numMeshes; ++i)
 	{
-		mMeshes[i].Create(*scene.mMeshes[i], mMaterials);
+		mMeshes[i].Create(*scene.mMeshes[i], &mMaterials);
 	}
 }
 
@@ -78,6 +80,9 @@ void Scene::LoadActors(const aiScene& scene)
 
 	aiNode** nodes = scene.mRootNode->mChildren;
 
+	map<string, aiLight> pointLightDescriptions;
+	PopulateLightLookupMap(scene, pointLightDescriptions);
+
 	for (int i = 0; i < numNodes; ++i)
 	{
 		if (nodes[i]->mNumMeshes > 0)
@@ -86,12 +91,31 @@ void Scene::LoadActors(const aiScene& scene)
 			Actor& actor = mActors.back();
 			actor.Create(*nodes[i], mMeshes);
 		}
+		else if (pointLightDescriptions.find(nodes[i]->mName.C_Str()) != pointLightDescriptions.end())
+		{
+			// A point light description with the same name was found,
+			// So create a point light object that uses the light description for
+			// details like attenuation and color, but uses the node for 
+			// determining its transform.
+			aiLight& lightDesc = pointLightDescriptions.find(nodes[i]->mName.C_Str())->second;
+			aiMatrix4x4 transform = nodes[i]->mTransformation;
+
+			mPointLights.push_back(PointLight());
+			PointLight& pointLight = mPointLights.back();
+			pointLight.Create(lightDesc, 
+				glm::vec3(transform.a4, transform.b4, transform.c4));
+		}
 	}
 }
 
-void Scene::LoadPointLights(const aiScene& scene)
+void Scene::PopulateLightLookupMap(const aiScene& scene,
+	std::map<std::string, aiLight>& lightMap)
 {
-
+	for (unsigned int i = 0; i < scene.mNumLights; ++i)
+	{
+		aiLight& light = *scene.mLights[i];
+		lightMap[light.mName.C_Str()] = light;
+	}
 }
 
 void Scene::RenderGeometry(VkCommandBuffer commandBuffer)
@@ -99,6 +123,16 @@ void Scene::RenderGeometry(VkCommandBuffer commandBuffer)
 	for (Actor& actor : mActors)
 	{
 		actor.Draw(commandBuffer);
+	}
+}
+
+void Scene::RenderLightVolumes(VkCommandBuffer commandBuffer)
+{
+	PointLight::BindSphereMeshBuffers(commandBuffer);
+
+	for (PointLight& pointLight : mPointLights)
+	{
+		pointLight.Draw(commandBuffer);
 	}
 }
 
@@ -113,6 +147,11 @@ void Scene::Update(float deltaTime)
 	for (Actor& actor : mActors)
 	{
 		actor.Update(this,deltaTime);
+	}
+
+	for (PointLight& pointLight : mPointLights)
+	{
+		pointLight.Update(this, deltaTime);
 	}
 }
 

@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#pragma region DeferredPipeline
+
 DeferredPipeline::DeferredPipeline()
 {
 	mVertexShaderPath = "Shaders/bin/deferredShader.vert";
@@ -39,17 +41,17 @@ void DeferredPipeline::CreateDescriptorSetLayout()
 	colorSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	colorSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = {};
-	uniformBufferLayoutBinding.binding = DD_UNIFORM_BUFFER;
-	uniformBufferLayoutBinding.descriptorCount = 1;
-	uniformBufferLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uniformBufferLayoutBinding.pImmutableSamplers = nullptr;
-	uniformBufferLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	//VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = {};
+	//uniformBufferLayoutBinding.binding = DD_UNIFORM_BUFFER;
+	//uniformBufferLayoutBinding.descriptorCount = 1;
+	//uniformBufferLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	//uniformBufferLayoutBinding.pImmutableSamplers = nullptr;
+	//uniformBufferLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 	VkDescriptorSetLayoutBinding bindings[] = { positionSamplerLayoutBinding,
 		normalSamplerLayoutBinding,
 		colorSamplerLayoutBinding,
-		uniformBufferLayoutBinding};
+		/*uniformBufferLayoutBinding*/};
 
 	VkDescriptorSetLayoutCreateInfo ciDescriptorSetLayout = {};
 	ciDescriptorSetLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -81,3 +83,67 @@ void DeferredPipeline::CreatePipelineLayout()
 		throw std::runtime_error("failed to create pipeline layout!");
 	}
 }
+
+#pragma endregion
+
+#pragma region LightPipeline
+
+LightPipeline::LightPipeline()
+{
+	//mPolygonMode = VK_POLYGON_MODE_LINE;
+	mVertexShaderPath = "Shaders/bin/lightShader.vert";
+	mFragmentShaderPath = "Shaders/bin/lightShader.frag";
+}
+
+void LightPipeline::CreateDescriptorSetLayout()
+{
+	DeferredPipeline::CreateDescriptorSetLayout();
+
+	Renderer* renderer = Renderer::Get();
+
+	VkDescriptorSetLayoutBinding lightDataBufferBinding = {};
+	lightDataBufferBinding.binding = LD_UNIFORM_BUFFER;
+	lightDataBufferBinding.descriptorCount = 1;
+	lightDataBufferBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	lightDataBufferBinding.pImmutableSamplers = nullptr;
+	lightDataBufferBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+
+	VkDescriptorSetLayoutCreateInfo ciDescriptorSetLayout = {};
+	ciDescriptorSetLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	ciDescriptorSetLayout.bindingCount = 1;
+	ciDescriptorSetLayout.pBindings = &lightDataBufferBinding;
+
+	if (vkCreateDescriptorSetLayout(renderer->GetDevice(),
+		&ciDescriptorSetLayout,
+		nullptr,
+		&mLightDescriptorSetLayout) != VK_SUCCESS)
+	{
+		throw exception("Failed to create descriptor set layout");
+	}
+}
+
+void LightPipeline::CreatePipelineLayout()
+{
+	Renderer* renderer = Renderer::Get();
+
+	VkDescriptorSetLayout layouts[] = { mDescriptorSetLayout, mLightDescriptorSetLayout };
+
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = LPS_COUNT;
+	pipelineLayoutInfo.pSetLayouts = layouts;
+	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.pPushConstantRanges = 0;
+
+	if (vkCreatePipelineLayout(renderer->GetDevice(), &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create pipeline layout!");
+	}
+}
+
+VkDescriptorSetLayout LightPipeline::GetLightDescriptorSetLayout()
+{
+	return mLightDescriptorSetLayout;
+}
+
+#pragma endregion

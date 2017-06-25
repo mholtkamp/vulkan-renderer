@@ -15,7 +15,6 @@
 #include "Pipeline.h"
 #include "EarlyDepthPipeline.h"
 #include "GeometryPipeline.h"
-#include "LightPipeline.h"
 #include "DeferredPipeline.h"
 #include "GBuffer.h"
 
@@ -75,8 +74,8 @@ public:
 
 	VkDescriptorPool GetDescriptorPool();
 
-	Pipeline& GetGeometryPipeline();
-	Pipeline& GetLightPipeline();
+	GeometryPipeline& GetGeometryPipeline();
+	LightPipeline& GetLightPipeline();
 	Pipeline& GetDeferredPipeline();
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -212,7 +211,7 @@ private:
 	EarlyDepthPipeline mEarlyDepthPipeline;
 	GeometryPipeline mGeometryPipeline;
 	LightPipeline mLightPipeline;
-	DeferredPipeline mDeferredPipeline;
+	//DeferredPipeline mDeferredPipeline;
 
 	VkDescriptorSet mDeferredDescriptorSet;
 	VkBuffer mDeferredUniformBuffer;

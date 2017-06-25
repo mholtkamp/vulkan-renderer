@@ -30,6 +30,19 @@ enum DeferredDescriptor
 	DD_COUNT
 };
 
+enum LightDescriptor
+{
+	LD_UNIFORM_BUFFER,
+	LD_COUNT
+};
+
+enum LightPassSetIndices
+{
+	LPS_GBUFFER_TEXTURES,
+	LPS_LIGHT_DATA,
+	LPS_COUNT
+};
+
 enum GBufferIndex
 {
 	GB_POSITION,
