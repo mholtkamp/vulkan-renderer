@@ -94,6 +94,7 @@ LightPipeline::LightPipeline()
 	mVertexShaderPath = "Shaders/bin/lightShader.vert";
 	mFragmentShaderPath = "Shaders/bin/lightShader.frag";
 	mBlendEnabled = true;
+	mCullMode = VK_CULL_MODE_FRONT_BIT;
 
 	assert(mBlendAttachments.size() > 0);
 

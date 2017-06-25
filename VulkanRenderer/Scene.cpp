@@ -40,6 +40,11 @@ void Scene::Load(const std::string& directory,
 			aiProcess_JoinIdenticalVertices |
 			aiProcess_SortByPType);
 
+		if (scene == nullptr)
+		{
+			throw exception("Failed to open Collada file");
+		}
+
 		LoadMaterials(*scene);
 		LoadMeshes(*scene);
 		LoadActors(*scene);
