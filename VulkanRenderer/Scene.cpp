@@ -104,6 +104,7 @@ void Scene::LoadActors(const aiScene& scene)
 			PointLight& pointLight = mPointLights.back();
 			pointLight.Create(lightDesc, 
 				glm::vec3(transform.a4, transform.b4, transform.c4));
+			pointLight.SetRadius(1.5f);
 		}
 	}
 }

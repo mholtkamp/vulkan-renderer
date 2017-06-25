@@ -25,5 +25,7 @@ out gl_PerVertex
 void main() 
 {
 	gl_Position = light.mWVP * vec4(inPosition, 1.0f);
-    outTexcoord = gl_Position.xy/gl_Position.w;
+    vec2 texcoord = gl_Position.xy/gl_Position.w;
+    texcoord = texcoord/2.0 + 0.5;
+    outTexcoord = texcoord;
 }

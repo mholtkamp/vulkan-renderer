@@ -23,10 +23,10 @@ enum ActorDescriptor
 
 enum DeferredDescriptor
 {
+	DD_UNIFORM_BUFFER,
 	DD_TEXTURE_POSITION,
 	DD_TEXTURE_NORMAL,
 	DD_TEXTURE_COLOR,
-	DD_UNIFORM_BUFFER,
 	DD_COUNT
 };
 

@@ -47,9 +47,10 @@ Renderer::Renderer() :
 	mScene(nullptr),
 	mInitialized(false)
 {
-	mDeferredUniformData.mLightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	mDeferredUniformData.mLightDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
-	mDeferredUniformData.mVisualizationMode = -1;
+	mDeferredUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	mDeferredUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
+	mDeferredUniformData.mScreenDimensions = glm::vec2(800.0f, 600.0f);
+	//mDeferredUniformData.mVisualizationMode = -1;
 }
 
 void Renderer::Create()
@@ -230,6 +231,8 @@ void Renderer::CreateSwapchain()
 
 	mSwapchainImageFormat = surfaceFormat.format;
 	mSwapchainExtent = extent;
+
+	mDeferredUniformData.mScreenDimensions = glm::vec2(extent.width, extent.height);
 }
 
 void Renderer::PreparePresentation()
@@ -847,7 +850,7 @@ void Renderer::CreateDeferredDescriptorSet()
 
 		descriptorWrite[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite[i].dstSet = mDeferredDescriptorSet;
-		descriptorWrite[i].dstBinding = i;
+		descriptorWrite[i].dstBinding = DD_TEXTURE_POSITION + i;
 		descriptorWrite[i].dstArrayElement = 0;
 		descriptorWrite[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		descriptorWrite[i].descriptorCount = 1;
@@ -857,23 +860,23 @@ void Renderer::CreateDeferredDescriptorSet()
 	vkUpdateDescriptorSets(mDevice, 3, descriptorWrite, 0, nullptr);
 
 	// Update the uniform buffer descriptor
-	//VkDescriptorBufferInfo bufferInfo = {};
-	//bufferInfo.buffer = mDeferredUniformBuffer;
-	//bufferInfo.range = sizeof(DeferredUniformBuffer);
-	//bufferInfo.offset = 0;
+	VkDescriptorBufferInfo bufferInfo = {};
+	bufferInfo.buffer = mDeferredUniformBuffer;
+	bufferInfo.range = sizeof(DeferredUniformBuffer);
+	bufferInfo.offset = 0;
 
-	//VkWriteDescriptorSet bufferWrite = {};
-	//bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	//bufferWrite.dstSet = mDeferredDescriptorSet;
-	//bufferWrite.dstBinding = DD_UNIFORM_BUFFER;
-	//bufferWrite.dstArrayElement = 0;
-	//bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//bufferWrite.descriptorCount = 1;
-	//bufferWrite.pBufferInfo = &bufferInfo;
-	//bufferWrite.pImageInfo = nullptr;
-	//bufferWrite.pTexelBufferView = nullptr;
+	VkWriteDescriptorSet bufferWrite = {};
+	bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	bufferWrite.dstSet = mDeferredDescriptorSet;
+	bufferWrite.dstBinding = DD_UNIFORM_BUFFER;
+	bufferWrite.dstArrayElement = 0;
+	bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	bufferWrite.descriptorCount = 1;
+	bufferWrite.pBufferInfo = &bufferInfo;
+	bufferWrite.pImageInfo = nullptr;
+	bufferWrite.pTexelBufferView = nullptr;
 
-	//vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
+	vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
 }
 
 void Renderer::CreateCommandPool()
@@ -1395,20 +1398,20 @@ void Renderer::SetVisualizationMode(int32_t mode)
 {
 	assert(mode >= -1);
 	assert(mode < GB_COUNT);
-	mDeferredUniformData.mVisualizationMode = mode;
+	//mDeferredUniformData.mVisualizationMode = mode;
 	UpdateDeferredUniformBuffer();
 }
 
 void Renderer::SetDirectionalLightColor(glm::vec4 color)
 {
-	mDeferredUniformData.mLightColor = color;
+	mDeferredUniformData.mSunColor = color;
 	UpdateDeferredUniformBuffer();
 }
 
 void Renderer::SetDirectionalLightDirection(glm::vec3 direction)
 {
 	direction = glm::normalize(direction);
-	mDeferredUniformData.mLightDirection = glm::vec4(direction, 0.0);
+	mDeferredUniformData.mSunDirection = glm::vec4(direction, 0.0);
 	UpdateDeferredUniformBuffer();
 }
 

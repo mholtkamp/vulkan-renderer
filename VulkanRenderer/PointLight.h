@@ -40,6 +40,18 @@ public:
 
 	void Draw(VkCommandBuffer commandBuffer);
 
+	void SetRadius(float radius);
+
+	void SetColor(glm::vec3 color);
+
+	void SetPosition(glm::vec3 position);
+
+	float GetRadius();
+
+	glm::vec3 GetColor();
+
+	glm::vec3 GetPosition();
+
 	static void LoadSphereMesh();
 
 	static void DestroySphereMesh();

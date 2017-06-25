@@ -20,9 +20,10 @@
 
 struct DeferredUniformBuffer
 {
-	glm::vec4 mLightDirection;
-	glm::vec4 mLightColor;
-	int32_t mVisualizationMode;
+	glm::vec4 mSunDirection;
+	glm::vec4 mSunColor;
+	glm::vec2 mScreenDimensions;
+	//int32_t mVisualizationMode;
 };
 
 struct QueueFamilyIndices

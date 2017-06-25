@@ -41,17 +41,17 @@ void DeferredPipeline::CreateDescriptorSetLayout()
 	colorSamplerLayoutBinding.pImmutableSamplers = nullptr;
 	colorSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-	//VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = {};
-	//uniformBufferLayoutBinding.binding = DD_UNIFORM_BUFFER;
-	//uniformBufferLayoutBinding.descriptorCount = 1;
-	//uniformBufferLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//uniformBufferLayoutBinding.pImmutableSamplers = nullptr;
-	//uniformBufferLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = {};
+	uniformBufferLayoutBinding.binding = DD_UNIFORM_BUFFER;
+	uniformBufferLayoutBinding.descriptorCount = 1;
+	uniformBufferLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uniformBufferLayoutBinding.pImmutableSamplers = nullptr;
+	uniformBufferLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
 	VkDescriptorSetLayoutBinding bindings[] = { positionSamplerLayoutBinding,
 		normalSamplerLayoutBinding,
 		colorSamplerLayoutBinding,
-		/*uniformBufferLayoutBinding*/};
+		uniformBufferLayoutBinding};
 
 	VkDescriptorSetLayoutCreateInfo ciDescriptorSetLayout = {};
 	ciDescriptorSetLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
