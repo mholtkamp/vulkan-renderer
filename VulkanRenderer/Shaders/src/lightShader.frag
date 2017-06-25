@@ -33,13 +33,14 @@ void main()
     vec3 normal = texture(samplerNormal, texcoord).rgb;
     vec4 color = texture(samplerColor, texcoord);
     
-    //vec3 lightVector = -1.0 * normalize(ubo.mLightDirection.rgb);
     vec3 lightVector = normalize(light.mPosition.xyz - position);
+    float dist = length(light.mPosition.xyz - position);
     float diffuseFactor = clamp(dot(normal, lightVector), 0.0, 1.0);
+    diffuseFactor = diffuseFactor / (light.mConstantAttenuation + light.mLinearAttenuation * dist + light.mQuadraticAttenuation * dist * dist);
     
-    //// Output final, lit image.
-    outFinalColor = diffuseFactor *  color ;
+    // Output final, lit image.
+    outFinalColor = diffuseFactor * color * light.mColor;
     
-    outFinalColor = color;
+    //outFinalColor = color;
     //outFinalColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }

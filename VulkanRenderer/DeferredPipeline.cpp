@@ -93,6 +93,15 @@ LightPipeline::LightPipeline()
 	//mPolygonMode = VK_POLYGON_MODE_LINE;
 	mVertexShaderPath = "Shaders/bin/lightShader.vert";
 	mFragmentShaderPath = "Shaders/bin/lightShader.frag";
+	mBlendEnabled = true;
+
+	assert(mBlendAttachments.size() > 0);
+
+	mBlendAttachments[0].blendEnable = VK_TRUE;
+	mBlendAttachments[0].colorBlendOp = VK_BLEND_OP_ADD;
+	mBlendAttachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	mBlendAttachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	mBlendAttachments[0].alphaBlendOp = VK_BLEND_OP_MAX;
 }
 
 void LightPipeline::CreateDescriptorSetLayout()
