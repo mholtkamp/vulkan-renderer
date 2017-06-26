@@ -9,11 +9,13 @@ struct LightData
 	glm::mat4 mWVP;
 	glm::vec4 mPosition;
 	glm::vec4 mColor;
+	float mRadius;
 	float mConstantAttenuation;
 	float mLinearAttenuation;
 	float mQuadraticAttenuation;
 
 	LightData() :
+		mRadius(1.0f),
 		mConstantAttenuation(0.0f),
 		mLinearAttenuation(0.0f),
 		mQuadraticAttenuation(0.0f)
@@ -69,8 +71,6 @@ private:
 	void UpdateUniformBuffer(class Camera* camera, float deltaTime);
 
 	LightData mLightData;
-
-	float mRadius;
 
 	VkDescriptorSet mDescriptorSet;
 	VkBuffer mUniformBuffer;

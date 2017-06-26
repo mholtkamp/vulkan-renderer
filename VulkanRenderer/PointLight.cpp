@@ -13,7 +13,6 @@ using namespace std;
 Mesh* PointLight::sSphereMesh = nullptr;
 
 PointLight::PointLight() : 
-	mRadius(0.0f),
 	mDescriptorSet(VK_NULL_HANDLE),
 	mUniformBuffer(VK_NULL_HANDLE),
 	mUniformBufferMemory(VK_NULL_HANDLE)
@@ -25,15 +24,13 @@ void PointLight::Create(glm::vec3 position,
 	glm::vec3 color,
 	float radius)
 {
-	CreateDescriptorSet();
-
 	mLightData.mPosition = glm::vec4(position, 1.0f);
 	mLightData.mColor = glm::vec4(color, 1.0f);
-	mRadius = radius;
+	mLightData.mRadius = radius;
 
 	mLightData.mConstantAttenuation = 1.0f;
-	mLightData.mLinearAttenuation = 0.0f;
-	mLightData.mQuadraticAttenuation = (INVERSE_MININUM_INTENSITY - 1.0f) / (radius * radius);
+	mLightData.mLinearAttenuation = 1.0f;
+	mLightData.mQuadraticAttenuation = 0.0f;//(INVERSE_MININUM_INTENSITY - 1.0f) / (radius * radius);
 
 	CreateDescriptorSet();
 }
@@ -53,7 +50,7 @@ void PointLight::Create(const aiLight& light,
 	float q = light.mAttenuationQuadratic;
 	float i = glm::max(glm::max(mLightData.mColor.r, mLightData.mColor.g), mLightData.mColor.b);
 	float inv = INVERSE_MININUM_INTENSITY;
-	mRadius = (-l + sqrt(l * l - 4 * q * (c - (inv) * i))) / (2 * q);
+	mLightData.mRadius = (-l + sqrt(l * l - 4 * q * (c - (inv) * i))) / (2 * q);
 
 	CreateDescriptorSet();
 }
@@ -63,7 +60,7 @@ void PointLight::LoadSphereMesh()
 	DestroySphereMesh();
 
 	sSphereMesh = new Mesh();
-	sSphereMesh->LoadMesh("Meshes/Sphere_48.dae");
+	sSphereMesh->LoadMesh("Meshes/Sphere_112.dae");
 }
 
 void PointLight::DestroySphereMesh()
@@ -127,7 +124,7 @@ void PointLight::Draw(VkCommandBuffer commandBuffer)
 
 void PointLight::SetRadius(float radius)
 {
-	mRadius = radius;
+	mLightData.mRadius = radius;
 }
 
 void PointLight::SetColor(glm::vec3 color)
@@ -142,7 +139,7 @@ void PointLight::SetPosition(glm::vec3 position)
 
 float PointLight::GetRadius()
 {
-	return mRadius;
+	return mLightData.mRadius;
 }
 
 glm::vec3 PointLight::GetColor()
@@ -221,7 +218,7 @@ void PointLight::UpdateUniformBuffer(Camera* camera, float deltaTime)
 		glm::vec3(mLightData.mPosition.x,
 			mLightData.mPosition.y,
 			mLightData.mPosition.z));
-	mLightData.mWVP = glm::scale(mLightData.mWVP, glm::vec3(mRadius, mRadius, mRadius));
+	mLightData.mWVP = glm::scale(mLightData.mWVP, glm::vec3(mLightData.mRadius, mLightData.mRadius, mLightData.mRadius) * 1.05f);
 
 	mLightData.mWVP = camera->GetViewProjectionMatrix() * mLightData.mWVP;
 

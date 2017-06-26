@@ -17,6 +17,7 @@ layout(set = 1, binding = 0) uniform LightUniformBuffer
     mat4 mWVP;
     vec4 mPosition;
     vec4 mColor;
+    float mRadius;
     float mConstantAttenuation;
     float mLinearAttenuation;
     float mQuadraticAttenuation;
@@ -36,11 +37,12 @@ void main()
     vec3 lightVector = normalize(light.mPosition.xyz - position);
     float dist = length(light.mPosition.xyz - position);
     float diffuseFactor = clamp(dot(normal, lightVector), 0.0, 1.0);
-    diffuseFactor = diffuseFactor / (light.mConstantAttenuation + light.mLinearAttenuation * dist + light.mQuadraticAttenuation * dist * dist);
+    diffuseFactor = clamp(diffuseFactor  * (1 - (dist/light.mRadius)), 0.0, 1.0);
+    //float ambientFactor = 0.5;
     
     // Output final, lit image.
     outFinalColor = diffuseFactor * color * light.mColor;
-    
+    //outFinalColor = light.mColor * 0.05f;
     //outFinalColor = color;
     //outFinalColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }

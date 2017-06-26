@@ -37,6 +37,8 @@ public:
 
 	const std::string& GetDirectory() const;
 
+	void SpawnTestLights();
+
 private:
 
 	void LoadMaterials(const aiScene& scene);

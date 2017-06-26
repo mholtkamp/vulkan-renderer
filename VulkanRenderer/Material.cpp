@@ -88,6 +88,11 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 
 	for (uint32_t i = 0; i < SLOT_COUNT; ++i)
 	{
+		if (mTextures[i] == nullptr)
+		{
+			continue;
+		}
+
 		imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		imageInfo[i].imageView = (mTextures[i] != nullptr) ? mTextures[i]->GetImageView() : VK_NULL_HANDLE;
 		imageInfo[i].sampler =(mTextures[i] != nullptr) ? mTextures[i]->GetSampler() : VK_NULL_HANDLE;

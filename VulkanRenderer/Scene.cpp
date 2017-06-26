@@ -1,5 +1,6 @@
 #include "Scene.h"
 #include "Camera.h"
+#include "Constants.h"
 #include <map>
 
 using namespace std;
@@ -50,7 +51,37 @@ void Scene::Load(const std::string& directory,
 		LoadActors(*scene);
 		//LoadCameras(*scene);
 
+		SpawnTestLights();
+
 		mLoaded = true;
+	}
+}
+
+void Scene::SpawnTestLights()
+{
+	const glm::vec3 minExtents(-20.0f, 0.0f,-10.0f);
+	const glm::vec3 maxExtents(20.0f, 20.0f, 10.0f);
+	const glm::vec3 ranges = maxExtents - minExtents;
+
+	for (uint32_t i = 0; i < TEST_LIGHT_COUNT; ++i)
+	{
+		mPointLights.push_back(PointLight());
+		PointLight& pointLight = mPointLights.back();
+
+		glm::vec3 position;
+		position.x = ((rand() / static_cast<float>(RAND_MAX)) * ranges.x + minExtents.x);
+		position.y = ((rand() / static_cast<float>(RAND_MAX)) * ranges.y + minExtents.y);
+		position.z = ((rand() / static_cast<float>(RAND_MAX)) * ranges.z + minExtents.z);
+
+		glm::vec3 color;
+		color.r = rand() / static_cast<float>(RAND_MAX);
+		color.g = rand() / static_cast<float>(RAND_MAX);
+		color.b = rand() / static_cast<float>(RAND_MAX);
+
+		color = glm::normalize(color);
+
+		pointLight.Create(position, color, 8.0f);
+		//pointLight.SetRadius(5.0f);
 	}
 }
 

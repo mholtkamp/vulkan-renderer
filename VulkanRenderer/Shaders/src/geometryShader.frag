@@ -16,4 +16,9 @@ void main()
     outPosition = vec4(inPosition, 1.0);
     outNormal = vec4(inNormal, 0.0);
     outColor = texture(diffuseSampler, inTexcoord);
+    
+    if (outColor.a < 0.5)
+    {
+        discard;
+    }
 }

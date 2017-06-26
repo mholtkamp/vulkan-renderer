@@ -12,6 +12,7 @@ layout(set = 1, binding = 0) uniform LightUniformBuffer
     mat4 mWVP;
     vec4 mPosition;
     vec4 mColor;
+    float mRadius;
     float mConstantAttenuation;
     float mLinearAttenuation;
     float mQuadraticAttenuation;
