@@ -59,8 +59,8 @@ void Scene::Load(const std::string& directory,
 
 void Scene::SpawnTestLights()
 {
-	const glm::vec3 minExtents(-20.0f, 0.0f,-10.0f);
-	const glm::vec3 maxExtents(20.0f, 20.0f, 10.0f);
+	const glm::vec3 minExtents(-40.0f, 0.0f,-20.0f);
+	const glm::vec3 maxExtents(40.0f, 20.0f, 20.0f);
 	const glm::vec3 ranges = maxExtents - minExtents;
 
 	for (uint32_t i = 0; i < TEST_LIGHT_COUNT; ++i)
