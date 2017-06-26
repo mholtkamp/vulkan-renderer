@@ -5,6 +5,16 @@
 
 using namespace std;
 
+static const int numLights = 300;
+static const glm::vec3 minExtents(-80.0f, 1.0f, -40.0f);
+static const glm::vec3 maxExtents(80.0f, 60.0f, 40.0f);
+static const glm::vec3 ranges = maxExtents - minExtents;
+static const float lightMultiplier = 2.0f;
+static const float minSpeed = 0.5f;
+static const float maxSpeed = 8.0f;
+static const float speedRange = maxSpeed - minSpeed;
+static const float radiusGrowSpeed = 2.0f;
+
 Scene::Scene() : 
 	mLoaded(false)
 {
@@ -57,13 +67,34 @@ void Scene::Load(const std::string& directory,
 	}
 }
 
+void Scene::UpdateDebug(float deltaTime)
+{
+
+	// Change Radii
+	if (GetAsyncKeyState('T'))
+	{
+		for (PointLight& light : mPointLights)
+		{
+			float radius = light.GetRadius();
+			radius += deltaTime * radiusGrowSpeed;
+			light.SetRadius(radius);
+		}
+	}
+
+	if (GetAsyncKeyState('R'))
+	{
+		for (PointLight& light : mPointLights)
+		{
+			float radius = light.GetRadius();
+			radius -= deltaTime * radiusGrowSpeed;
+			light.SetRadius(radius);
+		}
+	}
+}
+
 void Scene::SpawnTestLights()
 {
-	const glm::vec3 minExtents(-40.0f, 0.0f,-20.0f);
-	const glm::vec3 maxExtents(40.0f, 20.0f, 20.0f);
-	const glm::vec3 ranges = maxExtents - minExtents;
-
-	for (uint32_t i = 0; i < TEST_LIGHT_COUNT; ++i)
+	for (uint32_t i = 0; i < numLights; ++i)
 	{
 		mPointLights.push_back(PointLight());
 		PointLight& pointLight = mPointLights.back();
@@ -78,10 +109,21 @@ void Scene::SpawnTestLights()
 		color.g = rand() / static_cast<float>(RAND_MAX);
 		color.b = rand() / static_cast<float>(RAND_MAX);
 
-		color = glm::normalize(color);
+		color = color * lightMultiplier;
+
+		//color = glm::normalize(color);
 
 		pointLight.Create(position, color, 8.0f);
 		//pointLight.SetRadius(5.0f);
+
+		glm::vec3 velocity;
+		float speed = (rand() / static_cast<float>(RAND_MAX)) * minSpeed + speedRange;
+		velocity.x = rand() / static_cast<float>(RAND_MAX);
+		velocity.y = rand() / static_cast<float>(RAND_MAX);
+		velocity.z = rand() / static_cast<float>(RAND_MAX);
+		velocity = speed * glm::normalize(velocity);
+
+		pointLight.SetVelocity(velocity);
 	}
 }
 
@@ -190,6 +232,10 @@ void Scene::Update(float deltaTime)
 	{
 		pointLight.Update(this, deltaTime);
 	}
+
+	UpdateLightPositions(deltaTime);
+
+	UpdateDebug(deltaTime);
 }
 
 Camera* Scene::GetActiveCamera()
@@ -200,4 +246,32 @@ Camera* Scene::GetActiveCamera()
 const std::string& Scene::GetDirectory() const
 {
 	return mDirectory;
+}
+
+void Scene::UpdateLightPositions(float deltaTime)
+{
+	for (uint32_t i = 0; i < mPointLights.size(); ++i)
+	{
+		glm::vec3 velocity = mPointLights[i].GetVelocity();
+		glm::vec3 position = mPointLights[i].GetPosition();
+
+		position += velocity * deltaTime;
+
+		mPointLights[i].SetPosition(position);
+
+		if (position.x < minExtents.x)
+			velocity.x = abs(velocity.x);
+		if (position.y < minExtents.y)
+			velocity.y = abs(velocity.y);
+		if (position.z < minExtents.z)
+			velocity.z = abs(velocity.z);
+		if (position.x > maxExtents.x)
+			velocity.x = -abs(velocity.x);
+		if (position.y > maxExtents.y)
+			velocity.y = -abs(velocity.y);
+		if (position.z > maxExtents.z)
+			velocity.z = -abs(velocity.z);
+
+		mPointLights[i].SetVelocity(velocity);
+	}
 }

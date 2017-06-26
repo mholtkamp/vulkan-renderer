@@ -6,7 +6,7 @@
 
 CameraController::CameraController() :
 	mCamera(nullptr),
-	mMoveSpeed(2.0f),
+	mMoveSpeed(10.0f),
 	mRotationSpeed(90.0f)
 {
 
@@ -22,24 +22,42 @@ void CameraController::Update(float deltaTime)
 	glm::vec3 cameraPosition = mCamera->GetPosition();
 	glm::vec3 cameraRotation = mCamera->GetRotation();
 
+	float angle = glm::radians(cameraRotation.y);
+	float c = cos(angle);
+	float s = sin(angle);
+
 	if (GetAsyncKeyState('A'))
 	{
-		cameraPosition.x -= mMoveSpeed * deltaTime;
+		cameraPosition.x -= c * (mMoveSpeed * deltaTime);
+		cameraPosition.z += s * (mMoveSpeed * deltaTime);
 	}
 
 	if (GetAsyncKeyState('D') )
 	{
-		cameraPosition.x += mMoveSpeed * deltaTime;
+		cameraPosition.x += c * (mMoveSpeed * deltaTime);
+		cameraPosition.z -= s * (mMoveSpeed * deltaTime);
 	}
 
 	if (GetAsyncKeyState('W'))
 	{
-		cameraPosition.z -= mMoveSpeed * deltaTime;
+		cameraPosition.z -= c * (mMoveSpeed * deltaTime);
+		cameraPosition.x -= s * (mMoveSpeed * deltaTime);
 	}
 
 	if (GetAsyncKeyState('S'))
 	{
-		cameraPosition.z += mMoveSpeed * deltaTime;
+		cameraPosition.z += c * (mMoveSpeed * deltaTime);
+		cameraPosition.x += s * (mMoveSpeed * deltaTime);
+	}
+
+	if (GetAsyncKeyState('E'))
+	{
+		cameraPosition.y += (mMoveSpeed * deltaTime);
+	}
+
+	if (GetAsyncKeyState('Q'))
+	{
+		cameraPosition.y -= (mMoveSpeed * deltaTime);
 	}
 
 	if (GetAsyncKeyState(VK_LEFT))

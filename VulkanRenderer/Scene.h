@@ -50,6 +50,10 @@ private:
 	void PopulateLightLookupMap(const aiScene& scene, 
 		std::map<std::string, aiLight>& lightMap);
 
+	void UpdateLightPositions(float deltaTime);
+
+	void UpdateDebug(float deltaTime);
+
 private:
 
 	std::string mDirectory;

@@ -48,11 +48,15 @@ public:
 
 	void SetPosition(glm::vec3 position);
 
+	void SetVelocity(glm::vec3 velocity);
+
 	float GetRadius();
 
 	glm::vec3 GetColor();
 
 	glm::vec3 GetPosition();
+
+	glm::vec3 GetVelocity();
 
 	static void LoadSphereMesh();
 
@@ -69,6 +73,8 @@ private:
 	void CreateUniformBuffer();
 
 	void UpdateUniformBuffer(class Camera* camera, float deltaTime);
+
+	glm::vec3 mVelocity;
 
 	LightData mLightData;
 

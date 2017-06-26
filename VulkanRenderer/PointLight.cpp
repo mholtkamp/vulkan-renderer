@@ -124,6 +124,11 @@ void PointLight::Draw(VkCommandBuffer commandBuffer)
 
 void PointLight::SetRadius(float radius)
 {
+	if (radius < 0.0f)
+	{
+		radius = 0.1f;
+	}
+
 	mLightData.mRadius = radius;
 }
 
@@ -135,6 +140,11 @@ void PointLight::SetColor(glm::vec3 color)
 void PointLight::SetPosition(glm::vec3 position)
 {
 	mLightData.mPosition = glm::vec4(position, 1.0f);
+}
+
+void PointLight::SetVelocity(glm::vec3 velocity)
+{
+	mVelocity = velocity;
 }
 
 float PointLight::GetRadius()
@@ -150,6 +160,11 @@ glm::vec3 PointLight::GetColor()
 glm::vec3 PointLight::GetPosition()
 {
 	return mLightData.mPosition;
+}
+
+glm::vec3 PointLight::GetVelocity()
+{
+	return mVelocity;
 }
 
 void PointLight::CreateDescriptorSet()
