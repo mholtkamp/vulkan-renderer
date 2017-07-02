@@ -35,7 +35,8 @@ private:
 
 	void CreateVertexBuffer(aiVector3D* positions,
 							aiVector3D* texcoords,
-							aiVector3D* normals);
+							aiVector3D* normals,
+							aiVector3D* tangents);
 
 	void CreateIndexBuffer(aiFace* faces);
 

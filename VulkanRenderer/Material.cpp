@@ -1,6 +1,7 @@
 #include "Material.h"
 #include "Texture.h"
 #include "Renderer.h"
+#include "Constants.h"
 
 #include <assimp/scene.h>
 
@@ -56,6 +57,10 @@ void Material::Create(const Scene& scene,
 		material.GetTexture(aiTextureType_DIFFUSE, 0, &diffuseTexture);
 		SetTexture(scene, textures, mTextures[SLOT_DIFFUSE], diffuseTexture.C_Str());
 	}
+	else
+	{
+		SetDefaultTexture(scene, textures, mTextures[SLOT_DIFFUSE], DEFAULT_DIFFUSE_TEXTURE_NAME);
+	}
 
 	//aiString specularTexture;
 	//if (material.GetTextureCount(aiTextureType_SPECULAR) > 0)
@@ -64,12 +69,16 @@ void Material::Create(const Scene& scene,
 	//	SetTexture(textures, SlotSpecular, specularTexture.C_Str());
 	//}
 
-	//aiString normalTexture;
-	//if (material.GetTextureCount(aiTextureType_NORMALS) > 0)
-	//{
-	//  material.GetTexture(aiTextureType_NORMALS, 0, &normalTexture);
-	//	SetTexture(textures, SlotNormals, normalTexture.C_Str());
-	//}
+	aiString normalTexture;
+	if (material.GetTextureCount(aiTextureType_NORMALS) > 0)
+	{
+		material.GetTexture(aiTextureType_NORMALS, 0, &normalTexture);
+		SetTexture(scene, textures, mTextures[SLOT_NORMALS], normalTexture.C_Str());
+	}
+	else
+	{
+		SetDefaultTexture(scene, textures, mTextures[SLOT_NORMALS], DEFAULT_NORMAL_TEXTURE_NAME);
+	}
 
 	//aiString emissiveTexture;
 	//if (material.GetTextureCount(aiTextureType_EMISSIVE) > 0)
@@ -105,7 +114,7 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 		descriptorWrite[i].descriptorCount = 1;
 		descriptorWrite[i].pImageInfo = &imageInfo[i];
 
-		vkUpdateDescriptorSets(device, SLOT_COUNT, descriptorWrite, 0, nullptr);
+		vkUpdateDescriptorSets(device, 1, descriptorWrite, 0, nullptr);
 	}
 }
 
@@ -119,6 +128,24 @@ void Material::SetTexture(const Scene& scene,
 		textures.insert(pair<string, Texture>(name, Texture()));
 		Texture& texEntry = textures[name];
 		texEntry.Load(scene.GetDirectory() + name);
+		texture = &texEntry;
+	}
+	else
+	{
+		texture = &textures[name];
+	}
+}
+
+void Material::SetDefaultTexture(const Scene& scene,
+	std::map<std::string, Texture>& textures,
+	Texture*& texture,
+	std::string name)
+{
+	if (textures.find(name) == textures.end())
+	{
+		textures.insert(pair<string, Texture>(name, Texture()));
+		Texture& texEntry = textures[name];
+		texEntry.Load(DEFAULT_TEXTURE_DIRECTORY_NAME + name);
 		texture = &texEntry;
 	}
 	else

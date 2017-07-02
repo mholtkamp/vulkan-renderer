@@ -15,6 +15,8 @@ public:
 
 	void Load(const std::string& path);
 
+	const std::string& GetName() const;
+
 	void CreateTextureSampler();
 
 	VkImageView GetImageView();

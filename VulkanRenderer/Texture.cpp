@@ -37,6 +37,8 @@ void Texture::Load(const std::string& path)
 	int texHeight;
 	int texChannels;
 
+	mName = path;
+
 	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -69,6 +71,11 @@ void Texture::Load(const std::string& path)
 
 	mImageView = CreateImageView(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 	CreateTextureSampler();
+}
+
+const std::string& Texture::GetName() const
+{
+	return mName;
 }
 
 VkImageView Texture::GetImageView()

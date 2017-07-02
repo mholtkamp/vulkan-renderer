@@ -6,5 +6,11 @@
 #define MINIMUM_INTENSITY (5.0f / 256.0f)
 #define INVERSE_MININUM_INTENSITY (1.0f / MINIMUM_INTENSITY)
 
-#define TEST_LIGHT_COUNT 100
 #define TEST_LIGHT_RANGE 25.0f
+
+#define DEFAULT_TEXTURE_DIRECTORY_NAME "Textures/"
+#define DEFAULT_DIFFUSE_TEXTURE_NAME "DefaultDiffuseTexture.png"
+#define DEFAULT_SPECULAR_TEXTURE_NAME "DefaultSpecularTexture.png"
+#define DEFAULT_NORMAL_TEXTURE_NAME "DefaultNormalTexture.png"
+#define DEFAULT_REFLECTIVE_TEXTURE_NAME "DefaultReflectiveTexture.png"
+#define DEFAULT_EMISSIVE_TEXTURE_NAME "DefaultEmissiveTexture.png"

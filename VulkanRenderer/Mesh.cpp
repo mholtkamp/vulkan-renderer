@@ -56,10 +56,11 @@ void Mesh::Create(const aiMesh& meshData,
 	aiVector3D* positions = meshData.mVertices;
 	aiVector3D* texcoords3D = meshData.mTextureCoords[0];
 	aiVector3D* normals = meshData.mNormals;
+	aiVector3D* tangents = meshData.mTangents;
 
 	aiFace* faces = meshData.mFaces;
 
-	CreateVertexBuffer(positions, texcoords3D, normals);
+	CreateVertexBuffer(positions, texcoords3D, normals, tangents);
 	CreateIndexBuffer(faces);
 
 	// Assign associated material
@@ -132,7 +133,8 @@ uint32_t Mesh::GetNumVertices()
 
 void Mesh::CreateVertexBuffer(aiVector3D* positions,
 							  aiVector3D* texcoords,
-							  aiVector3D* normals)
+							  aiVector3D* normals,
+							  aiVector3D* tangents)
 {
 	Vertex* vertices = static_cast<Vertex*>(malloc(sizeof(Vertex) * mNumVertices));
 
@@ -147,6 +149,9 @@ void Mesh::CreateVertexBuffer(aiVector3D* positions,
 		vertices[i].mNormal = glm::vec3(normals[i].x,
 										normals[i].y,
 										normals[i].z);
+		vertices[i].mTangent = glm::vec3(tangents[i].x,
+										 tangents[i].y,
+										 tangents[i].z);
 	}
 
 	Renderer* renderer = Renderer::Get();

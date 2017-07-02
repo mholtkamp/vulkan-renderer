@@ -32,6 +32,11 @@ private:
 		Texture*& texture,
 		std::string name);
 
+	void SetDefaultTexture(const class Scene& scene,
+		std::map<std::string, Texture>& textures,
+		Texture*& texture,
+		std::string name);
+
 	std::string mName;
 
 	glm::vec4 mDiffuseColor;
