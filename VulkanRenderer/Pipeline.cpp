@@ -8,7 +8,6 @@ using namespace std;
 Pipeline::Pipeline() :
 	mPipeline(VK_NULL_HANDLE),
 	mPipelineLayout(VK_NULL_HANDLE),
-	mDescriptorSetLayout(VK_NULL_HANDLE),
 	mSubpass(0),
 	mVertexShaderPath("Shaders/bin/geometryShader.vert"),
 	mFragmentShaderPath("Shaders/bin/geometryShader.frag"),
@@ -41,9 +40,13 @@ void Pipeline::SetFragmentShader(const std::string& path)
 	mFragmentShaderPath = path;
 }
 
-VkDescriptorSetLayout Pipeline::GetDescriptorSetLayout()
+VkDescriptorSetLayout Pipeline::GetDescriptorSetLayout(uint32_t index)
 {
-	return mDescriptorSetLayout;
+	if (index > mDescriptorSetLayouts.size())
+	{
+		throw exception("Accessing invalid descriptor set");
+	}
+	return mDescriptorSetLayouts[index];
 }
 
 void Pipeline::Create()
@@ -51,7 +54,8 @@ void Pipeline::Create()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	CreateDescriptorSetLayout();
+	PopulateLayoutBindings();
+	CreateDescriptorSetLayouts();
 
 	vector<char> vertShaderCode = ReadFile(mVertexShaderPath);
 
@@ -206,7 +210,11 @@ void Pipeline::Destroy()
 
 	vkDestroyPipeline(device, mPipeline, nullptr);
 	vkDestroyPipelineLayout(device, mPipelineLayout, nullptr);
-	vkDestroyDescriptorSetLayout(device, mDescriptorSetLayout, nullptr);
+
+	for (VkDescriptorSetLayout layout : mDescriptorSetLayouts)
+	{
+		vkDestroyDescriptorSetLayout(device, layout, nullptr);
+	}
 }
 
 void Pipeline::BindPipeline(VkCommandBuffer commandBuffer)
@@ -253,4 +261,62 @@ void Pipeline::AddBlendAttachmentState()
 	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 
 	mBlendAttachments.push_back(colorBlendAttachment);
+}
+
+void Pipeline::AddLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags)
+{
+	VkDescriptorSetLayoutBinding layoutBinding = {};
+	layoutBinding.descriptorCount = 1;
+	layoutBinding.descriptorType = type;
+	layoutBinding.pImmutableSamplers = nullptr;
+	layoutBinding.stageFlags = stageFlags;
+	layoutBinding.binding = mLayoutBindings.back().size();
+
+	mLayoutBindings.back().push_back(layoutBinding);
+}
+
+void Pipeline::PushSet()
+{
+	mLayoutBindings.push_back(std::vector<VkDescriptorSetLayoutBinding>());
+}
+
+void Pipeline::CreatePipelineLayout()
+{
+	Renderer* renderer = Renderer::Get();
+
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = mDescriptorSetLayouts.size();
+	pipelineLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
+	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.pPushConstantRanges = 0;
+
+	if (vkCreatePipelineLayout(renderer->GetDevice(), &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create pipeline layout!");
+	}
+}
+
+void Pipeline::CreateDescriptorSetLayouts()
+{
+	Renderer* renderer = Renderer::Get();
+
+	for (uint32_t i = 0; i < mLayoutBindings.size(); ++i)
+	{
+		VkDescriptorSetLayoutCreateInfo ciDescriptorSetLayout = {};
+		ciDescriptorSetLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		ciDescriptorSetLayout.bindingCount = mLayoutBindings[i].size();
+		ciDescriptorSetLayout.pBindings = mLayoutBindings[i].data();
+
+		mDescriptorSetLayouts.push_back(VK_NULL_HANDLE);
+
+		if (vkCreateDescriptorSetLayout(renderer->GetDevice(),
+			&ciDescriptorSetLayout,
+			nullptr,
+			&mDescriptorSetLayouts[i]) != VK_SUCCESS)
+		{
+			throw exception("Failed to create descriptor set layout");
+		}
+	}
+
 }

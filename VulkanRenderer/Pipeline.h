@@ -23,22 +23,26 @@ public:
 
 	void BindPipeline(VkCommandBuffer commandBuffer);
 
-	VkDescriptorSetLayout GetDescriptorSetLayout();
+	VkDescriptorSetLayout GetDescriptorSetLayout(uint32_t index = 0);
 
 	VkPipelineLayout GetPipelineLayout();
 
 protected:
 
+	void PushSet();
+	void AddLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags);
+
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
-	virtual void CreateDescriptorSetLayout() = 0;
-	virtual void CreatePipelineLayout() = 0;
+	virtual void PopulateLayoutBindings() = 0;
+	void CreateDescriptorSetLayouts();
+	void CreatePipelineLayout();
 
 	void AddBlendAttachmentState();
 
 	VkPipeline mPipeline;
 	VkPipelineLayout mPipelineLayout;
-	VkDescriptorSetLayout mDescriptorSetLayout;
+	std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
 	uint32_t mSubpass;
 
 	// Shader stages
@@ -61,4 +65,6 @@ protected:
 	// Color Blend State
 	VkBool32 mBlendEnabled;
 	std::vector<VkPipelineColorBlendAttachmentState> mBlendAttachments;
+
+	std::vector<std::vector<VkDescriptorSetLayoutBinding> > mLayoutBindings;
 };

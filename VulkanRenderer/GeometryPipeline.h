@@ -8,7 +8,5 @@ class GeometryPipeline : public Pipeline
 public:
 
 	GeometryPipeline();
-
-	virtual void CreateDescriptorSetLayout() override;
-	virtual void CreatePipelineLayout() override;
+	virtual void PopulateLayoutBindings() override;
 };

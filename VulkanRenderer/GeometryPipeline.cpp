@@ -11,57 +11,20 @@ GeometryPipeline::GeometryPipeline()
 	mDepthCompareOp = VK_COMPARE_OP_EQUAL;
 
 	// Add blend states for each attachment (1 already created).
-	AddBlendAttachmentState();
-	AddBlendAttachmentState();
-}
-
-void GeometryPipeline::CreatePipelineLayout()
-{
-	Renderer* renderer = Renderer::Get();
-
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &mDescriptorSetLayout;
-	pipelineLayoutInfo.pushConstantRangeCount = 0;
-	pipelineLayoutInfo.pPushConstantRanges = 0;
-
-	if (vkCreatePipelineLayout(renderer->GetDevice(), &pipelineLayoutInfo, nullptr, &mPipelineLayout) != VK_SUCCESS)
+	for (int32_t i = 0; i < GB_COUNT - 1; ++i)
 	{
-		throw std::runtime_error("failed to create pipeline layout!");
+		AddBlendAttachmentState();
 	}
 }
 
-void GeometryPipeline::CreateDescriptorSetLayout()
+void GeometryPipeline::PopulateLayoutBindings()
 {
-	Renderer* renderer = Renderer::Get();
+	PushSet();
+	AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
 
-	VkDescriptorSetLayoutBinding uboLayoutBinding = {};
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.pImmutableSamplers = nullptr;
-
-	VkDescriptorSetLayoutBinding samplerLayoutBinding = {};
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.pImmutableSamplers = nullptr;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	VkDescriptorSetLayoutBinding bindings[] = { uboLayoutBinding, samplerLayoutBinding };
-
-	VkDescriptorSetLayoutCreateInfo ciDescriptorSetLayout = {};
-	ciDescriptorSetLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	ciDescriptorSetLayout.bindingCount = 2;
-	ciDescriptorSetLayout.pBindings = bindings;
-
-	if (vkCreateDescriptorSetLayout(renderer->GetDevice(),
-		&ciDescriptorSetLayout,
-		nullptr,
-		&mDescriptorSetLayout) != VK_SUCCESS)
+	// Add texture sampler descriptors for each texture slot
+	for (int32_t i = 0; i < SLOT_COUNT; ++i)
 	{
-		throw exception("Failed to create descriptor set layout");
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 }

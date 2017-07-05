@@ -114,7 +114,7 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 		descriptorWrite[i].descriptorCount = 1;
 		descriptorWrite[i].pImageInfo = &imageInfo[i];
 
-		vkUpdateDescriptorSets(device, 1, descriptorWrite, 0, nullptr);
+		vkUpdateDescriptorSets(device, 1, &descriptorWrite[i], 0, nullptr);
 	}
 }
 
