@@ -16,6 +16,8 @@ public:
 
 private:
 
+	bool mDebugMode;
+
 	GBufferIndex mGBufferViewMode;
 
 };

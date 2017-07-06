@@ -39,4 +39,17 @@ void DebugActionHandler::Update()
 	{
 		Renderer::Get()->SetVisualizationMode(mGBufferViewMode == GB_COUNT ? -1 : mGBufferViewMode);
 	}
+
+
+	if (GetAsyncKeyState(VK_CONTROL) &&
+		GetAsyncKeyState(VK_TAB))
+	{
+		Renderer::Get()->SetDebugMode(true);
+	}
+
+	if (GetAsyncKeyState(VK_CONTROL) &&
+		GetAsyncKeyState(VK_SHIFT))
+	{
+		Renderer::Get()->SetDebugMode(false);
+	}
 }

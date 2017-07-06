@@ -45,12 +45,13 @@ Renderer::Renderer() :
 	mImageAvailableSemaphore(0),
 	mRenderFinishedSemaphore(0),
 	mScene(nullptr),
+	mDebugMode(false),
 	mInitialized(false)
 {
 	mDeferredUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	mDeferredUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
 	mDeferredUniformData.mScreenDimensions = glm::vec2(800.0f, 600.0f);
-	//mDeferredUniformData.mVisualizationMode = -1;
+	mDeferredUniformData.mVisualizationMode = 0;
 }
 
 void Renderer::Create()
@@ -97,7 +98,7 @@ void Renderer::DestroySwapchain()
 	mEarlyDepthPipeline.Destroy();
 	mGeometryPipeline.Destroy();
 	mLightPipeline.Destroy();
-	//mDeferredPipeline.Destroy();
+	mDebugDeferredPipeline.Destroy();
 
 	mGBuffer.Destroy();
 
@@ -978,12 +979,22 @@ void Renderer::CreateCommandBuffers()
 		// ******************
 		//  Deferred Pass
 		// ******************
-		//mDeferredPipeline.BindPipeline(mCommandBuffers[i]);
-		mLightPipeline.BindPipeline(mCommandBuffers[i]);
-		// Bind the common deferred descriptor set
-		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
-		// Render each light
-		mScene->RenderLightVolumes(mCommandBuffers[i]);
+		if (mDebugMode)
+		{
+			mDebugDeferredPipeline.BindPipeline(mCommandBuffers[i]);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
+		
+			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+		}
+		else
+		{
+			mLightPipeline.BindPipeline(mCommandBuffers[i]);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
+
+			// Render each light
+			mScene->RenderLightVolumes(mCommandBuffers[i]);
+		}
+
 		vkCmdEndRenderPass(mCommandBuffers[i]);
 
 		if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
@@ -1407,7 +1418,7 @@ void Renderer::SetVisualizationMode(int32_t mode)
 {
 	assert(mode >= -1);
 	assert(mode < GB_COUNT);
-	//mDeferredUniformData.mVisualizationMode = mode;
+	mDeferredUniformData.mVisualizationMode = mode;
 	UpdateDeferredUniformBuffer();
 }
 
@@ -1429,5 +1440,12 @@ void Renderer::CreatePipelines()
 	mEarlyDepthPipeline.Create();
 	mGeometryPipeline.Create();
 	mLightPipeline.Create();
-	//mDeferredPipeline.Create();
+	mDebugDeferredPipeline.Create();
+}
+
+void Renderer::SetDebugMode(bool mode)
+{
+	mDebugMode = mode;
+	UpdateDeferredUniformBuffer();
+	CreateCommandBuffers();
 }

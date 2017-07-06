@@ -20,6 +20,8 @@ public:
 
 class DebugDeferredPipeline : public DeferredPipeline
 {
+public:
+
 	DebugDeferredPipeline();
 	virtual void PopulateLayoutBindings() override;
 };

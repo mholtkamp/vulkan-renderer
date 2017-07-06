@@ -104,6 +104,8 @@ public:
 
 	void SetDirectionalLightDirection(glm::vec3 direction);
 
+	void SetDebugMode(bool mode);
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,
@@ -213,7 +215,7 @@ private:
 	EarlyDepthPipeline mEarlyDepthPipeline;
 	GeometryPipeline mGeometryPipeline;
 	LightPipeline mLightPipeline;
-	//DeferredPipeline mDeferredPipeline;
+	DebugDeferredPipeline mDebugDeferredPipeline;
 
 	VkDescriptorSet mDeferredDescriptorSet;
 	VkBuffer mDeferredUniformBuffer;
@@ -226,6 +228,8 @@ private:
 	Scene* mScene;
 
 	AppState* mAppState;
+
+	bool mDebugMode;
 
 	bool mInitialized;
 };
