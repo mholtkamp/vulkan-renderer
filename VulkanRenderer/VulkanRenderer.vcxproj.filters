@@ -146,5 +146,8 @@
     <ClInclude Include="LightSpawner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PipelineConfigs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

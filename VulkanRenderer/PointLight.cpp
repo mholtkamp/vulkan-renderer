@@ -179,7 +179,8 @@ void PointLight::CreateDescriptorSet()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	VkDescriptorSetLayout layouts[] = { renderer->GetLightPipeline().GetDescriptorSetLayout() };
+	VkDescriptorSetLayout layouts[] = { renderer->GetLightPipeline().GetDescriptorSetLayout(1) };
+		//renderer->GetLightPipeline().GetDescriptorSetLayout(1)};
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = renderer->GetDescriptorPool();

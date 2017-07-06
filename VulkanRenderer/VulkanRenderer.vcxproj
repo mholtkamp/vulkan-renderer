@@ -167,6 +167,7 @@
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Pipeline.h" />
+    <ClInclude Include="PipelineConfigs.h" />
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scene.h" />

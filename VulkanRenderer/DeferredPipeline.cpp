@@ -18,39 +18,6 @@ DeferredPipeline::DeferredPipeline()
 
 void DeferredPipeline::PopulateLayoutBindings()
 {
-	//VkDescriptorSetLayoutBinding positionSamplerLayoutBinding = {};
-	//positionSamplerLayoutBinding.binding = DD_TEXTURE_POSITION;
-	//positionSamplerLayoutBinding.descriptorCount = 1;
-	//positionSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//positionSamplerLayoutBinding.pImmutableSamplers = nullptr;
-	//positionSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//VkDescriptorSetLayoutBinding normalSamplerLayoutBinding = {};
-	//normalSamplerLayoutBinding.binding = DD_TEXTURE_NORMAL;
-	//normalSamplerLayoutBinding.descriptorCount = 1;
-	//normalSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//normalSamplerLayoutBinding.pImmutableSamplers = nullptr;
-	//normalSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//VkDescriptorSetLayoutBinding colorSamplerLayoutBinding = {};
-	//colorSamplerLayoutBinding.binding = DD_TEXTURE_COLOR;
-	//colorSamplerLayoutBinding.descriptorCount = 1;
-	//colorSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	//colorSamplerLayoutBinding.pImmutableSamplers = nullptr;
-	//colorSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//VkDescriptorSetLayoutBinding uniformBufferLayoutBinding = {};
-	//uniformBufferLayoutBinding.binding = DD_UNIFORM_BUFFER;
-	//uniformBufferLayoutBinding.descriptorCount = 1;
-	//uniformBufferLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	//uniformBufferLayoutBinding.pImmutableSamplers = nullptr;
-	//uniformBufferLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-
-	//VkDescriptorSetLayoutBinding bindings[] = { positionSamplerLayoutBinding,
-	//	normalSamplerLayoutBinding,
-	//	colorSamplerLayoutBinding,
-	//	uniformBufferLayoutBinding};
-
 	PushSet();
 	AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT); // Uniform buffer
 	AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT); // Position texture
