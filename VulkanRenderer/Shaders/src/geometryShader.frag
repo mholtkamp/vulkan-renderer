@@ -22,7 +22,9 @@ void main()
     
     vec3 normal = texture(normalSampler, inTexcoord).rgb;
     normal = normalize(normal * 2.0 - 1.0);
-    outNormal = vec4(normalize(inTBN * normal), 0.0);    
+    outNormal = vec4(normalize(inTBN * normal), 0.0);
+    
+    //outNormal = vec4(inNormal, 0.0);
     
     if (outColor.a < 0.5)
     {

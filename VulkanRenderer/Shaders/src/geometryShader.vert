@@ -34,5 +34,5 @@ void main()
     outNormal = (uboGeometry.mNormalMatrix * vec4(inNormal, 0.0)).xyz;
     outTangent = (uboGeometry.mNormalMatrix * vec4(inTangent, 0.0)).xyz;
     outBitangent = cross(outNormal, outTangent);
-    outTBN = mat3(outTangent, outNormal, outBitangent);   
+    outTBN = mat3(outTangent, outBitangent, outNormal);   
 }
