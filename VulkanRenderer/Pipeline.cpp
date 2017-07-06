@@ -215,6 +215,9 @@ void Pipeline::Destroy()
 	{
 		vkDestroyDescriptorSetLayout(device, layout, nullptr);
 	}
+
+	mDescriptorSetLayouts.clear();
+	mLayoutBindings.clear();
 }
 
 void Pipeline::BindPipeline(VkCommandBuffer commandBuffer)
