@@ -56,18 +56,3 @@ void LightPipeline::PopulateLayoutBindings()
 }
 
 #pragma endregion
-
-#pragma region DebugDeferredPipeline
-
-DebugDeferredPipeline::DebugDeferredPipeline()
-{
-	mVertexShaderPath = "Shaders/bin/debugDeferredShader.vert";
-	mFragmentShaderPath = "Shaders/bin/debugDeferredShader.frag";
-}
-
-void DebugDeferredPipeline::PopulateLayoutBindings()
-{
-	DeferredPipeline::PopulateLayoutBindings();
-}
-
-#pragma endregion

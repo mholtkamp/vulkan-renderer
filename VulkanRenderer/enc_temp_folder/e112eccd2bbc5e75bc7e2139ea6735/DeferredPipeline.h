@@ -17,9 +17,3 @@ public:
 	LightPipeline();
 	virtual void PopulateLayoutBindings() override;
 };
-
-class DebugDeferredPipeline : public DeferredPipeline
-{
-	DebugDeferredPipeline();
-	virtual void PopulateLayoutBindings() override;
-};

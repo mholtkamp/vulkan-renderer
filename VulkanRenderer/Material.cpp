@@ -62,12 +62,16 @@ void Material::Create(const Scene& scene,
 		SetDefaultTexture(scene, textures, mTextures[SLOT_DIFFUSE], DEFAULT_DIFFUSE_TEXTURE_NAME);
 	}
 
-	//aiString specularTexture;
-	//if (material.GetTextureCount(aiTextureType_SPECULAR) > 0)
-	//{
-	//  material.GetTexture(aiTextureType_SPECULAR, 0, &specularTexture);
-	//	SetTexture(textures, SlotSpecular, specularTexture.C_Str());
-	//}
+	aiString specularTexture;
+	if (material.GetTextureCount(aiTextureType_SPECULAR) > 0)
+	{
+		material.GetTexture(aiTextureType_SPECULAR, 0, &specularTexture);
+		SetTexture(scene, textures, mTextures[SLOT_SPECULAR], specularTexture.C_Str());
+	}
+	else
+	{
+		SetDefaultTexture(scene, textures, mTextures[SLOT_SPECULAR], DEFAULT_SPECULAR_TEXTURE_NAME);
+	}
 
 	aiString normalTexture;
 	if (material.GetTextureCount(aiTextureType_NORMALS) > 0)

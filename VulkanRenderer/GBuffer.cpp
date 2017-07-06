@@ -64,6 +64,7 @@ void GBuffer::CreateImages()
 	CreateAttachment(GB_POSITION, VK_FORMAT_R16G16B16A16_SFLOAT);
 	CreateAttachment(GB_NORMAL, VK_FORMAT_R16G16B16A16_SFLOAT);
 	CreateAttachment(GB_COLOR, VK_FORMAT_R8G8B8A8_UNORM);
+	CreateAttachment(GB_SPECULAR, VK_FORMAT_R8G8B8A8_UNORM);
 }
 
 void GBuffer::CreateSampler()

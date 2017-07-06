@@ -242,6 +242,8 @@ void Renderer::PreparePresentation()
 
 void Renderer::Render()
 {
+	UpdateDeferredUniformBuffer();
+
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
@@ -816,6 +818,13 @@ void Renderer::CreateDeferredUniformBuffer()
 
 void Renderer::UpdateDeferredUniformBuffer()
 {
+	// Update the camera
+	if (mScene != nullptr &&
+		mScene->GetActiveCamera() != nullptr)
+	{
+		mDeferredUniformData.mViewPosition = glm::vec4(mScene->GetActiveCamera()->GetPosition(), 1.0f);
+	}
+
 	void* data;
 	vkMapMemory(mDevice, mDeferredUniformBufferMemory, 0, sizeof(DeferredUniformBuffer), 0, &data);
 	memcpy(data, &mDeferredUniformData, sizeof(DeferredUniformBuffer));
@@ -857,7 +866,7 @@ void Renderer::CreateDeferredDescriptorSet()
 		descriptorWrite[i].pImageInfo = &imageInfo[i];
 	}
 
-	vkUpdateDescriptorSets(mDevice, 3, descriptorWrite, 0, nullptr);
+	vkUpdateDescriptorSets(mDevice, GB_COUNT, descriptorWrite, 0, nullptr);
 
 	// Update the uniform buffer descriptor
 	VkDescriptorBufferInfo bufferInfo = {};
@@ -947,7 +956,7 @@ void Renderer::CreateCommandBuffers()
 		VkClearValue clearValues[GB_COUNT + 2] = {};
 		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		clearValues[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = 5;
+		renderPassInfo.clearValueCount = GB_COUNT + 2;
 		renderPassInfo.pClearValues = clearValues;
 
 		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
