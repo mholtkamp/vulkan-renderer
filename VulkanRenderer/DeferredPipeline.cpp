@@ -32,7 +32,6 @@ void DeferredPipeline::PopulateLayoutBindings()
 
 LightPipeline::LightPipeline()
 {
-	//mPolygonMode = VK_POLYGON_MODE_LINE;
 	mVertexShaderPath = "Shaders/bin/lightShader.vert";
 	mFragmentShaderPath = "Shaders/bin/lightShader.frag";
 	mBlendEnabled = true;
