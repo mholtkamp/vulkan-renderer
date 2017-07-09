@@ -13,9 +13,7 @@
 #include "Scene.h"
 
 #include "Pipeline.h"
-#include "EarlyDepthPipeline.h"
-#include "GeometryPipeline.h"
-#include "DeferredPipeline.h"
+#include "PipelineConfigs.h"
 #include "GBuffer.h"
 
 struct DeferredUniformBuffer

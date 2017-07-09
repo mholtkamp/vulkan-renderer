@@ -133,10 +133,7 @@
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
-    <ClCompile Include="DeferredPipeline.cpp" />
-    <ClCompile Include="EarlyDepthPipeline.cpp" />
     <ClCompile Include="GBuffer.cpp" />
-    <ClCompile Include="GeometryPipeline.cpp" />
     <ClCompile Include="LightSpawn.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Material.cpp" />
@@ -158,11 +155,8 @@
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DebugActionHandler.h" />
-    <ClInclude Include="DeferredPipeline.h" />
-    <ClInclude Include="EarlyDepthPipeline.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="GBuffer.h" />
-    <ClInclude Include="GeometryPipeline.h" />
     <ClInclude Include="LightSpawner.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Mesh.h" />
