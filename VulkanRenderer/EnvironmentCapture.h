@@ -30,17 +30,20 @@ private:
 
 	void CreateFramebuffer();
 
+	void CreateImageViews();
+
 private:
 
 	static VkRenderPass sRenderPass;
 
-	VkFramebuffer mFramebuffer;
-
 	VkImage mImage;
 	VkDeviceMemory mImageMemory;
-	VkImageView mImageView;
+	VkImageView mCubemapImageView;
 	VkSampler mSampler;
 	uint32_t mCapturedResolution;
+
+	std::array<VkImageView, 6> mFaceImageViews;
+	std::array<VkFramebuffer, 6> mFramebuffers;
 
 	glm::vec3 mPosition;
 

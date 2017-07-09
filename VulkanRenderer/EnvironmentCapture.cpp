@@ -8,12 +8,15 @@ EnvironmentCapture::EnvironmentCapture() :
 	mFramebuffer(VK_NULL_HANDLE),
 	mImage(VK_NULL_HANDLE),
 	mImageMemory(VK_NULL_HANDLE),
-	mImageView(VK_NULL_HANDLE),
+	mCubemapImageView(VK_NULL_HANDLE),
 	mSampler(VK_NULL_HANDLE),
 	mResolution(DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION),
 	mCapturedResolution(0)
 {
-
+	for (VkImageView& view : mFaceImageViews)
+	{
+		view = VK_NULL_HANDLE;
+	}
 }
 
 EnvironmentCapture::~EnvironmentCapture()
@@ -63,21 +66,28 @@ void EnvironmentCapture::DestroyCubemap()
 
 	if (mImage != VK_NULL_HANDLE)
 	{
-		assert(mImageView != VK_NULL_HANDLE);
+		assert(mCubemapImageView != VK_NULL_HANDLE);
 		assert(mImageMemory != VK_NULL_HANDLE);
 		assert(mSampler != VK_NULL_HANDLE);
 
 		vkDestroyImage(device, mImage, nullptr);
 		mImage = VK_NULL_HANDLE;
 
-		vkDestroyImageView(device, mImageView, nullptr);
-		mImageView = VK_NULL_HANDLE;
+		vkDestroyImageView(device, mCubemapImageView, nullptr);
+		mCubemapImageView = VK_NULL_HANDLE;
 
 		vkDestroySampler(device, mSampler, nullptr);
 		mSampler = VK_NULL_HANDLE;
 
 		vkFreeMemory(device, mImageMemory, nullptr);
 		mImageMemory = VK_NULL_HANDLE;
+
+		for (VkImageView& view : mFaceImageViews)
+		{
+			assert(view != VK_NULL_HANDLE);
+			vkDestroyImageView(device, view, nullptr);
+			view = VK_NULL_HANDLE;
+		}
 	}
 }
 
@@ -142,7 +152,7 @@ void EnvironmentCapture::CreateCubemap()
 
 	Texture::TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-	mImageView = Texture::CreateImageView(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	CreateImageViews();
 
 	VkSamplerCreateInfo ciSampler = {};
 	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -174,5 +184,66 @@ void EnvironmentCapture::DestroyFramebuffer()
 
 void EnvironmentCapture::CreateFramebuffer()
 {
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+	VkRenderPass renderPass = renderer->GetRenderPass();
 
+	for (uint32_t i = 0; i < 6; ++i)
+	{
+		std::vector<VkImageView> attachments;
+		attachments.push_back(mFaceImageViews[i]);
+		attachments.push_back(renderer->GetDepthImageView());
+	}
+}
+
+void EnvironmentCapture::CreateImageViews()
+{
+	// Create the cubemap image view first
+	VkDevice device = Renderer::Get()->GetDevice();
+
+	VkImageViewCreateInfo viewInfo = {};
+	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	viewInfo.image = mImage;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
+	viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	viewInfo.subresourceRange.baseMipLevel = 0;
+	viewInfo.subresourceRange.levelCount = 1;
+	viewInfo.subresourceRange.baseArrayLayer = 0;
+	viewInfo.subresourceRange.layerCount = 6;
+
+	if (vkCreateImageView(device, &viewInfo, nullptr, &mCubemapImageView) != VK_SUCCESS)
+	{
+		throw std::exception("Failed to create texture image view");
+	}
+
+	// Now create individual image views 
+	for (uint32_t i = 0; i < 6; ++i)
+	{
+		VkImageViewCreateInfo ciImageView = {};
+		ciImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		ciImageView.image = mImage;
+		ciImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		ciImageView.format = VK_FORMAT_R8G8B8A8_UNORM;
+		ciImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		ciImageView.subresourceRange.baseMipLevel = 0;
+		ciImageView.subresourceRange.levelCount = 1;
+		ciImageView.subresourceRange.baseArrayLayer = i;
+		ciImageView.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(device, &viewInfo, nullptr, &mFaceImageViews[i]) != VK_SUCCESS)
+		{
+			throw std::exception("Failed to create texture image view");
+		}
+	}
+}
+
+void EnvironmentCapture::CreateRenderPass()
+{
+	//if (sRenderPass != VK_NULL_HANDLE)
+	//{
+	//	return;
+	//}
+
+	
 }

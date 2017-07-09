@@ -133,6 +133,7 @@
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
+    <ClCompile Include="EnvironmentCapture.cpp" />
     <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="LightSpawn.cpp" />
     <ClCompile Include="Main.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DebugActionHandler.h" />
     <ClInclude Include="Enums.h" />
+    <ClInclude Include="EnvironmentCapture.h" />
     <ClInclude Include="GBuffer.h" />
     <ClInclude Include="LightSpawner.h" />
     <ClInclude Include="Material.h" />
