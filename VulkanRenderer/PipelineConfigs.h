@@ -141,6 +141,7 @@ public:
 
 	virtual void PopulateLayoutBindings() override
 	{
+		PushSet();
 
 	}
 };

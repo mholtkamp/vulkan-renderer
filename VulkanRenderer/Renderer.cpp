@@ -633,13 +633,6 @@ void Renderer::CreateRenderPass()
 	// Lighting input attachment references
 	std::vector<VkAttachmentReference> geometryInputAttachmentReference;
 
-	//depthGeometryAttachmentReference.push_back(
-	//	{
-	//		ATTACHMENT_DEPTH,
-	//		VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL
-	//	}
-	//);
-
 	for (uint32_t i = 0; i < GB_COUNT; ++i)
 	{
 		geometryInputAttachmentReference.push_back(

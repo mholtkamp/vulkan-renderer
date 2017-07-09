@@ -194,7 +194,7 @@ void Texture::CreateTextureSampler()
 	ciSampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	ciSampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	ciSampler.anisotropyEnable = VK_FALSE;
-	ciSampler.maxAnisotropy = 1;
+	ciSampler.maxAnisotropy = 1.0f;
 	ciSampler.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	ciSampler.unnormalizedCoordinates = VK_FALSE;
 	ciSampler.compareEnable = VK_FALSE;
