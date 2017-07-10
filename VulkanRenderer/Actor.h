@@ -10,6 +10,7 @@ struct GeometryUniformBuffer
 	glm::mat4 mWVPMatrix;
 	glm::mat4 mWorldMatrix;
 	glm::mat4 mNormalMatrix;
+	float mReflectivity;
 };
 
 class Actor

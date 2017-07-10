@@ -20,8 +20,10 @@ public:
 
 	virtual void PopulateLayoutBindings() override
 	{
+		Pipeline::PopulateLayoutBindings();
+
 		PushSet();
-		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Add texture sampler descriptors for each texture slot
 		for (int32_t i = 0; i < SLOT_COUNT; ++i)
@@ -49,8 +51,10 @@ public:
 
 	virtual void PopulateLayoutBindings() override
 	{
+		Pipeline::PopulateLayoutBindings();
+
 		PushSet();
-		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 
 		// Add texture sampler descriptors for each texture slot
 		for (int32_t i = 0; i < SLOT_COUNT; ++i)
@@ -76,8 +80,9 @@ public:
 
 	virtual void PopulateLayoutBindings() override
 	{
+		Pipeline::PopulateLayoutBindings();
+
 		PushSet();
-		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT); // Uniform buffer
 		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT); // Position texture
 		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT); // Normal texture
 		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT); // Color texture

@@ -25,6 +25,10 @@ public:
 
 	void UpdateDescriptorSets(VkDescriptorSet descriptorSet);
 
+	float GetReflectivity();
+
+	void SetReflectivity(float reflectivity);
+
 private:
 
 	void SetTexture(const class Scene& scene,
@@ -41,6 +45,8 @@ private:
 
 	glm::vec4 mDiffuseColor;
 	glm::vec4 mSpecularColor;
+
+	float mReflectivity;
 
 	Texture* mTextures[SLOT_COUNT];
 };

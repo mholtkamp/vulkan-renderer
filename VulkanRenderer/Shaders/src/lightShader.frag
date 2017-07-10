@@ -1,12 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout (set = 0, binding = 1) uniform sampler2D samplerPosition;
-layout (set = 0, binding = 2) uniform sampler2D samplerNormal;
-layout (set = 0, binding = 3) uniform sampler2D samplerColor;
-layout (set = 0, binding = 4) uniform sampler2D samplerSpecularColor;
-
-layout (set = 0, binding = 0) uniform DeferredUniformBuffer
+layout (set = 0, binding = 0) uniform GlobalUniformBuffer
 {
     vec4 mSunDirection;
     vec4 mSunColor;
@@ -15,7 +10,12 @@ layout (set = 0, binding = 0) uniform DeferredUniformBuffer
     int mVisualizationMode;
 } ubo;
 
-layout(set = 1, binding = 0) uniform LightUniformBuffer
+layout (set = 1, binding = 0) uniform sampler2D samplerPosition;
+layout (set = 1, binding = 1) uniform sampler2D samplerNormal;
+layout (set = 1, binding = 2) uniform sampler2D samplerColor;
+layout (set = 1, binding = 3) uniform sampler2D samplerSpecularColor;
+
+layout(set = 2, binding = 0) uniform LightUniformBuffer
 {
     mat4 mWVP;
     vec4 mPosition;

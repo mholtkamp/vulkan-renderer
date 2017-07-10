@@ -7,7 +7,7 @@ layout (location = 2) in vec3 inNormal;
 
 layout (location = 0) out vec2 outTexcoord;
 
-layout(set = 1, binding = 0) uniform LightUniformBuffer
+layout(set = 2, binding = 0) uniform LightUniformBuffer
 {
     mat4 mWVP;
     vec4 mPosition;

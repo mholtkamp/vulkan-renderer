@@ -10,7 +10,8 @@ using namespace std;
 Material::Material() :
 	mName("Material"),
 	mDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f),
-	mSpecularColor(1.0f, 1.0f, 1.0f, 1.0f)
+	mSpecularColor(1.0f, 1.0f, 1.0f, 1.0f),
+	mReflectivity(0.0f)
 {
 	for (uint32_t i = 0; i < SLOT_COUNT; ++i)
 	{
@@ -49,6 +50,13 @@ void Material::Create(const Scene& scene,
 		mSpecularColor.g = specularColor.g;
 		mSpecularColor.b = specularColor.b;
 		mSpecularColor.a = 1.0f;
+	}
+
+	float shininess = 0.0f;
+	if (material.Get(AI_MATKEY_SHININESS, shininess) == aiReturn_SUCCESS)
+	{
+		mReflectivity = shininess;
+		mReflectivity = 0.0f;
 	}
 
 	aiString diffuseTexture;
@@ -156,4 +164,14 @@ void Material::SetDefaultTexture(const Scene& scene,
 	{
 		texture = &textures[name];
 	}
+}
+
+float Material::GetReflectivity()
+{
+	return mReflectivity;
+}
+
+void Material::SetReflectivity(float reflectivity)
+{
+	mReflectivity = reflectivity;
 }

@@ -104,7 +104,7 @@ void EnvironmentCapture::Capture()
 		//  Light Pass
 		// ******************
 		renderer->GetLightPipeline().BindPipeline(commandBuffer);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
 		mScene->RenderLightVolumes(commandBuffer);
 
 		vkCmdEndRenderPass(commandBuffer);

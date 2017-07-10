@@ -34,7 +34,7 @@ protected:
 
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 
-	virtual void PopulateLayoutBindings() = 0;
+	virtual void PopulateLayoutBindings();
 	void CreateDescriptorSetLayouts();
 	void CreatePipelineLayout();
 

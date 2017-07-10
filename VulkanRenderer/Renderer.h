@@ -16,7 +16,7 @@
 #include "PipelineConfigs.h"
 #include "GBuffer.h"
 
-struct DeferredUniformBuffer
+struct GlobalUniformBuffer
 {
 	glm::vec4 mSunDirection;
 	glm::vec4 mSunColor;
@@ -109,7 +109,7 @@ public:
 
 	GBuffer& GetGBuffer();
 
-	VkDescriptorSet& GetDeferredDescriptorSet();
+	VkDescriptorSet& GetGlobalDescriptorSet();
 
 private:
 
@@ -136,11 +136,11 @@ private:
 
 	void CreateGBuffer();
 
-	void CreateDeferredUniformBuffer();
+	void CreateGlobalUniformBuffer();
 
-	void UpdateDeferredUniformBuffer();
+	void UpdateGlobalUniformBuffer();
 
-	void CreateDeferredDescriptorSet();
+	void CreateGlobalDescriptorSet();
 
 	void CreateRenderPass();
 
@@ -222,11 +222,13 @@ private:
 	LightPipeline mLightPipeline;
 	DebugDeferredPipeline mDebugDeferredPipeline;
 
-	VkDescriptorSet mDeferredDescriptorSet;
-	VkBuffer mDeferredUniformBuffer;
-	VkDeviceMemory mDeferredUniformBufferMemory;
+	VkDescriptorSet mGlobalDescriptorSet;
+	VkBuffer mGlobalUniformBuffer;
+	VkDeviceMemory mGlobalUniformBufferMemory;
 
-	DeferredUniformBuffer mDeferredUniformData;
+	VkDescriptorSet mDeferredDescriptorSet;
+
+	GlobalUniformBuffer mGlobalUniformData;
 
 	GBuffer mGBuffer;
 

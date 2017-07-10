@@ -48,10 +48,10 @@ Renderer::Renderer() :
 	mDebugMode(false),
 	mInitialized(false)
 {
-	mDeferredUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-	mDeferredUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
-	mDeferredUniformData.mScreenDimensions = glm::vec2(800.0f, 600.0f);
-	mDeferredUniformData.mVisualizationMode = 0;
+	mGlobalUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+	mGlobalUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
+	mGlobalUniformData.mScreenDimensions = glm::vec2(800.0f, 600.0f);
+	mGlobalUniformData.mVisualizationMode = 0;
 }
 
 void Renderer::Create()
@@ -108,9 +108,9 @@ void Renderer::DestroySwapchain()
 	vkDestroyImageView(mDevice, mDepthImageView, nullptr);
 	vkFreeMemory(mDevice, mDepthImageMemory, nullptr);
 
-	vkDestroyBuffer(mDevice, mDeferredUniformBuffer, nullptr);
-	vkFreeMemory(mDevice, mDeferredUniformBufferMemory, nullptr);
-	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mDeferredDescriptorSet);
+	vkDestroyBuffer(mDevice, mGlobalUniformBuffer, nullptr);
+	vkFreeMemory(mDevice, mGlobalUniformBufferMemory, nullptr);
+	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mGlobalDescriptorSet);
 
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
 	{
@@ -156,7 +156,7 @@ void Renderer::Initialize()
 	CreateRenderPass();
 	CreatePipelines();
 	mGBuffer.CreateSampler();
-	CreateDeferredDescriptorSet();
+	CreateGlobalDescriptorSet();
 	CreateFramebuffers();
 	
 	CreateCommandBuffers();
@@ -233,7 +233,7 @@ void Renderer::CreateSwapchain()
 	mSwapchainImageFormat = surfaceFormat.format;
 	mSwapchainExtent = extent;
 
-	mDeferredUniformData.mScreenDimensions = glm::vec2(extent.width, extent.height);
+	mGlobalUniformData.mScreenDimensions = glm::vec2(extent.width, extent.height);
 }
 
 void Renderer::PreparePresentation()
@@ -243,7 +243,7 @@ void Renderer::PreparePresentation()
 
 void Renderer::Render()
 {
-	UpdateDeferredUniformBuffer();
+	UpdateGlobalUniformBuffer();
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -813,38 +813,46 @@ void Renderer::CreateGBuffer()
 	mGBuffer.Create();
 }
 
-void Renderer::CreateDeferredUniformBuffer()
+void Renderer::CreateGlobalUniformBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(DeferredUniformBuffer);
-	CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mDeferredUniformBuffer, mDeferredUniformBufferMemory);
-	UpdateDeferredUniformBuffer();
+	VkDeviceSize bufferSize = sizeof(GlobalUniformBuffer);
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mGlobalUniformBuffer, mGlobalUniformBufferMemory);
+	UpdateGlobalUniformBuffer();
 }
 
-void Renderer::UpdateDeferredUniformBuffer()
+void Renderer::UpdateGlobalUniformBuffer()
 {
 	// Update the camera
 	if (mScene != nullptr &&
 		mScene->GetActiveCamera() != nullptr)
 	{
-		mDeferredUniformData.mViewPosition = glm::vec4(mScene->GetActiveCamera()->GetPosition(), 1.0f);
+		mGlobalUniformData.mViewPosition = glm::vec4(mScene->GetActiveCamera()->GetPosition(), 1.0f);
 	}
 
 	void* data;
-	vkMapMemory(mDevice, mDeferredUniformBufferMemory, 0, sizeof(DeferredUniformBuffer), 0, &data);
-	memcpy(data, &mDeferredUniformData, sizeof(DeferredUniformBuffer));
-	vkUnmapMemory(mDevice, mDeferredUniformBufferMemory);
+	vkMapMemory(mDevice, mGlobalUniformBufferMemory, 0, sizeof(GlobalUniformBuffer), 0, &data);
+	memcpy(data, &mGlobalUniformData, sizeof(GlobalUniformBuffer));
+	vkUnmapMemory(mDevice, mGlobalUniformBufferMemory);
 }
 
-void Renderer::CreateDeferredDescriptorSet()
+void Renderer::CreateGlobalDescriptorSet()
 {
-	CreateDeferredUniformBuffer();
+	CreateGlobalUniformBuffer();
 
-	VkDescriptorSetLayout layouts[] = { mLightPipeline.GetDescriptorSetLayout() };
+	VkDescriptorSetLayout layouts[] = { mGeometryPipeline.GetDescriptorSetLayout(0)};
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = mDescriptorPool;
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = layouts;
+
+	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mGlobalDescriptorSet) != VK_SUCCESS)
+	{
+		throw exception("Failed to create descriptor set");
+	}
+
+	VkDescriptorSetLayout deferredLayouts[] = { mLightPipeline.GetDescriptorSetLayout(1) };
+	allocInfo.pSetLayouts = deferredLayouts;
 
 	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mDeferredDescriptorSet) != VK_SUCCESS)
 	{
@@ -874,14 +882,14 @@ void Renderer::CreateDeferredDescriptorSet()
 
 	// Update the uniform buffer descriptor
 	VkDescriptorBufferInfo bufferInfo = {};
-	bufferInfo.buffer = mDeferredUniformBuffer;
-	bufferInfo.range = sizeof(DeferredUniformBuffer);
+	bufferInfo.buffer = mGlobalUniformBuffer;
+	bufferInfo.range = sizeof(GlobalUniformBuffer);
 	bufferInfo.offset = 0;
 
 	VkWriteDescriptorSet bufferWrite = {};
 	bufferWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	bufferWrite.dstSet = mDeferredDescriptorSet;
-	bufferWrite.dstBinding = DD_UNIFORM_BUFFER;
+	bufferWrite.dstSet = mGlobalDescriptorSet;
+	bufferWrite.dstBinding = 0;
 	bufferWrite.dstArrayElement = 0;
 	bufferWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	bufferWrite.descriptorCount = 1;
@@ -899,7 +907,7 @@ void Renderer::CreateCommandPool()
 	VkCommandPoolCreateInfo ciCommandPool = {};
 	ciCommandPool.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	ciCommandPool.queueFamilyIndex = queueFamilyIndices.mGraphicsFamily;
-	ciCommandPool.flags = 0;
+	ciCommandPool.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	if (vkCreateCommandPool(mDevice, &ciCommandPool, nullptr, &mCommandPool))
 	{
@@ -976,6 +984,7 @@ void Renderer::CreateCommandBuffers()
 		//  Geometry Pass
 		// ******************
 		mGeometryPipeline.BindPipeline(mCommandBuffers[i]);
+		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGeometryPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
 		mScene->RenderGeometry(mCommandBuffers[i]);
 		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
 
@@ -985,13 +994,15 @@ void Renderer::CreateCommandBuffers()
 		if (mDebugMode)
 		{
 			mDebugDeferredPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
 			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
 		}
 		else
 		{
 			mLightPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
 			mScene->RenderLightVolumes(mCommandBuffers[i]);
 		}
 
@@ -1135,7 +1146,7 @@ void Renderer::RecreateSwapchain()
 	CreateRenderPass();
 	CreatePipelines();
 	CreateFramebuffers();
-	CreateDeferredDescriptorSet();
+	CreateGlobalDescriptorSet();
 	CreateCommandBuffers();
 }
 
@@ -1165,9 +1176,9 @@ Pipeline& Renderer::GetDeferredPipeline()
 	//return mDeferredPipeline;
 }
 
-VkDescriptorSet& Renderer::GetDeferredDescriptorSet()
+VkDescriptorSet& Renderer::GetGlobalDescriptorSet()
 {
-	return mDeferredDescriptorSet;
+	return mGlobalDescriptorSet;
 }
 
 uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -1428,21 +1439,21 @@ void Renderer::SetVisualizationMode(int32_t mode)
 {
 	assert(mode >= -1);
 	assert(mode < GB_COUNT);
-	mDeferredUniformData.mVisualizationMode = mode;
-	UpdateDeferredUniformBuffer();
+	mGlobalUniformData.mVisualizationMode = mode;
+	UpdateGlobalUniformBuffer();
 }
 
 void Renderer::SetDirectionalLightColor(glm::vec4 color)
 {
-	mDeferredUniformData.mSunColor = color;
-	UpdateDeferredUniformBuffer();
+	mGlobalUniformData.mSunColor = color;
+	UpdateGlobalUniformBuffer();
 }
 
 void Renderer::SetDirectionalLightDirection(glm::vec3 direction)
 {
 	direction = glm::normalize(direction);
-	mDeferredUniformData.mSunDirection = glm::vec4(direction, 0.0);
-	UpdateDeferredUniformBuffer();
+	mGlobalUniformData.mSunDirection = glm::vec4(direction, 0.0);
+	UpdateGlobalUniformBuffer();
 }
 
 void Renderer::CreatePipelines()
@@ -1456,6 +1467,6 @@ void Renderer::CreatePipelines()
 void Renderer::SetDebugMode(bool mode)
 {
 	mDebugMode = mode;
-	UpdateDeferredUniformBuffer();
+	UpdateGlobalUniformBuffer();
 	CreateCommandBuffers();
 }

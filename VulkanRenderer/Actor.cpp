@@ -61,7 +61,7 @@ void Actor::CreateDescriptorSet()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	VkDescriptorSetLayout layouts[] = { renderer->GetGeometryPipeline().GetDescriptorSetLayout() };
+	VkDescriptorSetLayout layouts[] = { renderer->GetGeometryPipeline().GetDescriptorSetLayout(1) };
 	VkDescriptorSetAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = renderer->GetDescriptorPool();
@@ -108,7 +108,7 @@ void Actor::Draw(VkCommandBuffer commandBuffer)
 		vkCmdBindDescriptorSets(commandBuffer,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			geometryPipeline.GetPipelineLayout(),
-			0,
+			1,
 			1,
 			&mDescriptorSet,
 			0,
@@ -137,6 +137,7 @@ void Actor::UpdateUniformBuffer(Camera* camera, float deltaTime)
 	ubo.mWVPMatrix = camera->GetViewProjectionMatrix() * mWorldMatrix;
 	ubo.mWorldMatrix = mWorldMatrix;
 	ubo.mNormalMatrix = glm::transpose(glm::inverse(mWorldMatrix));
+	ubo.mReflectivity = mMesh->GetMaterial()->GetReflectivity();
 
 	void* data;
 	vkMapMemory(device, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);

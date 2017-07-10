@@ -8,9 +8,27 @@ layout(location = 3) in vec3 inTangent;
 layout(location = 4) in vec3 inBitangent;
 layout(location = 5) in mat3 inTBN;
 
-layout(set = 0, binding = 1) uniform sampler2D diffuseSampler;
-layout(set = 0, binding = 2) uniform sampler2D specularSampler;
-layout(set = 0, binding = 3) uniform sampler2D normalSampler;
+layout(set = 1, binding = 0) uniform GeometryUniformBuffer 
+{
+    mat4 mWVP;
+    mat4 mWorldMatrix;
+    mat4 mNormalMatrix;
+    float mReflectivity;
+} uboGeometry;
+
+layout(set = 1, binding = 1) uniform sampler2D diffuseSampler;
+layout(set = 1, binding = 2) uniform sampler2D specularSampler;
+layout(set = 1, binding = 3) uniform sampler2D normalSampler;
+layout(set = 1, binding = 4) uniform samplerCube environmentSampler;
+
+layout (set = 0, binding = 0) uniform GlobalUniformBuffer
+{
+    vec4 mSunDirection;
+    vec4 mSunColor;
+    vec4 mViewPosition;
+    vec2 mScreenDimensions;
+    int mVisualizationMode;
+} ubo;
 
 layout(location = 0) out vec4 outPosition;
 layout(location = 1) out vec4 outNormal;
@@ -31,4 +49,11 @@ void main()
     {
         discard;
     }
+    
+    vec3 incident = normalize(inPosition - ubo.mViewPosition.xyz);
+    vec3 reflection = reflect(incident, outNormal.xyz);
+    vec4 environmentColor = vec4(texture(environmentSampler, reflection).rgb, 1.0);
+    outColor = mix(outColor, environmentColor, uboGeometry.mReflectivity);
+    
+
 }
