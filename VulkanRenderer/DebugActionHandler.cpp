@@ -5,7 +5,9 @@
 #include <Windows.h>
 
 DebugActionHandler::DebugActionHandler() :
-	mGBufferViewMode(GB_COUNT)
+	mGBufferViewMode(GB_COUNT),
+	mEnvironmentCapture(0),
+	mEnvironmentCaptureFace(0)
 {
 
 }
@@ -44,12 +46,18 @@ void DebugActionHandler::Update()
 	if (GetAsyncKeyState(VK_CONTROL) &&
 		GetAsyncKeyState(VK_TAB))
 	{
-		Renderer::Get()->SetDebugMode(true);
+		Renderer::Get()->SetDebugMode(DEBUG_GBUFFER);
 	}
 
 	if (GetAsyncKeyState(VK_CONTROL) &&
 		GetAsyncKeyState(VK_SHIFT))
 	{
-		Renderer::Get()->SetDebugMode(false);
+		Renderer::Get()->SetDebugMode(DEBUG_NONE);
+	}
+
+	if (GetAsyncKeyState(VK_CONTROL) &&
+		GetAsyncKeyState('F'))
+	{
+		Renderer::Get()->SetDebugMode(DEBUG_ENVIRONMENT_CAPTURE);
 	}
 }

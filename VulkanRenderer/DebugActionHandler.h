@@ -20,4 +20,7 @@ private:
 
 	GBufferIndex mGBufferViewMode;
 
+	uint32_t mEnvironmentCapture;
+	uint32_t mEnvironmentCaptureFace;
+
 };

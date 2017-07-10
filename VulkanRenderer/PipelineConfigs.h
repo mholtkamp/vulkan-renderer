@@ -13,6 +13,7 @@ public:
 	{
 		mRasterizerDiscard = VK_FALSE;
 		mFragmentShaderPath = "";
+		mVertexShaderPath = "Shaders/bin/depthShader.vert";
 		mSubpass = PASS_DEPTH;
 
 		mBlendAttachments.clear();
@@ -41,6 +42,8 @@ public:
 	{
 		mSubpass = PASS_GEOMETRY;
 		mDepthCompareOp = VK_COMPARE_OP_EQUAL;
+		mVertexShaderPath = "Shaders/bin/geometryShader.vert";
+		mFragmentShaderPath = "Shaders/bin/geometryShader.frag";
 
 		// Add blend states for each attachment (1 already created).
 		for (int32_t i = 0; i < GB_COUNT - 1; ++i)
@@ -61,6 +64,17 @@ public:
 		{
 			AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 		}
+	}
+};
+
+class ReflectiveGeometryPipeline : public GeometryPipeline
+{
+public:
+
+	ReflectiveGeometryPipeline()
+	{
+		mVertexShaderPath = "Shaders/bin/reflectiveGeometryShader.vert";
+		mFragmentShaderPath = "Shaders/bin/reflectiveGeometryShader.frag";
 	}
 };
 
@@ -135,18 +149,21 @@ public:
 	}
 };
 
-class EnvironmentCapturePipeline : public Pipeline
+class EnvironmentCaptureDebugPipeline : public DeferredPipeline
 {
 public:
 
-	EnvironmentCapturePipeline()
+	EnvironmentCaptureDebugPipeline()
 	{
-
+		mFragmentShaderPath = "Shaders/bin/environmentCaptureDebug.frag";
 	}
 
 	virtual void PopulateLayoutBindings() override
 	{
+		DeferredPipeline::PopulateLayoutBindings();
+
 		PushSet();
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	}
 };

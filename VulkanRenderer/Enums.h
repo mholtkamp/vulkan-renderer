@@ -77,3 +77,10 @@ enum class ProjectionMode
 	ORTHOGRAPHIC,
 	PERSPECTIVE
 };
+
+enum DebugMode
+{
+	DEBUG_NONE,
+	DEBUG_GBUFFER,
+	DEBUG_ENVIRONMENT_CAPTURE
+};

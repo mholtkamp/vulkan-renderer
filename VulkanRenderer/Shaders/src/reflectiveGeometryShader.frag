@@ -19,6 +19,7 @@ layout(set = 1, binding = 0) uniform GeometryUniformBuffer
 layout(set = 1, binding = 1) uniform sampler2D diffuseSampler;
 layout(set = 1, binding = 2) uniform sampler2D specularSampler;
 layout(set = 1, binding = 3) uniform sampler2D normalSampler;
+layout(set = 1, binding = 4) uniform samplerCube environmentSampler;
 
 layout (set = 0, binding = 0) uniform GlobalUniformBuffer
 {
@@ -48,4 +49,11 @@ void main()
     {
         discard;
     }
+    
+    vec3 incident = normalize(inPosition - ubo.mViewPosition.xyz);
+    vec3 reflection = reflect(incident, outNormal.xyz);
+    vec4 environmentColor = vec4(texture(environmentSampler, reflection).rgb, 1.0);
+    outColor = mix(outColor, environmentColor, uboGeometry.mReflectivity);
+    
+
 }

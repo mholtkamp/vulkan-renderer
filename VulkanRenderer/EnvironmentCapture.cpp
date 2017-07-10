@@ -10,6 +10,7 @@ EnvironmentCapture::EnvironmentCapture() :
 	mImageMemory(VK_NULL_HANDLE),
 	mCubemapImageView(VK_NULL_HANDLE),
 	mSampler(VK_NULL_HANDLE),
+	mFaceSampler(VK_NULL_HANDLE),
 	mDepthImage(VK_NULL_HANDLE),
 	mDepthImageMemory(VK_NULL_HANDLE),
 	mDepthImageView(VK_NULL_HANDLE),
@@ -66,6 +67,7 @@ void EnvironmentCapture::Capture()
 	for (VkFramebuffer& framebuffer : mFramebuffers)
 	{
 		// Update scene using new camera
+		cameras[i].Update();
 		mScene->SetActiveCamera(&cameras[i]);
 		mScene->Update(0.0f);
 
@@ -97,6 +99,7 @@ void EnvironmentCapture::Capture()
 		//  Geometry Pass
 		// ******************
 		renderer->GetGeometryPipeline().BindPipeline(commandBuffer);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetGeometryPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
 		mScene->RenderGeometry(commandBuffer);
 		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -105,6 +108,7 @@ void EnvironmentCapture::Capture()
 		// ******************
 		renderer->GetLightPipeline().BindPipeline(commandBuffer);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 1, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
 		mScene->RenderLightVolumes(commandBuffer);
 
 		vkCmdEndRenderPass(commandBuffer);
@@ -127,7 +131,7 @@ void EnvironmentCapture::SetupCaptureCameras(std::array<Camera, 6>& cameras)
 		cameras[i].SetPerspectiveSettings(90.0f, 1.0f, 0.1f, 1024.0f);
 	}
 
-	float rightAngle = glm::radians(90.0f);
+	float rightAngle = 90.0f;
 
 	cameras[0].SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	cameras[1].SetRotation(glm::vec3(0.0f, rightAngle, 0.0f));
@@ -165,6 +169,7 @@ void EnvironmentCapture::DestroyCubemap()
 		assert(mCubemapImageView != VK_NULL_HANDLE);
 		assert(mImageMemory != VK_NULL_HANDLE);
 		assert(mSampler != VK_NULL_HANDLE);
+		assert(mFaceSampler != VK_NULL_HANDLE);
 		assert(mDepthImage != VK_NULL_HANDLE);
 		assert(mDepthImageMemory != VK_NULL_HANDLE);
 		assert(mDepthImageView != VK_NULL_HANDLE);
@@ -187,6 +192,9 @@ void EnvironmentCapture::DestroyCubemap()
 			vkDestroyImageView(device, view, nullptr);
 			view = VK_NULL_HANDLE;
 		}
+
+		vkDestroySampler(device, mFaceSampler, nullptr);
+		mFaceSampler = VK_NULL_HANDLE;
 
 		vkDestroyImage(device, mDepthImage, nullptr);
 		mDepthImage = VK_NULL_HANDLE;
@@ -271,11 +279,28 @@ void EnvironmentCapture::CreateCubemap()
 		throw std::exception("Failed to create texture sampler");
 	}
 
+	if (vkCreateSampler(device, &ciSampler, nullptr, &mFaceSampler) != VK_SUCCESS)
+	{
+		throw std::exception("Failed to create individual face sampler.");
+	}
+
 	CreateDepthImage();
 
 	CreateImageViews();
 
 	vkDeviceWaitIdle(device);
+}
+
+VkImageView EnvironmentCapture::GetFaceImageView(uint32_t index)
+{
+	assert(index >= 0);
+	assert(index < 6);
+	return mFaceImageViews[index];
+}
+
+VkSampler EnvironmentCapture::GetFaceSampler()
+{
+	return mFaceSampler;
 }
 
 void EnvironmentCapture::CreateDepthImage()
@@ -414,4 +439,26 @@ void EnvironmentCapture::CreateRenderPass()
 	//}
 
 	
+}
+
+void EnvironmentCapture::UpdateDesriptorSet(VkDescriptorSet descriptorSet)
+{
+	VkDevice device = Renderer::Get()->GetDevice();
+
+	VkDescriptorImageInfo imageInfo = {};
+	VkWriteDescriptorSet descriptorWrite = {};
+
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.imageView = mCubemapImageView;
+	imageInfo.sampler = mSampler;
+
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstBinding = AD_TEXTURE_ENVIRONMENT;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pImageInfo = &imageInfo;
+
+	vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 }

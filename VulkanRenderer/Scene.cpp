@@ -1,6 +1,7 @@
 #include "Scene.h"
 #include "Camera.h"
 #include "Constants.h"
+#include "Renderer.h"
 #include <map>
 
 using namespace std;
@@ -93,12 +94,12 @@ void Scene::UpdateDebug(float deltaTime)
 
 	static bool cDown = false;
 	if (GetAsyncKeyState('C') &&
-		GetAsyncKeyState(VK_CONTROL) &&
-		GetAsyncKeyState(VK_SHIFT))
+		GetAsyncKeyState(VK_CONTROL))
 	{
 		if (!cDown)
 		{
 			CaptureEnvironment();
+			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		cDown = true;
@@ -320,4 +321,14 @@ void Scene::SpawnTestEnvironmentCapture()
 	testCapture.SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
 	mEnvironmentCaptures.push_back(testCapture);
 	mEnvironmentCaptures.back().SetScene(this);
+
+	//for (Actor& actor : mActors)
+	//{
+	//	actor.SetEnvironmentCapture(&mEnvironmentCaptures.back());
+	//}	
+}
+
+std::vector<EnvironmentCapture>& Scene::GetEnvironmentCaptures()
+{
+	return mEnvironmentCaptures;
 }

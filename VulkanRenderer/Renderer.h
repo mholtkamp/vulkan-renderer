@@ -76,6 +76,7 @@ public:
 
 	EarlyDepthPipeline& GetEarlyDepthPipeline();
 	GeometryPipeline& GetGeometryPipeline();
+	ReflectiveGeometryPipeline& GetReflectiveGeometryPipeline();
 	LightPipeline& GetLightPipeline();
 	Pipeline& GetDeferredPipeline();
 
@@ -105,11 +106,15 @@ public:
 
 	void SetDirectionalLightDirection(glm::vec3 direction);
 
-	void SetDebugMode(bool mode);
+	void SetDebugMode(DebugMode mode);
 
 	GBuffer& GetGBuffer();
 
 	VkDescriptorSet& GetGlobalDescriptorSet();
+
+	VkDescriptorSet& GetDeferredDescriptorSet();
+
+	void CreateCommandBuffers();
 
 private:
 
@@ -142,6 +147,10 @@ private:
 
 	void CreateGlobalDescriptorSet();
 
+	void CreateEnvironmentCaptureDebugDescriptorSet();
+
+	void UpdateEnvironmentCaptureDebugDescriptorSet();
+
 	void CreateRenderPass();
 
 	void CreatePipelines();
@@ -149,8 +158,6 @@ private:
 	void CreateFramebuffers();
 
 	void CreateCommandPool();
-
-	void CreateCommandBuffers();
 
 	void CreateSemaphores();
 
@@ -219,14 +226,17 @@ private:
 
 	EarlyDepthPipeline mEarlyDepthPipeline;
 	GeometryPipeline mGeometryPipeline;
+	ReflectiveGeometryPipeline mReflectiveGeometryPipeline;
 	LightPipeline mLightPipeline;
 	DebugDeferredPipeline mDebugDeferredPipeline;
+	EnvironmentCaptureDebugPipeline mEnvironmentCaptureDebugPipeline;
 
 	VkDescriptorSet mGlobalDescriptorSet;
 	VkBuffer mGlobalUniformBuffer;
 	VkDeviceMemory mGlobalUniformBufferMemory;
 
 	VkDescriptorSet mDeferredDescriptorSet;
+	VkDescriptorSet mEnvironmentCaptureDebugDescriptorSet;
 
 	GlobalUniformBuffer mGlobalUniformData;
 
@@ -236,7 +246,7 @@ private:
 
 	AppState* mAppState;
 
-	bool mDebugMode;
+	DebugMode mDebugMode;
 
 	bool mInitialized;
 };

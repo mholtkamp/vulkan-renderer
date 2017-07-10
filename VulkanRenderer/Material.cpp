@@ -50,14 +50,15 @@ void Material::Create(const Scene& scene,
 		mSpecularColor.g = specularColor.g;
 		mSpecularColor.b = specularColor.b;
 		mSpecularColor.a = 1.0f;
+
+		mReflectivity = specularColor.r;
 	}
 
-	float shininess = 0.0f;
-	if (material.Get(AI_MATKEY_SHININESS, shininess) == aiReturn_SUCCESS)
-	{
-		mReflectivity = shininess;
-		mReflectivity = 0.0f;
-	}
+	//aiColor3D ambientColor;
+	//if (material.Get(AI_MATKEY_COLOR_AMBIENT, ambientColor) == aiReturn_SUCCESS)
+	//{
+	//	mReflectivity = 1.0f - ambientColor.r;
+	//}
 
 	aiString diffuseTexture;
 	if (material.GetTextureCount(aiTextureType_DIFFUSE) > 0)

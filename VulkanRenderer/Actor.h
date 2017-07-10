@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Mesh.h"
+#include "EnvironmentCapture.h"
 
 #include <vulkan/vulkan.h>
 #include <glm/glm.hpp>
@@ -19,6 +20,8 @@ public:
 
 	Actor();
 
+	~Actor();
+
 	void Create(const aiNode& node, std::vector<Mesh>& meshes);
 
 	void Draw(VkCommandBuffer commandBuffer);
@@ -28,6 +31,8 @@ public:
 
 	void Destroy();
 
+	void SetEnvironmentCapture(EnvironmentCapture* environmentCapture);
+
 private:
 
 	void UpdateUniformBuffer(class Camera* camera,
@@ -36,6 +41,10 @@ private:
 	void CreateUniformBuffer();
 
 	void CreateDescriptorSet();
+
+	void UpdateEnvironmentSampler();
+
+	EnvironmentCapture* mEnvironmentCapture;
 
 	std::string mName;
 

@@ -17,16 +17,25 @@ Texture::Texture() :
 
 Texture::~Texture()
 {
-
+	Destroy();
 }
 
 void Texture::Destroy()
 {
 	VkDevice device = Renderer::Get()->GetDevice();
-	vkDestroySampler(device, mSampler, nullptr);
-	vkDestroyImageView(device, mImageView, nullptr);
-	vkDestroyImage(device, mImage, nullptr);
-	vkFreeMemory(device, mImageMemory, nullptr);
+
+	if (mImage != VK_NULL_HANDLE)
+	{
+		vkDestroySampler(device, mSampler, nullptr);
+		vkDestroyImageView(device, mImageView, nullptr);
+		vkDestroyImage(device, mImage, nullptr);
+		vkFreeMemory(device, mImageMemory, nullptr);
+
+		mImage = VK_NULL_HANDLE;
+		mImageView = VK_NULL_HANDLE;
+		mImageMemory = VK_NULL_HANDLE;
+		mSampler = VK_NULL_HANDLE;
+	}
 }
 
 void Texture::Load(const std::string& path)

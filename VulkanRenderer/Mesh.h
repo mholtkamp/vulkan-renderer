@@ -12,6 +12,8 @@ public:
 
 	Mesh();
 
+	~Mesh();
+
 	void Destroy();
 
 	void Create(const aiMesh& meshData,

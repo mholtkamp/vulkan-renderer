@@ -46,6 +46,8 @@ public:
 
 	void CaptureEnvironment();
 
+	std::vector<EnvironmentCapture>& GetEnvironmentCaptures();
+
 private:
 
 	void LoadMaterials(const aiScene& scene);

@@ -19,19 +19,27 @@ Mesh::Mesh() :
 
 }
 
+Mesh::~Mesh()
+{
+	Destroy();
+}
+
 void Mesh::Destroy()
 {
 	VkDevice device = Renderer::Get()->GetDevice();
 
-	vkDestroyBuffer(device, mIndexBuffer, nullptr);
-	vkFreeMemory(device, mIndexBufferMemory, nullptr);
-	vkDestroyBuffer(device, mVertexBuffer, nullptr);
-	vkFreeMemory(device, mVertexBufferMemory, nullptr);
+	if (mVertexBuffer != VK_NULL_HANDLE)
+	{
+		vkDestroyBuffer(device, mIndexBuffer, nullptr);
+		vkFreeMemory(device, mIndexBufferMemory, nullptr);
+		vkDestroyBuffer(device, mVertexBuffer, nullptr);
+		vkFreeMemory(device, mVertexBufferMemory, nullptr);
 
-	mIndexBuffer = VK_NULL_HANDLE;
-	mIndexBufferMemory = VK_NULL_HANDLE;
-	mVertexBuffer = VK_NULL_HANDLE;
-	mVertexBufferMemory = VK_NULL_HANDLE;
+		mIndexBuffer = VK_NULL_HANDLE;
+		mIndexBufferMemory = VK_NULL_HANDLE;
+		mVertexBuffer = VK_NULL_HANDLE;
+		mVertexBufferMemory = VK_NULL_HANDLE;
+	}
 
 	if (mOwnsMaterial)
 	{

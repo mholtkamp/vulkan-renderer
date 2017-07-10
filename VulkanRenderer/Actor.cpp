@@ -3,6 +3,7 @@
 #include "Clock.h"
 #include "Scene.h"
 #include "Camera.h"
+#include "EnvironmentCapture.h"
 
 #include <glm/glm.hpp>
 #include <exception>
@@ -12,11 +13,18 @@ using namespace std;
 Actor::Actor() :
 	mName("Actor"),
 	mMesh(nullptr),
+	mEnvironmentCapture(nullptr),
 	mDescriptorSet(VK_NULL_HANDLE),
 	mUniformBuffer(VK_NULL_HANDLE),
 	mUniformBufferMemory(VK_NULL_HANDLE)
+	
 {
 
+}
+
+Actor::~Actor()
+{
+	Destroy();
 }
 
 void Actor::Create(const aiNode& node, vector<Mesh>& meshes)
@@ -44,8 +52,17 @@ void Actor::Destroy()
 {
 	VkDevice device = Renderer::Get()->GetDevice();
 
-	vkDestroyBuffer(device, mUniformBuffer, nullptr);
-	vkFreeMemory(device, mUniformBufferMemory, nullptr);
+	if (mUniformBuffer != VK_NULL_HANDLE)
+	{
+		vkDestroyBuffer(device, mUniformBuffer, nullptr);
+		mUniformBuffer = VK_NULL_HANDLE;
+	}
+	
+	if (mUniformBufferMemory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(device, mUniformBufferMemory, nullptr);
+		mUniformBufferMemory = VK_NULL_HANDLE;
+	}
 }
 
 void Actor::CreateUniformBuffer()
@@ -95,14 +112,28 @@ void Actor::CreateDescriptorSet()
 	vkUpdateDescriptorSets(device, 1, descriptorWrites, 0, nullptr);
 
 	mMesh->UpdateDescriptorSets(mDescriptorSet);
+
+	UpdateEnvironmentSampler();
 }
 
 void Actor::Draw(VkCommandBuffer commandBuffer)
 {
-	Pipeline& geometryPipeline = Renderer::Get()->GetGeometryPipeline();
+	Renderer* renderer = Renderer::Get();
+	Pipeline& geometryPipeline = renderer->GetGeometryPipeline();
+	Pipeline& reflectiveGeometryPipeline = renderer->GetReflectiveGeometryPipeline();
 
 	if (mMesh != nullptr)
 	{
+		//if (mEnvironmentCapture != nullptr &&
+		//	mMesh->GetMaterial()->GetReflectivity() != 0.0f)
+		//{
+		//	reflectiveGeometryPipeline.BindPipeline(commandBuffer);
+		//}
+		//else
+		//{
+		//	geometryPipeline.BindPipeline(commandBuffer);
+		//}
+
 		mMesh->BindBuffers(commandBuffer);
 
 		vkCmdBindDescriptorSets(commandBuffer,
@@ -143,4 +174,17 @@ void Actor::UpdateUniformBuffer(Camera* camera, float deltaTime)
 	vkMapMemory(device, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);
 	memcpy(data, &ubo, sizeof(ubo));
 	vkUnmapMemory(device, mUniformBufferMemory);
+}
+
+void Actor::UpdateEnvironmentSampler()
+{
+	if (mEnvironmentCapture != nullptr)
+	{
+		mEnvironmentCapture->UpdateDesriptorSet(mDescriptorSet);
+	}
+}
+
+void Actor::SetEnvironmentCapture(EnvironmentCapture* environmentCapture)
+{
+	mEnvironmentCapture = environmentCapture;
 }

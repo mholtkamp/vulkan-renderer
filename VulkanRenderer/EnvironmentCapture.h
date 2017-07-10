@@ -21,6 +21,12 @@ public:
 
 	void SetScene(class Scene* scene);
 
+	void UpdateDesriptorSet(VkDescriptorSet descriptorSet);
+
+	VkImageView GetFaceImageView(uint32_t index = 0);
+
+	VkSampler GetFaceSampler();
+
 private:
 
 	static void CreateRenderPass();
@@ -55,6 +61,7 @@ private:
 	uint32_t mCapturedResolution;
 
 	std::array<VkImageView, 6> mFaceImageViews;
+	VkSampler mFaceSampler;
 	std::array<VkFramebuffer, 6> mFramebuffers;
 
 	glm::vec3 mPosition;

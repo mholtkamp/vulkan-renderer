@@ -45,7 +45,7 @@ Renderer::Renderer() :
 	mImageAvailableSemaphore(0),
 	mRenderFinishedSemaphore(0),
 	mScene(nullptr),
-	mDebugMode(false),
+	mDebugMode(DEBUG_NONE),
 	mInitialized(false)
 {
 	mGlobalUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -97,8 +97,10 @@ void Renderer::DestroySwapchain()
 
 	mEarlyDepthPipeline.Destroy();
 	mGeometryPipeline.Destroy();
+	mReflectiveGeometryPipeline.Destroy();
 	mLightPipeline.Destroy();
 	mDebugDeferredPipeline.Destroy();
+	mEnvironmentCaptureDebugPipeline.Destroy();
 
 	mGBuffer.Destroy();
 
@@ -157,6 +159,7 @@ void Renderer::Initialize()
 	CreatePipelines();
 	mGBuffer.CreateSampler();
 	CreateGlobalDescriptorSet();
+	CreateEnvironmentCaptureDebugDescriptorSet();
 	CreateFramebuffers();
 	
 	CreateCommandBuffers();
@@ -244,6 +247,11 @@ void Renderer::PreparePresentation()
 void Renderer::Render()
 {
 	UpdateGlobalUniformBuffer();
+
+	if (mDebugMode == DEBUG_ENVIRONMENT_CAPTURE)
+	{
+		UpdateEnvironmentCaptureDebugDescriptorSet();
+	}
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -900,6 +908,80 @@ void Renderer::CreateGlobalDescriptorSet()
 	vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
 }
 
+void Renderer::CreateEnvironmentCaptureDebugDescriptorSet()
+{
+	VkDescriptorSetLayout layouts[] = { mEnvironmentCaptureDebugPipeline.GetDescriptorSetLayout(2) };
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = mDescriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = layouts;
+
+	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mEnvironmentCaptureDebugDescriptorSet) != VK_SUCCESS)
+	{
+		throw exception("Failed to create descriptor set");
+	}
+
+	//// Update image descriptors
+	//VkDescriptorImageInfo imageInfo = {};
+	//VkWriteDescriptorSet descriptorWrite = {};
+
+	//imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	//imageInfo.imageView = VK_NULL_HANDLE;
+	//imageInfo.sampler = VK_NULL_HANDLE;
+
+	//descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	//descriptorWrite.dstSet = mEnvironmentCaptureDebugDescriptorSet;
+	//descriptorWrite.dstBinding = 0;
+	//descriptorWrite.dstArrayElement = 0;
+	//descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	//descriptorWrite.descriptorCount = 1;
+	//descriptorWrite.pImageInfo = &imageInfo;
+
+	//vkUpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
+}
+
+void Renderer::UpdateEnvironmentCaptureDebugDescriptorSet()
+{
+	// Update image descriptors
+	VkDescriptorImageInfo imageInfo = {};
+	VkWriteDescriptorSet descriptorWrite = {};
+
+	// Get the current environment capture
+	if (mScene == nullptr)
+	{
+		return;
+	}
+
+	std::vector<EnvironmentCapture>& captures = mScene->GetEnvironmentCaptures();
+
+	if (captures.size() == 0)
+	{
+		return;
+	}
+
+	EnvironmentCapture& capture = captures[0];
+
+	if (capture.GetFaceImageView(0) == VK_NULL_HANDLE)
+	{
+		return;
+	}
+
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = capture.GetFaceImageView(0);
+	imageInfo.sampler = capture.GetFaceSampler();
+
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = mEnvironmentCaptureDebugDescriptorSet;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pImageInfo = &imageInfo;
+
+	vkUpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
+}
+
 void Renderer::CreateCommandPool()
 {
 	QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(mPhysicalDevice);
@@ -991,12 +1073,19 @@ void Renderer::CreateCommandBuffers()
 		// ******************
 		//  Deferred Pass
 		// ******************
-		if (mDebugMode)
+		if (mDebugMode == DEBUG_GBUFFER)
 		{
 			mDebugDeferredPipeline.BindPipeline(mCommandBuffers[i]);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
 			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+		}
+		else if (mDebugMode == DEBUG_ENVIRONMENT_CAPTURE)
+		{
+			mEnvironmentCaptureDebugPipeline.BindPipeline(mCommandBuffers[i]);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 2, 1, &mEnvironmentCaptureDebugDescriptorSet, 0, 0);
 		}
 		else
 		{
@@ -1147,6 +1236,7 @@ void Renderer::RecreateSwapchain()
 	CreatePipelines();
 	CreateFramebuffers();
 	CreateGlobalDescriptorSet();
+	CreateEnvironmentCaptureDebugDescriptorSet();
 	CreateCommandBuffers();
 }
 
@@ -1165,6 +1255,11 @@ GeometryPipeline& Renderer::GetGeometryPipeline()
 	return mGeometryPipeline;
 }
 
+ReflectiveGeometryPipeline& Renderer::GetReflectiveGeometryPipeline()
+{
+	return mReflectiveGeometryPipeline;
+}
+
 LightPipeline& Renderer::GetLightPipeline()
 {
 	return mLightPipeline;
@@ -1179,6 +1274,11 @@ Pipeline& Renderer::GetDeferredPipeline()
 VkDescriptorSet& Renderer::GetGlobalDescriptorSet()
 {
 	return mGlobalDescriptorSet;
+}
+
+VkDescriptorSet& Renderer::GetDeferredDescriptorSet()
+{
+	return mDeferredDescriptorSet;
 }
 
 uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
@@ -1460,11 +1560,13 @@ void Renderer::CreatePipelines()
 {
 	mEarlyDepthPipeline.Create();
 	mGeometryPipeline.Create();
+	mReflectiveGeometryPipeline.Create();
 	mLightPipeline.Create();
 	mDebugDeferredPipeline.Create();
+	mEnvironmentCaptureDebugPipeline.Create();
 }
 
-void Renderer::SetDebugMode(bool mode)
+void Renderer::SetDebugMode(DebugMode mode)
 {
 	mDebugMode = mode;
 	UpdateGlobalUniformBuffer();
