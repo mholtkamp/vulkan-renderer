@@ -5,11 +5,13 @@
 VkRenderPass EnvironmentCapture::sRenderPass = VK_NULL_HANDLE;
 
 EnvironmentCapture::EnvironmentCapture() :
-	mFramebuffer(VK_NULL_HANDLE),
 	mImage(VK_NULL_HANDLE),
 	mImageMemory(VK_NULL_HANDLE),
 	mCubemapImageView(VK_NULL_HANDLE),
 	mSampler(VK_NULL_HANDLE),
+	mDepthImage(VK_NULL_HANDLE),
+	mDepthImageMemory(VK_NULL_HANDLE),
+	mDepthImageView(VK_NULL_HANDLE),
 	mResolution(DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION),
 	mCapturedResolution(0)
 {
@@ -17,11 +19,17 @@ EnvironmentCapture::EnvironmentCapture() :
 	{
 		view = VK_NULL_HANDLE;
 	}
+
+	for (VkFramebuffer& framebuffer : mFramebuffers)
+	{
+		framebuffer = VK_NULL_HANDLE;
+	}
 }
 
 EnvironmentCapture::~EnvironmentCapture()
 {
 	DestroyCubemap();
+	DestroyFramebuffers();
 }
 
 void EnvironmentCapture::Capture()
@@ -32,11 +40,11 @@ void EnvironmentCapture::Capture()
 	{
 		// Destroy old texture if it exists
 		DestroyCubemap();
-		DestroyFramebuffer();
+		DestroyFramebuffers();
 
 		// Recreate cubemap at proper resolution
 		CreateCubemap();
-		CreateFramebuffer();
+		CreateFramebuffers();
 	}
 
 	mCapturedResolution = mResolution;
@@ -69,6 +77,9 @@ void EnvironmentCapture::DestroyCubemap()
 		assert(mCubemapImageView != VK_NULL_HANDLE);
 		assert(mImageMemory != VK_NULL_HANDLE);
 		assert(mSampler != VK_NULL_HANDLE);
+		assert(mDepthImage != VK_NULL_HANDLE);
+		assert(mDepthImageMemory != VK_NULL_HANDLE);
+		assert(mDepthImageView != VK_NULL_HANDLE);
 
 		vkDestroyImage(device, mImage, nullptr);
 		mImage = VK_NULL_HANDLE;
@@ -88,6 +99,15 @@ void EnvironmentCapture::DestroyCubemap()
 			vkDestroyImageView(device, view, nullptr);
 			view = VK_NULL_HANDLE;
 		}
+
+		vkDestroyImage(device, mDepthImage, nullptr);
+		mDepthImage = VK_NULL_HANDLE;
+
+		vkFreeMemory(device, mDepthImageMemory, nullptr);
+		mDepthImageMemory = VK_NULL_HANDLE;
+
+		vkDestroyImageView(device, mDepthImageView, nullptr);
+		mDepthImageView = VK_NULL_HANDLE;
 	}
 }
 
@@ -96,21 +116,10 @@ void EnvironmentCapture::CreateCubemap()
 	assert(mImage == VK_NULL_HANDLE);
 	assert(mImageMemory == VK_NULL_HANDLE);
 	assert(mSampler == VK_NULL_HANDLE);
-	assert(mImageMemory == VK_NULL_HANDLE);
+	assert(mCubemapImageView == VK_NULL_HANDLE);
 
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
-	
-	//VkBuffer stagingBuffer;
-	//VkDeviceMemory stagingBufferMemory;
-	//VkDeviceSize imageSize = mResolution * mResolution * 4 * 6; // 4 channels, 6 faces of the cube
-
-	//renderer->CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-	//void* data;
-	//vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-	//memset(data, 128, static_cast<size_t>(imageSize));
-	//vkUnmapMemory(device, stagingBufferMemory);
 
 	// Create optimal tiled target image
 	VkImageCreateInfo imageCreateInfo = {};
@@ -152,8 +161,6 @@ void EnvironmentCapture::CreateCubemap()
 
 	Texture::TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-	CreateImageViews();
-
 	VkSamplerCreateInfo ciSampler = {};
 	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	ciSampler.magFilter = VK_FILTER_LINEAR;
@@ -175,24 +182,89 @@ void EnvironmentCapture::CreateCubemap()
 	{
 		throw std::exception("Failed to create texture sampler");
 	}
+
+	CreateDepthImage();
+
+	CreateImageViews();
 }
 
-void EnvironmentCapture::DestroyFramebuffer()
+void EnvironmentCapture::CreateDepthImage()
 {
+	assert(mDepthImage == VK_NULL_HANDLE);
+	assert(mDepthImageMemory == VK_NULL_HANDLE);
+	assert(mDepthImageView == VK_NULL_HANDLE);
 
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	Texture::CreateImage(mResolution,
+		mResolution,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		mDepthImage,
+		mDepthImageMemory);
+
+	mDepthImageView = Texture::CreateImageView(mDepthImage,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_IMAGE_ASPECT_DEPTH_BIT);
+
+	Texture::TransitionImageLayout(mDepthImage,
+		VK_FORMAT_D24_UNORM_S8_UINT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+	vkDeviceWaitIdle(device);
 }
 
-void EnvironmentCapture::CreateFramebuffer()
+void EnvironmentCapture::DestroyFramebuffers()
+{
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	for (VkFramebuffer& framebuffer : mFramebuffers)
+	{
+		if (framebuffer != VK_NULL_HANDLE)
+		{
+			vkDestroyFramebuffer(device, framebuffer, nullptr);
+			framebuffer = VK_NULL_HANDLE;
+		}
+	}
+}
+
+void EnvironmentCapture::CreateFramebuffers()
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 	VkRenderPass renderPass = renderer->GetRenderPass();
 
+	GBuffer& gBuffer = renderer->GetGBuffer();
+
 	for (uint32_t i = 0; i < 6; ++i)
 	{
 		std::vector<VkImageView> attachments;
 		attachments.push_back(mFaceImageViews[i]);
-		attachments.push_back(renderer->GetDepthImageView());
+		attachments.push_back(mDepthImage);
+
+		for (uint32_t g = 0; g < gBuffer.GetImageViews().size(); ++g)
+		{
+			attachments.push_back(gBuffer.GetImageViews()[g]);
+		}
+
+		VkFramebufferCreateInfo ciFramebuffer = {};
+		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		ciFramebuffer.renderPass = renderer->GetRenderPass();
+		ciFramebuffer.attachmentCount = attachments.size();
+		ciFramebuffer.pAttachments = attachments.data();
+		ciFramebuffer.width = mResolution;
+		ciFramebuffer.height = mResolution;
+		ciFramebuffer.layers = 1;
+
+		if (vkCreateFramebuffer(device, &ciFramebuffer, nullptr, &mFramebuffers[i]) != VK_SUCCESS)
+		{
+			throw std::exception("Failed to create framebuffer.");
+		}
 	}
 }
 

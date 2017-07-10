@@ -104,6 +104,8 @@ public:
 
 	void SetDebugMode(bool mode);
 
+	GBuffer& GetGBuffer();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,

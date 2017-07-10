@@ -775,6 +775,11 @@ void Renderer::CreateFramebuffers()
 	}
 }
 
+GBuffer& Renderer::GetGBuffer()
+{
+	return mGBuffer;
+}
+
 void Renderer::CreateDepthImage()
 {
 	Texture::CreateImage(mSwapchainExtent.width,

@@ -26,11 +26,13 @@ private:
 
 	void CreateCubemap();
 
-	void DestroyFramebuffer();
+	void DestroyFramebuffers();
 
-	void CreateFramebuffer();
+	void CreateFramebuffers();
 
 	void CreateImageViews();
+
+	void CreateDepthImage();
 
 private:
 
@@ -40,6 +42,11 @@ private:
 	VkDeviceMemory mImageMemory;
 	VkImageView mCubemapImageView;
 	VkSampler mSampler;
+
+	VkImage mDepthImage;
+	VkDeviceMemory mDepthImageMemory;
+	VkImageView mDepthImageView;
+
 	uint32_t mCapturedResolution;
 
 	std::array<VkImageView, 6> mFaceImageViews;
