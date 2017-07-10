@@ -1,6 +1,7 @@
 #include "EnvironmentCapture.h"
 #include "Constants.h"
 #include "Renderer.h"
+#include "Scene.h"
 
 VkRenderPass EnvironmentCapture::sRenderPass = VK_NULL_HANDLE;
 
@@ -13,7 +14,8 @@ EnvironmentCapture::EnvironmentCapture() :
 	mDepthImageMemory(VK_NULL_HANDLE),
 	mDepthImageView(VK_NULL_HANDLE),
 	mResolution(DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION),
-	mCapturedResolution(0)
+	mCapturedResolution(0),
+	mScene(nullptr)
 {
 	for (VkImageView& view : mFaceImageViews)
 	{
@@ -34,6 +36,9 @@ EnvironmentCapture::~EnvironmentCapture()
 
 void EnvironmentCapture::Capture()
 {
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
 	CreateRenderPass();
 
 	if (mCapturedResolution != mResolution)
@@ -47,7 +52,90 @@ void EnvironmentCapture::Capture()
 		CreateFramebuffers();
 	}
 
+	VkExtent2D renderAreaExtent = {};
+	renderAreaExtent.width = mResolution;
+	renderAreaExtent.height = mResolution;
+
+	std::array<Camera, 6> cameras;
+	SetupCaptureCameras(cameras);
+
+	Camera* savedCamera = mScene->GetActiveCamera();
+
+	uint32_t i = 0;
+
+	for (VkFramebuffer& framebuffer : mFramebuffers)
+	{
+		// Update scene using new camera
+		mScene->SetActiveCamera(&cameras[i]);
+		mScene->Update(0.0f);
+
+		VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
+
+		VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = renderer->GetRenderPass();
+		renderPassInfo.framebuffer = framebuffer;
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = renderAreaExtent;
+
+		VkClearValue clearValues[GB_COUNT + 2] = {};
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+		renderPassInfo.clearValueCount = GB_COUNT + 2;
+		renderPassInfo.pClearValues = clearValues;
+
+		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		// ******************
+		//  Early Depth Pass
+		// ******************
+		renderer->GetEarlyDepthPipeline().BindPipeline(commandBuffer);
+		mScene->RenderGeometry(commandBuffer);
+		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+		// ******************
+		//  Geometry Pass
+		// ******************
+		renderer->GetGeometryPipeline().BindPipeline(commandBuffer);
+		mScene->RenderGeometry(commandBuffer);
+		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+		// ******************
+		//  Light Pass
+		// ******************
+		renderer->GetLightPipeline().BindPipeline(commandBuffer);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
+		mScene->RenderLightVolumes(commandBuffer);
+
+		vkCmdEndRenderPass(commandBuffer);
+
+		renderer->EndSingleSubmissionCommands(commandBuffer);
+
+		++i;
+	}
+
 	mCapturedResolution = mResolution;
+
+	mScene->SetActiveCamera(savedCamera);
+}
+
+void EnvironmentCapture::SetupCaptureCameras(std::array<Camera, 6>& cameras)
+{
+	for (uint32_t i = 0; i < cameras.size(); ++i)
+	{
+		cameras[i].SetPosition(mPosition);
+		cameras[i].SetPerspectiveSettings(90.0f, 1.0f, 0.1f, 1024.0f);
+	}
+
+	float rightAngle = glm::radians(90.0f);
+
+	cameras[0].SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+	cameras[1].SetRotation(glm::vec3(0.0f, rightAngle, 0.0f));
+	cameras[2].SetRotation(glm::vec3(0.0f, rightAngle * 2, 0.0f));
+	cameras[3].SetRotation(glm::vec3(0.0f, rightAngle * 3, 0.0f));
+	cameras[4].SetRotation(glm::vec3(rightAngle, 0.0f, 0.0f));
+	cameras[5].SetRotation(glm::vec3(-rightAngle, 0.0f, 0.0f));
+
 }
 
 void EnvironmentCapture::SetPosition(glm::vec3 position)
@@ -55,7 +143,7 @@ void EnvironmentCapture::SetPosition(glm::vec3 position)
 	mPosition = position;
 }
 
-void EnvironmentCapture::SetTextureResolution(uint32_t size)
+void EnvironmentCapture::SetResolution(uint32_t size)
 {
 	if (size == 0 ||
 		size > ENVIRONMENT_CAPTURE_MAX_RESOLUTION)
@@ -123,16 +211,16 @@ void EnvironmentCapture::CreateCubemap()
 
 	// Create optimal tiled target image
 	VkImageCreateInfo imageCreateInfo = {};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageCreateInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+	imageCreateInfo.format = renderer->GetSwapchainFormat();
 	imageCreateInfo.mipLevels = 1;
 	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
 	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imageCreateInfo.extent = { mResolution, mResolution, 1 };
-	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 	imageCreateInfo.arrayLayers = 6;
 	imageCreateInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
 
@@ -144,7 +232,7 @@ void EnvironmentCapture::CreateCubemap()
 	VkMemoryRequirements memReqs;
 	vkGetImageMemoryRequirements(device, mImage, &memReqs);
 
-	VkMemoryAllocateInfo allocInfo;
+	VkMemoryAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memReqs.size;
 	allocInfo.memoryTypeIndex = renderer->FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
@@ -159,7 +247,7 @@ void EnvironmentCapture::CreateCubemap()
 		throw std::exception("Failed to bind memory to image for cubemap");
 	}
 
-	Texture::TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+	//Texture::TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
 	VkSamplerCreateInfo ciSampler = {};
 	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -186,6 +274,8 @@ void EnvironmentCapture::CreateCubemap()
 	CreateDepthImage();
 
 	CreateImageViews();
+
+	vkDeviceWaitIdle(device);
 }
 
 void EnvironmentCapture::CreateDepthImage()
@@ -218,6 +308,11 @@ void EnvironmentCapture::CreateDepthImage()
 	vkDeviceWaitIdle(device);
 }
 
+void EnvironmentCapture::SetScene(Scene* scene)
+{
+	mScene = scene;
+}
+
 void EnvironmentCapture::DestroyFramebuffers()
 {
 	Renderer* renderer = Renderer::Get();
@@ -245,7 +340,7 @@ void EnvironmentCapture::CreateFramebuffers()
 	{
 		std::vector<VkImageView> attachments;
 		attachments.push_back(mFaceImageViews[i]);
-		attachments.push_back(mDepthImage);
+		attachments.push_back(mDepthImageView);
 
 		for (uint32_t g = 0; g < gBuffer.GetImageViews().size(); ++g)
 		{
@@ -271,13 +366,14 @@ void EnvironmentCapture::CreateFramebuffers()
 void EnvironmentCapture::CreateImageViews()
 {
 	// Create the cubemap image view first
-	VkDevice device = Renderer::Get()->GetDevice();
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
 
 	VkImageViewCreateInfo viewInfo = {};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = mImage;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-	viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+	viewInfo.format = renderer->GetSwapchainFormat();
 	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
@@ -296,7 +392,7 @@ void EnvironmentCapture::CreateImageViews()
 		ciImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		ciImageView.image = mImage;
 		ciImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ciImageView.format = VK_FORMAT_R8G8B8A8_UNORM;
+		ciImageView.format = renderer->GetSwapchainFormat();
 		ciImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		ciImageView.subresourceRange.baseMipLevel = 0;
 		ciImageView.subresourceRange.levelCount = 1;

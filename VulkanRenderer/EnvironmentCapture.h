@@ -3,6 +3,7 @@
 #include <array>
 #include "Texture.h"
 #include <glm/glm.hpp>
+#include "Camera.h"
 
 class EnvironmentCapture
 {
@@ -16,7 +17,9 @@ public:
 
 	void SetPosition(glm::vec3 position);
 
-	void SetTextureResolution(uint32_t size);
+	void SetResolution(uint32_t size);
+
+	void SetScene(class Scene* scene);
 
 private:
 
@@ -33,6 +36,8 @@ private:
 	void CreateImageViews();
 
 	void CreateDepthImage();
+
+	void SetupCaptureCameras(std::array<Camera, 6>& cameras);
 
 private:
 
@@ -56,4 +61,5 @@ private:
 
 	uint32_t mResolution;
 
+	class Scene* mScene;
 };

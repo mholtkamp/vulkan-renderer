@@ -20,7 +20,7 @@ void Camera::SetOrthoSettings(float width, float height, float near, float far)
 	mOrthoSettings.mFar = far;
 }
 
-void Camera::SetPerspectiveSet(float fovx, float aspectRatio, float near, float far)
+void Camera::SetPerspectiveSettings(float fovx, float aspectRatio, float near, float far)
 {
 	mPerspectiveSettings.mFovY = fovx;
 	mPerspectiveSettings.mAspectRatio = aspectRatio;

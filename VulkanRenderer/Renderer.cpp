@@ -559,6 +559,11 @@ void Renderer::CreateImageViews()
 	}
 }
 
+VkFormat Renderer::GetSwapchainFormat()
+{
+	return mSwapchainImageFormat;
+}
+
 void Renderer::CreateRenderPass()
 {
 	std::vector<VkAttachmentDescription> attachments;
@@ -981,15 +986,12 @@ void Renderer::CreateCommandBuffers()
 		{
 			mDebugDeferredPipeline.BindPipeline(mCommandBuffers[i]);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
-		
 			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
 		}
 		else
 		{
 			mLightPipeline.BindPipeline(mCommandBuffers[i]);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mDeferredDescriptorSet, 0, 0);
-
-			// Render each light
 			mScene->RenderLightVolumes(mCommandBuffers[i]);
 		}
 
@@ -1142,6 +1144,11 @@ VkDescriptorPool Renderer::GetDescriptorPool()
 	return mDescriptorPool;
 }
 
+EarlyDepthPipeline& Renderer::GetEarlyDepthPipeline()
+{
+	return mEarlyDepthPipeline;
+}
+
 GeometryPipeline& Renderer::GetGeometryPipeline()
 {
 	return mGeometryPipeline;
@@ -1156,6 +1163,11 @@ Pipeline& Renderer::GetDeferredPipeline()
 {
 	return mLightPipeline;
 	//return mDeferredPipeline;
+}
+
+VkDescriptorSet& Renderer::GetDeferredDescriptorSet()
+{
+	return mDeferredDescriptorSet;
 }
 
 uint32_t Renderer::FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)

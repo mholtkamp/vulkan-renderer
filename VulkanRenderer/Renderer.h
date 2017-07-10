@@ -74,6 +74,7 @@ public:
 
 	VkDescriptorPool GetDescriptorPool();
 
+	EarlyDepthPipeline& GetEarlyDepthPipeline();
 	GeometryPipeline& GetGeometryPipeline();
 	LightPipeline& GetLightPipeline();
 	Pipeline& GetDeferredPipeline();
@@ -94,6 +95,8 @@ public:
 
 	VkExtent2D& GetSwapchainExtent();
 
+	VkFormat GetSwapchainFormat();
+
 	VkRenderPass GetRenderPass();
 
 	void SetVisualizationMode(int32_t mode);
@@ -105,6 +108,8 @@ public:
 	void SetDebugMode(bool mode);
 
 	GBuffer& GetGBuffer();
+
+	VkDescriptorSet& GetDeferredDescriptorSet();
 
 private:
 

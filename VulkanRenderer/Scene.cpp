@@ -62,6 +62,7 @@ void Scene::Load(const std::string& directory,
 		//LoadCameras(*scene);
 
 		SpawnTestLights();
+		SpawnTestEnvironmentCapture();
 
 		mLoaded = true;
 	}
@@ -69,7 +70,6 @@ void Scene::Load(const std::string& directory,
 
 void Scene::UpdateDebug(float deltaTime)
 {
-
 	// Change Radii
 	if (GetAsyncKeyState('T'))
 	{
@@ -89,6 +89,23 @@ void Scene::UpdateDebug(float deltaTime)
 			radius -= deltaTime * radiusGrowSpeed;
 			light.SetRadius(radius);
 		}
+	}
+
+	static bool cDown = false;
+	if (GetAsyncKeyState('C') &&
+		GetAsyncKeyState(VK_CONTROL) &&
+		GetAsyncKeyState(VK_SHIFT))
+	{
+		if (!cDown)
+		{
+			CaptureEnvironment();
+		}
+
+		cDown = true;
+	}
+	else
+	{
+		cDown = false;
 	}
 }
 
@@ -274,4 +291,33 @@ void Scene::UpdateLightPositions(float deltaTime)
 
 		mPointLights[i].SetVelocity(velocity);
 	}
+}
+
+void Scene::SetActiveCamera(Camera* activeCamera)
+{
+	mActiveCamera = activeCamera;
+}
+
+void Scene::CaptureEnvironment()
+{
+	for (EnvironmentCapture& capture : mEnvironmentCaptures)
+	{
+		capture.Capture();
+	}
+}
+
+void Scene::LoadEnvironmentCapture(const aiNode& node)
+{
+	mEnvironmentCaptures.push_back(EnvironmentCapture());
+	aiMatrix4x4 transform = node.mTransformation;
+	mEnvironmentCaptures.back().SetPosition(glm::vec3(transform.a4, transform.b4, transform.c4));
+	mEnvironmentCaptures.back().SetScene(this);
+}
+
+void Scene::SpawnTestEnvironmentCapture()
+{
+	EnvironmentCapture testCapture;
+	testCapture.SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
+	mEnvironmentCaptures.push_back(testCapture);
+	mEnvironmentCaptures.back().SetScene(this);
 }

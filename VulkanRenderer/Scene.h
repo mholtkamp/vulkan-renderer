@@ -11,6 +11,7 @@
 #include "PointLight.h"
 #include "Clock.h"
 #include "Camera.h"
+#include "EnvironmentCapture.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -39,6 +40,12 @@ public:
 
 	void SpawnTestLights();
 
+	void SpawnTestEnvironmentCapture();
+
+	void SetActiveCamera(Camera* activeCamera);
+
+	void CaptureEnvironment();
+
 private:
 
 	void LoadMaterials(const aiScene& scene);
@@ -46,6 +53,8 @@ private:
 	void LoadMeshes(const aiScene& scene);
 
 	void LoadActors(const aiScene& scene);
+
+	void LoadEnvironmentCapture(const aiNode& node);
 
 	void PopulateLightLookupMap(const aiScene& scene, 
 		std::map<std::string, aiLight>& lightMap);
@@ -69,6 +78,8 @@ private:
 	std::vector<PointLight> mPointLights;
 
 	std::vector<Camera> mCameras;
+
+	std::vector<EnvironmentCapture> mEnvironmentCaptures;
 
 	Camera* mActiveCamera;
 

@@ -4,6 +4,9 @@
 #include <glm/glm.hpp>
 //#include <glm/gtc/quaternion.hpp>
 
+#undef near
+#undef far
+
 struct OrthoSettings
 {
 	float mWidth;
@@ -51,7 +54,7 @@ public:
 		float near,
 		float far);
 
-	void SetPerspectiveSet(float fovY,
+	void SetPerspectiveSettings(float fovY,
 		float aspectRatio,
 		float near,
 		float far);
