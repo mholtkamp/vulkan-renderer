@@ -424,7 +424,7 @@ void EnvironmentCapture::CreateImageViews()
 		ciImageView.subresourceRange.baseArrayLayer = i;
 		ciImageView.subresourceRange.layerCount = 1;
 
-		if (vkCreateImageView(device, &viewInfo, nullptr, &mFaceImageViews[i]) != VK_SUCCESS)
+		if (vkCreateImageView(device, &ciImageView, nullptr, &mFaceImageViews[i]) != VK_SUCCESS)
 		{
 			throw std::exception("Failed to create texture image view");
 		}
@@ -433,11 +433,6 @@ void EnvironmentCapture::CreateImageViews()
 
 void EnvironmentCapture::CreateRenderPass()
 {
-	//if (sRenderPass != VK_NULL_HANDLE)
-	//{
-	//	return;
-	//}
-
 	
 }
 

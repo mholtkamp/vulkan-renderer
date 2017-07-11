@@ -248,11 +248,6 @@ void Renderer::Render()
 {
 	UpdateGlobalUniformBuffer();
 
-	if (mDebugMode == DEBUG_ENVIRONMENT_CAPTURE)
-	{
-		UpdateEnvironmentCaptureDebugDescriptorSet();
-	}
-
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
@@ -1086,7 +1081,8 @@ void Renderer::CreateCommandBuffers()
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 2, 1, &mEnvironmentCaptureDebugDescriptorSet, 0, 0);
-		}
+            vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+        }
 		else
 		{
 			mLightPipeline.BindPipeline(mCommandBuffers[i]);
@@ -1570,5 +1566,6 @@ void Renderer::SetDebugMode(DebugMode mode)
 {
 	mDebugMode = mode;
 	UpdateGlobalUniformBuffer();
+    UpdateEnvironmentCaptureDebugDescriptorSet();
 	CreateCommandBuffers();
 }
