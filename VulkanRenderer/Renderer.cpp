@@ -1241,7 +1241,7 @@ void Renderer::RecreateSwapchain()
 	CreateSwapchain();
 	CreateImageViews();
 	CreateDepthImage();
-	mGBuffer.CreateImages();
+	mGBuffer.Create(mSwapchainExtent.width, mSwapchainExtent.height);
 	CreateRenderPass();
 	CreatePipelines();
 	CreateFramebuffers();
