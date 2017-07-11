@@ -76,9 +76,7 @@ public:
 
 	EarlyDepthPipeline& GetEarlyDepthPipeline();
 	GeometryPipeline& GetGeometryPipeline();
-	ReflectiveGeometryPipeline& GetReflectiveGeometryPipeline();
 	LightPipeline& GetLightPipeline();
-    EnvironmentCaptureLightPipeline& GetEnvironmentCapturePipeline();
 	Pipeline& GetDeferredPipeline();
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -237,10 +235,8 @@ private:
 
 	EarlyDepthPipeline mEarlyDepthPipeline;
 	GeometryPipeline mGeometryPipeline;
-	ReflectiveGeometryPipeline mReflectiveGeometryPipeline;
 	LightPipeline mLightPipeline;
 	DebugDeferredPipeline mDebugDeferredPipeline;
-    EnvironmentCaptureLightPipeline mEnvironmentCapturePipeline;
 	EnvironmentCaptureDebugPipeline mEnvironmentCaptureDebugPipeline;
 
 	VkDescriptorSet mGlobalDescriptorSet;

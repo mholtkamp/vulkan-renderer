@@ -67,17 +67,6 @@ public:
 	}
 };
 
-class ReflectiveGeometryPipeline : public GeometryPipeline
-{
-public:
-
-	ReflectiveGeometryPipeline()
-	{
-		mVertexShaderPath = "Shaders/bin/reflectiveGeometryShader.vert";
-		mFragmentShaderPath = "Shaders/bin/reflectiveGeometryShader.frag";
-	}
-};
-
 class DeferredPipeline : public Pipeline
 {
 public:
@@ -147,27 +136,6 @@ public:
 	{
 		DeferredPipeline::PopulateLayoutBindings();
 	}
-};
-
-class EnvironmentCaptureGeometryPipeline : public GeometryPipeline
-{
-public:
-    EnvironmentCaptureGeometryPipeline()
-    {
-        mViewportWidth = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
-        mViewportHeight = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
-    }
-};
-
-class EnvironmentCaptureLightPipeline : public LightPipeline
-{
-public:
-
-    EnvironmentCaptureLightPipeline()
-    {
-        mViewportWidth = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
-        mViewportHeight = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
-    }
 };
 
 class EnvironmentCaptureDebugPipeline : public DeferredPipeline

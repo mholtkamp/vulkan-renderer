@@ -120,20 +120,9 @@ void Actor::Draw(VkCommandBuffer commandBuffer)
 {
 	Renderer* renderer = Renderer::Get();
 	Pipeline& geometryPipeline = renderer->GetGeometryPipeline();
-	Pipeline& reflectiveGeometryPipeline = renderer->GetReflectiveGeometryPipeline();
 
 	if (mMesh != nullptr)
 	{
-		//if (mEnvironmentCapture != nullptr &&
-		//	mMesh->GetMaterial()->GetReflectivity() != 0.0f)
-		//{
-		//	reflectiveGeometryPipeline.BindPipeline(commandBuffer);
-		//}
-		//else
-		//{
-		//	geometryPipeline.BindPipeline(commandBuffer);
-		//}
-
 		mMesh->BindBuffers(commandBuffer);
 
 		vkCmdBindDescriptorSets(commandBuffer,

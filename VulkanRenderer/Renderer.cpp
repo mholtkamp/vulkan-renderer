@@ -98,8 +98,6 @@ void Renderer::DestroySwapchain()
 
 	mEarlyDepthPipeline.Destroy();
 	mGeometryPipeline.Destroy();
-    mEnvironmentCapturePipeline.Destroy();
-	mReflectiveGeometryPipeline.Destroy();
 	mLightPipeline.Destroy();
 	mDebugDeferredPipeline.Destroy();
 	mEnvironmentCaptureDebugPipeline.Destroy();
@@ -1267,11 +1265,6 @@ GeometryPipeline& Renderer::GetGeometryPipeline()
 	return mGeometryPipeline;
 }
 
-ReflectiveGeometryPipeline& Renderer::GetReflectiveGeometryPipeline()
-{
-	return mReflectiveGeometryPipeline;
-}
-
 LightPipeline& Renderer::GetLightPipeline()
 {
 	return mLightPipeline;
@@ -1572,10 +1565,8 @@ void Renderer::CreatePipelines()
 {
 	mEarlyDepthPipeline.Create();
 	mGeometryPipeline.Create();
-	mReflectiveGeometryPipeline.Create();
 	mLightPipeline.Create();
 	mDebugDeferredPipeline.Create();
-    mEnvironmentCapturePipeline.Create();
 	mEnvironmentCaptureDebugPipeline.Create();
 }
 
@@ -1585,11 +1576,6 @@ void Renderer::SetDebugMode(DebugMode mode)
 	UpdateGlobalUniformBuffer();
     UpdateEnvironmentCaptureDebugDescriptorSet();
 	CreateCommandBuffers();
-}
-
-EnvironmentCaptureLightPipeline& Renderer::GetEnvironmentCapturePipeline()
-{
-    return mEnvironmentCapturePipeline;
 }
 
 void Renderer::SetEnvironmentDebugFace(uint32_t index)
