@@ -23,4 +23,6 @@ private:
 	uint32_t mEnvironmentCapture;
 	uint32_t mEnvironmentCaptureFace;
 
+    bool mAlwaysCapture;
+
 };

@@ -32,7 +32,6 @@ EnvironmentCapture::EnvironmentCapture() :
 EnvironmentCapture::~EnvironmentCapture()
 {
 	DestroyCubemap();
-	DestroyFramebuffers();
 }
 
 void EnvironmentCapture::Capture()
@@ -40,18 +39,32 @@ void EnvironmentCapture::Capture()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	CreateRenderPass();
-
 	if (mCapturedResolution != mResolution)
 	{
 		// Destroy old texture if it exists
 		DestroyCubemap();
-		DestroyFramebuffers();
 
 		// Recreate cubemap at proper resolution
 		CreateCubemap();
-		CreateFramebuffers();
 	}
+
+    EarlyDepthPipeline earlyDepthPipeline;
+    GeometryPipeline geometryPipeline;
+    LightPipeline lightPipeline;
+
+    earlyDepthPipeline.mViewportWidth = mResolution;
+    earlyDepthPipeline.mViewportHeight = mResolution;
+    geometryPipeline.mViewportWidth = mResolution;
+    geometryPipeline.mViewportHeight = mResolution;
+    lightPipeline.mViewportWidth = mResolution;
+    lightPipeline.mViewportHeight = mResolution;
+
+    earlyDepthPipeline.Create();
+    geometryPipeline.Create();
+    lightPipeline.Create();
+
+    CreateGBuffer();
+    CreateFramebuffers();
 
 	VkExtent2D renderAreaExtent = {};
 	renderAreaExtent.width = mResolution;
@@ -62,6 +75,15 @@ void EnvironmentCapture::Capture()
 
 	Camera* savedCamera = mScene->GetActiveCamera();
 
+    // Spoof the global uniform data to pretend that screen size is 
+    // only mResolution x mResolution
+    GlobalUniformData& globalData = renderer->GetGlobalUniformData();
+    glm::vec2 trueDimensions = globalData.mScreenDimensions;
+    globalData.mScreenDimensions = glm::vec2(mResolution, mResolution);
+
+    renderer->UpdateGlobalUniformBuffer();
+    UpdateDeferredDescriptor();
+
 	uint32_t i = 0;
 
 	for (VkFramebuffer& framebuffer : mFramebuffers)
@@ -69,7 +91,7 @@ void EnvironmentCapture::Capture()
 		// Update scene using new camera
 		cameras[i].Update();
 		mScene->SetActiveCamera(&cameras[i]);
-		mScene->Update(0.0f);
+		mScene->Update(0.0f, false);
 
 		VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
 
@@ -91,14 +113,14 @@ void EnvironmentCapture::Capture()
 		// ******************
 		//  Early Depth Pass
 		// ******************
-		renderer->GetEarlyDepthPipeline().BindPipeline(commandBuffer);
+		earlyDepthPipeline.BindPipeline(commandBuffer);
 		mScene->RenderGeometry(commandBuffer);
 		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
 		// ******************
 		//  Geometry Pass
 		// ******************
-		renderer->GetGeometryPipeline().BindPipeline(commandBuffer);
+		geometryPipeline.BindPipeline(commandBuffer);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetGeometryPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
 		mScene->RenderGeometry(commandBuffer);
 		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
@@ -106,10 +128,10 @@ void EnvironmentCapture::Capture()
 		// ******************
 		//  Light Pass
 		// ******************
-		renderer->GetLightPipeline().BindPipeline(commandBuffer);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
+		lightPipeline.BindPipeline(commandBuffer);
+        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 1, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
-		mScene->RenderLightVolumes(commandBuffer);
+        mScene->RenderLightVolumes(commandBuffer);
 
 		vkCmdEndRenderPass(commandBuffer);
 
@@ -118,9 +140,55 @@ void EnvironmentCapture::Capture()
 		++i;
 	}
 
+    // Revert the fake changes we made to global data
+    globalData.mScreenDimensions = trueDimensions;
+    renderer->UpdateGlobalUniformBuffer();
+    renderer->UpdateDeferredDescriptorSet();
+
 	mCapturedResolution = mResolution;
 
 	mScene->SetActiveCamera(savedCamera);
+
+    DestroyFramebuffers();
+    DestroyGBuffer();
+
+    earlyDepthPipeline.Destroy();
+    geometryPipeline.Destroy();
+    lightPipeline.Destroy();
+}
+
+void EnvironmentCapture::UpdateDeferredDescriptor()
+{
+    // Update image descriptors (for each gbuffer output)
+    VkDescriptorImageInfo imageInfo[GB_COUNT] = {};
+    VkWriteDescriptorSet descriptorWrite[GB_COUNT] = {};
+
+    for (uint32_t i = 0; i < GB_COUNT; ++i)
+    {
+        imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo[i].imageView = mGBuffer.GetImageViews()[i];
+        imageInfo[i].sampler = mGBuffer.GetSampler();
+
+        descriptorWrite[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite[i].dstSet = Renderer::Get()->GetDeferredDescriptorSet();
+        descriptorWrite[i].dstBinding = DD_TEXTURE_POSITION + i;
+        descriptorWrite[i].dstArrayElement = 0;
+        descriptorWrite[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite[i].descriptorCount = 1;
+        descriptorWrite[i].pImageInfo = &imageInfo[i];
+    }
+
+    vkUpdateDescriptorSets(Renderer::Get()->GetDevice(), GB_COUNT, descriptorWrite, 0, nullptr);
+}
+
+void EnvironmentCapture::CreateGBuffer()
+{
+    mGBuffer.Create(mResolution, mResolution);
+}
+
+void EnvironmentCapture::DestroyGBuffer()
+{
+    mGBuffer.Destroy();
 }
 
 void EnvironmentCapture::SetupCaptureCameras(std::array<Camera, 6>& cameras)
@@ -131,14 +199,12 @@ void EnvironmentCapture::SetupCaptureCameras(std::array<Camera, 6>& cameras)
 		cameras[i].SetPerspectiveSettings(90.0f, 1.0f, 0.1f, 1024.0f);
 	}
 
-	float rightAngle = 90.0f;
-
-	cameras[0].SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-	cameras[1].SetRotation(glm::vec3(0.0f, rightAngle, 0.0f));
-	cameras[2].SetRotation(glm::vec3(0.0f, rightAngle * 2, 0.0f));
-	cameras[3].SetRotation(glm::vec3(0.0f, rightAngle * 3, 0.0f));
-	cameras[4].SetRotation(glm::vec3(rightAngle, 0.0f, 0.0f));
-	cameras[5].SetRotation(glm::vec3(-rightAngle, 0.0f, 0.0f));
+    cameras[0].SetRotation(glm::vec3(0.0f, -90.0f, 0.0f));
+    cameras[1].SetRotation(glm::vec3(00.0f, 90.0f, 0.0f));
+    cameras[2].SetRotation(glm::vec3(90.0f, 0.0f, 0.0f));
+    cameras[3].SetRotation(glm::vec3(-90.0f, 0.0f, 0.0f));
+    cameras[4].SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+    cameras[5].SetRotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 }
 
@@ -359,17 +425,15 @@ void EnvironmentCapture::CreateFramebuffers()
 	VkDevice device = renderer->GetDevice();
 	VkRenderPass renderPass = renderer->GetRenderPass();
 
-	GBuffer& gBuffer = renderer->GetGBuffer();
-
 	for (uint32_t i = 0; i < 6; ++i)
 	{
 		std::vector<VkImageView> attachments;
 		attachments.push_back(mFaceImageViews[i]);
 		attachments.push_back(mDepthImageView);
 
-		for (uint32_t g = 0; g < gBuffer.GetImageViews().size(); ++g)
+		for (uint32_t g = 0; g < mGBuffer.GetImageViews().size(); ++g)
 		{
-			attachments.push_back(gBuffer.GetImageViews()[g]);
+			attachments.push_back(mGBuffer.GetImageViews()[g]);
 		}
 
 		VkFramebufferCreateInfo ciFramebuffer = {};

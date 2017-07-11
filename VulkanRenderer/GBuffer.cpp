@@ -6,7 +6,10 @@
 
 using namespace std;
 
-GBuffer::GBuffer()
+GBuffer::GBuffer() :
+    mWidth(0),
+    mHeight(0),
+    mSampler(VK_NULL_HANDLE)
 {
 
 }
@@ -16,13 +19,21 @@ GBuffer::~GBuffer()
 
 }
 
-void GBuffer::Create()
+void GBuffer::Create(uint32_t width, uint32_t height)
 {
+    mWidth = width;
+    mHeight = height;
 	CreateImages();
+    CreateSampler();
 }
 
 void GBuffer::Destroy()
 {
+    if (mImages.size() == 0)
+    {
+        return;
+    }
+
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
@@ -32,6 +43,17 @@ void GBuffer::Destroy()
 		vkDestroyImageView(device, mImageViews[i], nullptr);
 		vkFreeMemory(device, mImageMemory[i], nullptr);
 	}
+
+    mImages.clear();
+    mImageViews.clear();
+    mImageMemory.clear();
+    mFormats.clear();
+
+    if (mSampler != VK_NULL_HANDLE)
+    {
+        vkDestroySampler(device, mSampler, nullptr);
+        mSampler = VK_NULL_HANDLE;
+    }
 }
 
 std::vector<VkImage>& GBuffer::GetImage()
@@ -51,10 +73,7 @@ std::vector<VkFormat>& GBuffer::GetFormats()
 
 void GBuffer::CreateImages()
 {
-	if (mImages.size() != 0)
-	{
-
-	}
+	assert(mImages.size() == 0);
 
 	mImages.resize(GB_COUNT);
 	mImageMemory.resize(GB_COUNT);
@@ -69,6 +88,11 @@ void GBuffer::CreateImages()
 
 void GBuffer::CreateSampler()
 {
+    if (mSampler != VK_NULL_HANDLE)
+    {
+        return;
+    }
+
 	// Create sampler to sample from the color attachments
 	VkSamplerCreateInfo ciSampler = {};
 	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -84,7 +108,7 @@ void GBuffer::CreateSampler()
 	ciSampler.maxLod = 1.0f;
 	ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
-	if (vkCreateSampler(Renderer::Get()->GetDevice(), &ciSampler, nullptr, &mGBufferSampler) != VK_SUCCESS)
+	if (vkCreateSampler(Renderer::Get()->GetDevice(), &ciSampler, nullptr, &mSampler) != VK_SUCCESS)
 	{
 		throw exception("Failed to create GBuffer sampler");
 	}
@@ -109,8 +133,8 @@ void GBuffer::CreateAttachment(GBufferIndex index, VkFormat format)
 	aspect = VK_IMAGE_ASPECT_COLOR_BIT;
 	layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-	Texture::CreateImage(renderer->GetSwapchainExtent().width,
-		renderer->GetSwapchainExtent().height,
+	Texture::CreateImage(mWidth,
+		mHeight,
 		format,
 		VK_IMAGE_TILING_OPTIMAL,
 		usage,
@@ -130,5 +154,5 @@ void GBuffer::CreateAttachment(GBufferIndex index, VkFormat format)
 
 VkSampler GBuffer::GetSampler()
 {
-	return mGBufferSampler;
+	return mSampler;
 }

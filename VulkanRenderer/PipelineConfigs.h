@@ -43,7 +43,7 @@ public:
 		mSubpass = PASS_GEOMETRY;
 		mDepthCompareOp = VK_COMPARE_OP_EQUAL;
 		mVertexShaderPath = "Shaders/bin/geometryShader.vert";
-		mFragmentShaderPath = "Shaders/bin/geometryShader.frag";
+		mFragmentShaderPath = "Shaders/bin/reflectiveGeometryShader.frag";
 
 		// Add blend states for each attachment (1 already created).
 		for (int32_t i = 0; i < GB_COUNT - 1; ++i)
@@ -147,6 +147,27 @@ public:
 	{
 		DeferredPipeline::PopulateLayoutBindings();
 	}
+};
+
+class EnvironmentCaptureGeometryPipeline : public GeometryPipeline
+{
+public:
+    EnvironmentCaptureGeometryPipeline()
+    {
+        mViewportWidth = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
+        mViewportHeight = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
+    }
+};
+
+class EnvironmentCaptureLightPipeline : public LightPipeline
+{
+public:
+
+    EnvironmentCaptureLightPipeline()
+    {
+        mViewportWidth = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
+        mViewportHeight = DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION;
+    }
 };
 
 class EnvironmentCaptureDebugPipeline : public DeferredPipeline

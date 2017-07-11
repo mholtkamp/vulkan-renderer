@@ -7,7 +7,8 @@
 DebugActionHandler::DebugActionHandler() :
 	mGBufferViewMode(GB_COUNT),
 	mEnvironmentCapture(0),
-	mEnvironmentCaptureFace(0)
+	mEnvironmentCaptureFace(0),
+    mAlwaysCapture(false)
 {
 
 }
@@ -60,4 +61,62 @@ void DebugActionHandler::Update()
 	{
 		Renderer::Get()->SetDebugMode(DEBUG_ENVIRONMENT_CAPTURE);
 	}
+
+    if (GetAsyncKeyState('F') &&
+        GetAsyncKeyState('1'))
+    {
+        Renderer::Get()->SetEnvironmentDebugFace(0);
+    }
+
+    if (GetAsyncKeyState('F') &&
+        GetAsyncKeyState('2'))
+    {
+        Renderer::Get()->SetEnvironmentDebugFace(1);
+    }
+
+    if (GetAsyncKeyState('F') &&
+        GetAsyncKeyState('3'))
+    {
+        Renderer::Get()->SetEnvironmentDebugFace(2);
+    }
+
+    if (GetAsyncKeyState('F') &&
+        GetAsyncKeyState('4'))
+    {
+        Renderer::Get()->SetEnvironmentDebugFace(3);
+    }
+
+    if (GetAsyncKeyState('F') &&
+        GetAsyncKeyState('5'))
+    {
+        Renderer::Get()->SetEnvironmentDebugFace(4);
+    }
+
+    if (GetAsyncKeyState('F') &&
+        GetAsyncKeyState('6'))
+    {
+        Renderer::Get()->SetEnvironmentDebugFace(5);
+    }
+
+    static bool eDown = false;
+
+    if (GetAsyncKeyState('E') &&
+        GetAsyncKeyState(VK_CONTROL))
+    {
+        if (!eDown)
+        {
+            mAlwaysCapture = !mAlwaysCapture;
+        }
+
+        eDown = true;
+    }
+    else
+    {
+        eDown = false;
+    }
+
+    if (mAlwaysCapture)
+    {
+        Renderer::Get()->UpdateEnvironmentCaptures();
+    }
 }

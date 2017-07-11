@@ -46,7 +46,8 @@ Renderer::Renderer() :
 	mRenderFinishedSemaphore(0),
 	mScene(nullptr),
 	mDebugMode(DEBUG_NONE),
-	mInitialized(false)
+	mInitialized(false),
+    mEnvironmentDebugFace(0)
 {
 	mGlobalUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	mGlobalUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
@@ -97,6 +98,7 @@ void Renderer::DestroySwapchain()
 
 	mEarlyDepthPipeline.Destroy();
 	mGeometryPipeline.Destroy();
+    mEnvironmentCapturePipeline.Destroy();
 	mReflectiveGeometryPipeline.Destroy();
 	mLightPipeline.Destroy();
 	mDebugDeferredPipeline.Destroy();
@@ -246,6 +248,7 @@ void Renderer::PreparePresentation()
 
 void Renderer::Render()
 {
+    UpdateGlobalUniformData();
 	UpdateGlobalUniformBuffer();
 
 	uint32_t imageIndex;
@@ -813,28 +816,36 @@ void Renderer::CreateDepthImage()
 
 void Renderer::CreateGBuffer()
 {
-	mGBuffer.Create();
+	mGBuffer.Create(mSwapchainExtent.width, mSwapchainExtent.height);
 }
 
 void Renderer::CreateGlobalUniformBuffer()
 {
-	VkDeviceSize bufferSize = sizeof(GlobalUniformBuffer);
+	VkDeviceSize bufferSize = sizeof(GlobalUniformData);
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mGlobalUniformBuffer, mGlobalUniformBufferMemory);
 	UpdateGlobalUniformBuffer();
 }
 
+void Renderer::UpdateGlobalUniformData()
+{
+    // Update the camera
+    if (mScene != nullptr &&
+        mScene->GetActiveCamera() != nullptr)
+    {
+        mGlobalUniformData.mViewPosition = glm::vec4(mScene->GetActiveCamera()->GetPosition(), 1.0f);
+    }
+}
+
+GlobalUniformData& Renderer::GetGlobalUniformData()
+{
+    return mGlobalUniformData;
+}
+
 void Renderer::UpdateGlobalUniformBuffer()
 {
-	// Update the camera
-	if (mScene != nullptr &&
-		mScene->GetActiveCamera() != nullptr)
-	{
-		mGlobalUniformData.mViewPosition = glm::vec4(mScene->GetActiveCamera()->GetPosition(), 1.0f);
-	}
-
 	void* data;
-	vkMapMemory(mDevice, mGlobalUniformBufferMemory, 0, sizeof(GlobalUniformBuffer), 0, &data);
-	memcpy(data, &mGlobalUniformData, sizeof(GlobalUniformBuffer));
+	vkMapMemory(mDevice, mGlobalUniformBufferMemory, 0, sizeof(GlobalUniformData), 0, &data);
+	memcpy(data, &mGlobalUniformData, sizeof(GlobalUniformData));
 	vkUnmapMemory(mDevice, mGlobalUniformBufferMemory);
 }
 
@@ -862,31 +873,12 @@ void Renderer::CreateGlobalDescriptorSet()
 		throw exception("Failed to create descriptor set");
 	}
 
-	// Update image descriptors (for each gbuffer output)
-	VkDescriptorImageInfo imageInfo[GB_COUNT] = {};
-	VkWriteDescriptorSet descriptorWrite[GB_COUNT] = {};
-
-	for (uint32_t i = 0; i < GB_COUNT; ++i)
-	{
-		imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo[i].imageView = mGBuffer.GetImageViews()[i];
-		imageInfo[i].sampler = mGBuffer.GetSampler();
-
-		descriptorWrite[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrite[i].dstSet = mDeferredDescriptorSet;
-		descriptorWrite[i].dstBinding = DD_TEXTURE_POSITION + i;
-		descriptorWrite[i].dstArrayElement = 0;
-		descriptorWrite[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrite[i].descriptorCount = 1;
-		descriptorWrite[i].pImageInfo = &imageInfo[i];
-	}
-
-	vkUpdateDescriptorSets(mDevice, GB_COUNT, descriptorWrite, 0, nullptr);
+    UpdateDeferredDescriptorSet();
 
 	// Update the uniform buffer descriptor
 	VkDescriptorBufferInfo bufferInfo = {};
 	bufferInfo.buffer = mGlobalUniformBuffer;
-	bufferInfo.range = sizeof(GlobalUniformBuffer);
+	bufferInfo.range = sizeof(GlobalUniformData);
 	bufferInfo.offset = 0;
 
 	VkWriteDescriptorSet bufferWrite = {};
@@ -901,6 +893,30 @@ void Renderer::CreateGlobalDescriptorSet()
 	bufferWrite.pTexelBufferView = nullptr;
 
 	vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
+}
+
+void Renderer::UpdateDeferredDescriptorSet()
+{
+    // Update image descriptors (for each gbuffer output)
+    VkDescriptorImageInfo imageInfo[GB_COUNT] = {};
+    VkWriteDescriptorSet descriptorWrite[GB_COUNT] = {};
+
+    for (uint32_t i = 0; i < GB_COUNT; ++i)
+    {
+        imageInfo[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo[i].imageView = mGBuffer.GetImageViews()[i];
+        imageInfo[i].sampler = mGBuffer.GetSampler();
+
+        descriptorWrite[i].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite[i].dstSet = mDeferredDescriptorSet;
+        descriptorWrite[i].dstBinding = DD_TEXTURE_POSITION + i;
+        descriptorWrite[i].dstArrayElement = 0;
+        descriptorWrite[i].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite[i].descriptorCount = 1;
+        descriptorWrite[i].pImageInfo = &imageInfo[i];
+    }
+
+    vkUpdateDescriptorSets(mDevice, GB_COUNT, descriptorWrite, 0, nullptr);
 }
 
 void Renderer::CreateEnvironmentCaptureDebugDescriptorSet()
@@ -963,7 +979,7 @@ void Renderer::UpdateEnvironmentCaptureDebugDescriptorSet()
 	}
 
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = capture.GetFaceImageView(0);
+	imageInfo.imageView = capture.GetFaceImageView(mEnvironmentDebugFace);
 	imageInfo.sampler = capture.GetFaceSampler();
 
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -1559,6 +1575,7 @@ void Renderer::CreatePipelines()
 	mReflectiveGeometryPipeline.Create();
 	mLightPipeline.Create();
 	mDebugDeferredPipeline.Create();
+    mEnvironmentCapturePipeline.Create();
 	mEnvironmentCaptureDebugPipeline.Create();
 }
 
@@ -1568,4 +1585,24 @@ void Renderer::SetDebugMode(DebugMode mode)
 	UpdateGlobalUniformBuffer();
     UpdateEnvironmentCaptureDebugDescriptorSet();
 	CreateCommandBuffers();
+}
+
+EnvironmentCaptureLightPipeline& Renderer::GetEnvironmentCapturePipeline()
+{
+    return mEnvironmentCapturePipeline;
+}
+
+void Renderer::SetEnvironmentDebugFace(uint32_t index)
+{
+    mEnvironmentDebugFace = index;
+    UpdateEnvironmentCaptureDebugDescriptorSet();
+    CreateCommandBuffers();
+}
+
+void Renderer::UpdateEnvironmentCaptures()
+{
+    if (mScene != nullptr)
+    {
+        mScene->CaptureEnvironment();
+    }
 }

@@ -233,7 +233,7 @@ void Scene::RenderLightVolumes(VkCommandBuffer commandBuffer)
 	}
 }
 
-void Scene::Update(float deltaTime)
+void Scene::Update(float deltaTime, bool updateDebug)
 {
 
 	if (mActiveCamera != nullptr)
@@ -251,9 +251,12 @@ void Scene::Update(float deltaTime)
 		pointLight.Update(this, deltaTime);
 	}
 
-	UpdateLightPositions(deltaTime);
+    if (updateDebug)
+    {
+        UpdateLightPositions(deltaTime);
 
-	UpdateDebug(deltaTime);
+        UpdateDebug(deltaTime);
+    }
 }
 
 Camera* Scene::GetActiveCamera()
@@ -305,6 +308,11 @@ void Scene::CaptureEnvironment()
 	{
 		capture.Capture();
 	}
+
+    for (Actor& actor : mActors)
+    {
+        actor.UpdateEnvironmentSampler();
+    }
 }
 
 void Scene::LoadEnvironmentCapture(const aiNode& node)
@@ -322,10 +330,10 @@ void Scene::SpawnTestEnvironmentCapture()
 	mEnvironmentCaptures.push_back(testCapture);
 	mEnvironmentCaptures.back().SetScene(this);
 
-	//for (Actor& actor : mActors)
-	//{
-	//	actor.SetEnvironmentCapture(&mEnvironmentCaptures.back());
-	//}	
+	for (Actor& actor : mActors)
+	{
+		actor.SetEnvironmentCapture(&mEnvironmentCaptures.back());
+	}	
 }
 
 std::vector<EnvironmentCapture>& Scene::GetEnvironmentCaptures()

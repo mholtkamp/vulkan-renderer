@@ -33,6 +33,8 @@ public:
 
 	void SetEnvironmentCapture(EnvironmentCapture* environmentCapture);
 
+    void UpdateEnvironmentSampler();
+
 private:
 
 	void UpdateUniformBuffer(class Camera* camera,
@@ -41,8 +43,6 @@ private:
 	void CreateUniformBuffer();
 
 	void CreateDescriptorSet();
-
-	void UpdateEnvironmentSampler();
 
 	EnvironmentCapture* mEnvironmentCapture;
 

@@ -171,6 +171,20 @@
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\src\debugDeferredShader.frag" />
+    <None Include="Shaders\src\debugDeferredShader.vert" />
+    <None Include="Shaders\src\deferredShader.frag" />
+    <None Include="Shaders\src\deferredShader.vert" />
+    <None Include="Shaders\src\depthShader.vert" />
+    <None Include="Shaders\src\environmentCaptureDebug.frag" />
+    <None Include="Shaders\src\geometryShader.frag" />
+    <None Include="Shaders\src\geometryShader.vert" />
+    <None Include="Shaders\src\lightShader.frag" />
+    <None Include="Shaders\src\lightShader.vert" />
+    <None Include="Shaders\src\reflectiveGeometryShader.frag" />
+    <None Include="Shaders\src\reflectiveGeometryShader.vert" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

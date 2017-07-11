@@ -20,7 +20,9 @@ Pipeline::Pipeline() :
 	mDepthTestEnabled(VK_TRUE),
 	mDepthWriteEnabled(VK_TRUE),
 	mDepthCompareOp(VK_COMPARE_OP_LESS),
-	mBlendEnabled(VK_FALSE)
+	mBlendEnabled(VK_FALSE),
+    mViewportWidth(0),
+    mViewportHeight(0)
 {
 	AddBlendAttachmentState();
 }
@@ -104,14 +106,15 @@ void Pipeline::Create()
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float) swapchainExtent.width;
-	viewport.height = (float)  swapchainExtent.height;
+	viewport.width = (float) ((mViewportWidth == 0) ? swapchainExtent.width : mViewportWidth);
+	viewport.height = (float)  ((mViewportHeight == 0) ? swapchainExtent.height : mViewportHeight);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
-	scissor.extent =  swapchainExtent;
+	scissor.extent.width = (mViewportWidth == 0) ? swapchainExtent.width : mViewportWidth;
+    scissor.extent.height = (mViewportHeight == 0) ? swapchainExtent.height : mViewportHeight;
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

@@ -16,7 +16,7 @@
 #include "PipelineConfigs.h"
 #include "GBuffer.h"
 
-struct GlobalUniformBuffer
+struct GlobalUniformData
 {
 	glm::vec4 mSunDirection;
 	glm::vec4 mSunColor;
@@ -78,6 +78,7 @@ public:
 	GeometryPipeline& GetGeometryPipeline();
 	ReflectiveGeometryPipeline& GetReflectiveGeometryPipeline();
 	LightPipeline& GetLightPipeline();
+    EnvironmentCaptureLightPipeline& GetEnvironmentCapturePipeline();
 	Pipeline& GetDeferredPipeline();
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
@@ -116,6 +117,18 @@ public:
 
 	void CreateCommandBuffers();
 
+    void SetEnvironmentDebugFace(uint32_t index);
+
+    void UpdateGlobalUniformBuffer();
+
+    void UpdateGlobalUniformData();
+
+    GlobalUniformData& GetGlobalUniformData();
+
+    void UpdateEnvironmentCaptures();
+
+    void UpdateDeferredDescriptorSet();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,
@@ -142,8 +155,6 @@ private:
 	void CreateGBuffer();
 
 	void CreateGlobalUniformBuffer();
-
-	void UpdateGlobalUniformBuffer();
 
 	void CreateGlobalDescriptorSet();
 
@@ -229,6 +240,7 @@ private:
 	ReflectiveGeometryPipeline mReflectiveGeometryPipeline;
 	LightPipeline mLightPipeline;
 	DebugDeferredPipeline mDebugDeferredPipeline;
+    EnvironmentCaptureLightPipeline mEnvironmentCapturePipeline;
 	EnvironmentCaptureDebugPipeline mEnvironmentCaptureDebugPipeline;
 
 	VkDescriptorSet mGlobalDescriptorSet;
@@ -238,7 +250,7 @@ private:
 	VkDescriptorSet mDeferredDescriptorSet;
 	VkDescriptorSet mEnvironmentCaptureDebugDescriptorSet;
 
-	GlobalUniformBuffer mGlobalUniformData;
+	GlobalUniformData mGlobalUniformData;
 
 	GBuffer mGBuffer;
 
@@ -249,4 +261,6 @@ private:
 	DebugMode mDebugMode;
 
 	bool mInitialized;
+
+    uint32_t mEnvironmentDebugFace;
 };

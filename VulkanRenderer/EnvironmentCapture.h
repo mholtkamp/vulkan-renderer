@@ -4,6 +4,7 @@
 #include "Texture.h"
 #include <glm/glm.hpp>
 #include "Camera.h"
+#include "GBuffer.h"
 
 class EnvironmentCapture
 {
@@ -45,7 +46,13 @@ private:
 
 	void SetupCaptureCameras(std::array<Camera, 6>& cameras);
 
+    void CreateGBuffer();
+
+    void DestroyGBuffer();
+
 private:
+
+    void UpdateDeferredDescriptor();
 
 	static VkRenderPass sRenderPass;
 
@@ -67,6 +74,8 @@ private:
 	glm::vec3 mPosition;
 
 	uint32_t mResolution;
+
+    GBuffer mGBuffer;
 
 	class Scene* mScene;
 };

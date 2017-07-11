@@ -14,7 +14,7 @@ public:
 
 	~GBuffer();
 
-	void Create();
+	void Create(uint32_t width, uint32_t height);
 
 	void Destroy();
 
@@ -34,10 +34,12 @@ public:
 
 private:
 
+    uint32_t mWidth;
+    uint32_t mHeight;
+
 	std::vector<VkImage> mImages;
 	std::vector<VkDeviceMemory> mImageMemory;
 	std::vector<VkImageView> mImageViews;
 	std::vector<VkFormat> mFormats;
-	VkFramebuffer mGBuffer;
-	VkSampler mGBufferSampler;
+	VkSampler mSampler;
 };

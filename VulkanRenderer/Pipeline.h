@@ -43,11 +43,18 @@ protected:
 	VkPipeline mPipeline;
 	VkPipelineLayout mPipelineLayout;
 	std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
-	uint32_t mSubpass;
+	
+public:
+
+    uint32_t mSubpass;
 
 	// Shader stages
 	std::string mVertexShaderPath;
 	std::string mFragmentShaderPath;
+
+    // Viewport
+    uint32_t mViewportWidth;
+    uint32_t mViewportHeight;
 
 	// Rasterizer stage
 	VkBool32 mRasterizerDiscard;

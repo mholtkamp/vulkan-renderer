@@ -32,7 +32,7 @@ public:
 
 	void RenderLightVolumes(VkCommandBuffer commandBuffer);
 
-	void Update(float deltaTime);
+	void Update(float deltaTime, bool updateDebug = true);
 
 	Camera* GetActiveCamera();
 
