@@ -61,30 +61,17 @@ void main()
     
 	// Determine if colors should be shadowed
 	float visibility = 1.0;
-	float bias = 0.01f;
+	float bias = 0.001f;
 
 	vec4 shadowCoord = inShadowCoordinate;// / inShadowCoordinate.w;
 
 	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
 	{
-		float dist = texture( shadowMapSampler, shadowCoord.st).r;
+		float dist = texture(shadowMapSampler, shadowCoord.st).r + bias;
 		if (shadowCoord.w > 0.0 && dist < shadowCoord.z) 
 		{
-			visibility = 0.5;
-			outColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-			outSpecularColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+			visibility = 0.2;
 		}
-	}
-
-	if (inShadowCoordinate.x < 0.5f)
-	{
-		outColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-		outSpecularColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	}
-	else
-	{
-		outColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
-		outSpecularColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 	}
 
 	//if (texture(shadowMapSampler, shadowCoord.xy ).z  <  shadowCoord.z)
@@ -94,6 +81,6 @@ void main()
 	//	outSpecularColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 	//}
 
-	//outColor *= visibility;
-	//outSpecularColor *= visibility;
+	outColor *= visibility;
+	outSpecularColor *= visibility;
 }

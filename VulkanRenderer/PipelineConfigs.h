@@ -42,7 +42,7 @@ public:
 	{
 		mSubpass = PASS_GEOMETRY;
 		mDepthCompareOp = VK_COMPARE_OP_EQUAL;
-		mVertexShaderPath = "Shaders/bin/geometryShader.vert";
+		mVertexShaderPath = "Shaders/bin/reflectiveGeometryShader.vert";
 		mFragmentShaderPath = "Shaders/bin/reflectiveGeometryShader.frag";
 
 		// Add blend states for each attachment (1 already created).
