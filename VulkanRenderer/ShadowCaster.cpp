@@ -12,7 +12,7 @@ ShadowCaster::ShadowCaster() :
 
 }
 
-ShadowCaster::~ShadowCaster()
+void ShadowCaster::Destroy()
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();

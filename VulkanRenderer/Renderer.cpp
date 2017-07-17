@@ -127,6 +127,8 @@ Renderer::~Renderer()
 {
 	PointLight::DestroySphereMesh();
 
+    mShadowCaster.Destroy();
+
 	DestroySwapchain();
 
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
@@ -963,6 +965,11 @@ void Renderer::UpdateDebugDescriptorSet()
 		return;
 	}
 
+    if (mDebugMode == DEBUG_NONE)
+    {
+        return;
+    }
+
 	if (mDebugMode == DEBUG_ENVIRONMENT_CAPTURE)
 	{
 		std::vector<EnvironmentCapture>& captures = mScene->GetEnvironmentCaptures();
@@ -1130,6 +1137,16 @@ void Renderer::CreateCommandBuffers()
 			throw exception("Failed to record command buffer");
 		}
 	}
+}
+
+VkImageView Renderer::GetShadowMapImageView()
+{
+    return mShadowCaster.GetShadowMapImageView();
+}
+
+VkSampler Renderer::GetShadowMapSampler()
+{
+    return mShadowCaster.GetShadowMapSampler();
 }
 
 void Renderer::RenderShadowMaps()

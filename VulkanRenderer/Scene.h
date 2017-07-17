@@ -49,6 +49,8 @@ public:
 
 	void CaptureEnvironment();
 
+    void UpdateShadowMapDescriptors();
+
 	std::vector<EnvironmentCapture>& GetEnvironmentCaptures();
 
 	DirectionalLight& GetDirectionalLight();

@@ -131,6 +131,10 @@ public:
 
 	void RenderShadowMaps();
 
+    VkImageView GetShadowMapImageView();
+
+    VkSampler GetShadowMapSampler();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,

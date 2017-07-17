@@ -103,12 +103,13 @@ void Material::Create(const Scene& scene,
 
 void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 {
-	VkDevice device = Renderer::Get()->GetDevice();
+    Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
 
 	VkDescriptorImageInfo imageInfo[SLOT_COUNT] = {};
 	VkWriteDescriptorSet descriptorWrite[SLOT_COUNT] = {};
 
-	for (uint32_t i = 0; i < SLOT_COUNT; ++i)
+	for (uint32_t i = 0; i < SLOT_SHADOW_MAP; ++i)
 	{
 		if (mTextures[i] == nullptr)
 		{

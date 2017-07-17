@@ -124,6 +124,7 @@ void Scene::UpdateDebug(float deltaTime)
 		//if (!sDown)
 		//{
 			Renderer::Get()->RenderShadowMaps();
+            UpdateShadowMapDescriptors();
 			Renderer::Get()->CreateCommandBuffers();
 		//}
 
@@ -296,6 +297,14 @@ void Scene::Update(float deltaTime, bool updateDebug)
         UpdateLightPositions(deltaTime);
 
         UpdateDebug(deltaTime);
+    }
+}
+
+void Scene::UpdateShadowMapDescriptors()
+{
+    for (Actor& actor : mActors)
+    {
+        actor.UpdateShadowMapDescriptor();
     }
 }
 

@@ -13,12 +13,14 @@ layout(set = 1, binding = 0) uniform GeometryUniformBuffer
     mat4 mWVP;
     mat4 mWorldMatrix;
     mat4 mNormalMatrix;
+    mat4 mLightMVP;
     float mReflectivity;
 } uboGeometry;
 
 layout(set = 1, binding = 1) uniform sampler2D diffuseSampler;
 layout(set = 1, binding = 2) uniform sampler2D specularSampler;
 layout(set = 1, binding = 3) uniform sampler2D normalSampler;
+layout(set = 1, binding = 4) uniform sampler2D shadowMapSampler;
 
 layout (set = 0, binding = 0) uniform GlobalUniformBuffer
 {
@@ -44,6 +46,7 @@ void main()
     normal = normalize(normal * 2.0 - 1.0);
     outNormal = vec4(normalize(inTBN * normal), 0.0);
     
+
     if (outColor.a < 0.5)
     {
         discard;

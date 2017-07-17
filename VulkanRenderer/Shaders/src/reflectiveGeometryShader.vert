@@ -6,6 +6,7 @@ layout(set = 1, binding = 0) uniform GeometryUniformBuffer
     mat4 mWVP;
     mat4 mWorldMatrix;
     mat4 mNormalMatrix;
+    mat4 mLightMVP;
     float mReflectivity;
 } uboGeometry;
 

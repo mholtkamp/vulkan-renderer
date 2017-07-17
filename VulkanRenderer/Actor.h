@@ -36,6 +36,8 @@ public:
 
     void UpdateEnvironmentSampler();
 
+    void UpdateShadowMapDescriptor();
+
 private:
 
 	void UpdateUniformBuffer(class Scene* camera,

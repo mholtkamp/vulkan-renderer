@@ -46,5 +46,11 @@ void DirectionalLight::GenerateViewProjectionMatrix()
 	view = glm::lookAtRH(mPosition, mPosition + mDirection, glm::vec3(0.0f, 1.0f, 0.0f));
 	proj = glm::orthoRH(-100.0f, 100.0f, -100.0f, 100.0f, -100.0f, 100.0f);
 
-	mViewProjectionMatrix = proj * view;
+    // Needed for adjusting to NDC
+    const glm::mat4 clip(1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, -1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.5f, 0.0f,
+        0.0f, 0.0f, 0.5f, 1.0f);
+
+	mViewProjectionMatrix = clip * proj * view;
 }

@@ -10,7 +10,7 @@ public:
 
 	ShadowCaster();
 
-	~ShadowCaster();
+    void Destroy();
 
 	void RenderShadowMap(Scene* scene);
 
