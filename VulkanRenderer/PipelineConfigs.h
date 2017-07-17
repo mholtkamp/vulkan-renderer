@@ -178,7 +178,7 @@ public:
 
 	ShadowMapDebugPipeline()
 	{
-
+        mFragmentShaderPath = "Shaders/bin/shadowMapDebug.frag";
 	}
 
 	virtual void PopulateLayoutBindings() override

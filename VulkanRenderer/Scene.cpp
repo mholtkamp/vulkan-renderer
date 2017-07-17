@@ -121,11 +121,11 @@ void Scene::UpdateDebug(float deltaTime)
 	if (GetAsyncKeyState('S') &&
 		GetAsyncKeyState(VK_CONTROL))
 	{
-		if (!sDown)
-		{
+		//if (!sDown)
+		//{
 			Renderer::Get()->RenderShadowMaps();
 			Renderer::Get()->CreateCommandBuffers();
-		}
+		//}
 
 		sDown = true;
 	}
@@ -278,6 +278,8 @@ void Scene::Update(float deltaTime, bool updateDebug)
 	{
 		mActiveCamera->Update();
 	}
+
+    mDirectionalLight.Update();
 
 	for (Actor& actor : mActors)
 	{
