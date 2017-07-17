@@ -6,7 +6,9 @@ layout(location = 1) in vec2 inTexcoord;
 layout(location = 2) in vec3 inNormal;
 layout(location = 3) in vec3 inTangent;
 layout(location = 4) in vec3 inBitangent;
-layout(location = 5) in mat3 inTBN;
+layout(location = 5) in vec4 inShadowCoordinate;
+layout(location = 6) in mat3 inTBN;
+
 
 layout(set = 1, binding = 0) uniform GeometryUniformBuffer 
 {
@@ -61,18 +63,11 @@ void main()
 	float visibility = 1.0;
 	float bias = 0.01f;
 
-	const mat4 biasMat = mat4( 
-	0.5, 0.0, 0.0, 0.0,
-	0.0, 0.5, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.5, 0.5, 0.0, 1.0 );
-
-	vec4 shadowCoord = biasMat * uboGeometry.mLightMVP * vec4(inPosition, 1.0);
-	shadowCoord = shadowCoord / shadowCoord.w;
+	vec4 shadowCoord = inShadowCoordinate;// / inShadowCoordinate.w;
 
 	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
 	{
-		float dist = texture( shadowMapSampler, shadowCoord.st).r - bias;
+		float dist = texture( shadowMapSampler, shadowCoord.st).r;
 		if (shadowCoord.w > 0.0 && dist < shadowCoord.z) 
 		{
 			visibility = 0.5;
@@ -81,7 +76,16 @@ void main()
 		}
 	}
 
-
+	if (inShadowCoordinate.x < 0.5f)
+	{
+		outColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+		outSpecularColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	}
+	else
+	{
+		outColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+		outSpecularColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);
+	}
 
 	//if (texture(shadowMapSampler, shadowCoord.xy ).z  <  shadowCoord.z)
 	//{

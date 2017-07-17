@@ -189,7 +189,7 @@ void Actor::UpdateUniformBuffer(Scene* scene, float deltaTime)
 	ubo.mWVPMatrix = camera->GetViewProjectionMatrix() * mWorldMatrix;
 	ubo.mWorldMatrix = mWorldMatrix;
 	ubo.mNormalMatrix = glm::transpose(glm::inverse(mWorldMatrix));
-	ubo.mLightWVPMatrix = (scene->GetDirectionalLight().GetViewProjectionMatrix() * mWorldMatrix);
+	ubo.mLightWVPMatrix = scene->GetDirectionalLight().GetViewProjectionMatrix() /* * mWorldMatrix*/;
 	ubo.mReflectivity = mMesh->GetMaterial()->GetReflectivity();
 
 	void* data;

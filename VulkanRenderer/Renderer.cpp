@@ -965,7 +965,8 @@ void Renderer::UpdateDebugDescriptorSet()
 		return;
 	}
 
-    if (mDebugMode == DEBUG_NONE)
+    if (mDebugMode == DEBUG_NONE ||
+		mDebugMode == DEBUG_GBUFFER)
     {
         return;
     }
