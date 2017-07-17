@@ -64,9 +64,17 @@ void Scene::Load(const std::string& directory,
 
 		SpawnTestLights();
 		SpawnTestEnvironmentCapture();
+		SetTestDirectionalLight();
 
 		mLoaded = true;
 	}
+}
+
+void Scene::SetTestDirectionalLight()
+{
+	mDirectionalLight.SetEnabled(true);
+	mDirectionalLight.SetColor(glm::vec4(1.0f, 0.9f, 0.9f, 1.0f));
+	mDirectionalLight.SetDirection(glm::normalize(glm::vec3(1.0f, -1.0f, 0.2f)));
 }
 
 void Scene::UpdateDebug(float deltaTime)
@@ -107,6 +115,23 @@ void Scene::UpdateDebug(float deltaTime)
 	else
 	{
 		cDown = false;
+	}
+
+	static bool sDown = false;
+	if (GetAsyncKeyState('S') &&
+		GetAsyncKeyState(VK_CONTROL))
+	{
+		if (!sDown)
+		{
+			Renderer::Get()->RenderShadowMaps();
+			Renderer::Get()->CreateCommandBuffers();
+		}
+
+		sDown = true;
+	}
+	else
+	{
+		sDown = false;
 	}
 }
 
@@ -215,8 +240,21 @@ void Scene::PopulateLightLookupMap(const aiScene& scene,
 	}
 }
 
+DirectionalLight& Scene::GetDirectionalLight()
+{
+	return mDirectionalLight;
+}
+
 void Scene::RenderGeometry(VkCommandBuffer commandBuffer)
 {	
+	for (Actor& actor : mActors)
+	{
+		actor.Draw(commandBuffer);
+	}
+}
+
+void Scene::RenderShadowCasters(VkCommandBuffer commandBuffer)
+{
 	for (Actor& actor : mActors)
 	{
 		actor.Draw(commandBuffer);

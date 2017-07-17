@@ -133,6 +133,7 @@
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
+    <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="EnvironmentCapture.cpp" />
     <ClCompile Include="GBuffer.cpp" />
     <ClCompile Include="LightSpawn.cpp" />
@@ -143,6 +144,7 @@
     <ClCompile Include="PointLight.cpp" />
     <ClCompile Include="Renderer.cpp" />
     <ClCompile Include="Scene.cpp" />
+    <ClCompile Include="ShadowCaster.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Utilities.cpp" />
@@ -156,6 +158,7 @@
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DebugActionHandler.h" />
+    <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="EnvironmentCapture.h" />
     <ClInclude Include="GBuffer.h" />
@@ -167,6 +170,7 @@
     <ClInclude Include="PointLight.h" />
     <ClInclude Include="Renderer.h" />
     <ClInclude Include="Scene.h" />
+    <ClInclude Include="ShadowCaster.h" />
     <ClInclude Include="Texture.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="Vertex.h" />

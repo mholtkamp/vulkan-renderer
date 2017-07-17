@@ -46,6 +46,7 @@ protected:
 	
 public:
 
+	VkRenderPass mRenderpass;
     uint32_t mSubpass;
 
 	// Shader stages

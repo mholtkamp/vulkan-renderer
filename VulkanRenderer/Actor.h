@@ -11,6 +11,7 @@ struct GeometryUniformBuffer
 	glm::mat4 mWVPMatrix;
 	glm::mat4 mWorldMatrix;
 	glm::mat4 mNormalMatrix;
+	glm::mat4 mLightWVPMatrix;
 	float mReflectivity;
 };
 
@@ -37,7 +38,7 @@ public:
 
 private:
 
-	void UpdateUniformBuffer(class Camera* camera,
+	void UpdateUniformBuffer(class Scene* camera,
 		float DeltaTime);
 
 	void CreateUniformBuffer();

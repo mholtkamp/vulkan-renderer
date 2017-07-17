@@ -16,6 +16,8 @@
 #include "PipelineConfigs.h"
 #include "GBuffer.h"
 
+#include "ShadowCaster.h"
+
 struct GlobalUniformData
 {
 	glm::vec4 mSunDirection;
@@ -127,6 +129,8 @@ public:
 
     void UpdateDeferredDescriptorSet();
 
+	void RenderShadowMaps();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,
@@ -156,9 +160,9 @@ private:
 
 	void CreateGlobalDescriptorSet();
 
-	void CreateEnvironmentCaptureDebugDescriptorSet();
+	void CreateDebugDescriptorSet();
 
-	void UpdateEnvironmentCaptureDebugDescriptorSet();
+	void UpdateDebugDescriptorSet();
 
 	void CreateRenderPass();
 
@@ -238,13 +242,14 @@ private:
 	LightPipeline mLightPipeline;
 	DebugDeferredPipeline mDebugDeferredPipeline;
 	EnvironmentCaptureDebugPipeline mEnvironmentCaptureDebugPipeline;
+	ShadowMapDebugPipeline mShadowMapDebugPipeline;
 
 	VkDescriptorSet mGlobalDescriptorSet;
 	VkBuffer mGlobalUniformBuffer;
 	VkDeviceMemory mGlobalUniformBufferMemory;
 
 	VkDescriptorSet mDeferredDescriptorSet;
-	VkDescriptorSet mEnvironmentCaptureDebugDescriptorSet;
+	VkDescriptorSet mDebugDescriptorSet;
 
 	GlobalUniformData mGlobalUniformData;
 
@@ -259,4 +264,6 @@ private:
 	bool mInitialized;
 
     uint32_t mEnvironmentDebugFace;
+
+	ShadowCaster mShadowCaster;
 };

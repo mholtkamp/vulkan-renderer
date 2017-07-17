@@ -12,6 +12,7 @@
 #include "Clock.h"
 #include "Camera.h"
 #include "EnvironmentCapture.h"
+#include "DirectionalLight.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -29,6 +30,8 @@ public:
 		const std::string& file);
 
 	void RenderGeometry(VkCommandBuffer commandBuffer);
+
+	void RenderShadowCasters(VkCommandBuffer commandBuffer);
 
 	void RenderLightVolumes(VkCommandBuffer commandBuffer);
 
@@ -48,6 +51,8 @@ public:
 
 	std::vector<EnvironmentCapture>& GetEnvironmentCaptures();
 
+	DirectionalLight& GetDirectionalLight();
+
 private:
 
 	void LoadMaterials(const aiScene& scene);
@@ -64,6 +69,8 @@ private:
 	void UpdateLightPositions(float deltaTime);
 
 	void UpdateDebug(float deltaTime);
+
+	void SetTestDirectionalLight();
 
 private:
 
@@ -82,6 +89,8 @@ private:
 	std::vector<Camera> mCameras;
 
 	std::vector<EnvironmentCapture> mEnvironmentCaptures;
+
+	DirectionalLight mDirectionalLight;
 
 	Camera* mActiveCamera;
 

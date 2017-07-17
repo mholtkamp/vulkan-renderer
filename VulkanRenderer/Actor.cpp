@@ -146,17 +146,19 @@ void Actor::Draw(VkCommandBuffer commandBuffer)
 void Actor::Update(Scene* scene,
 	float deltaTime)
 {
-	UpdateUniformBuffer(scene->GetActiveCamera(), deltaTime);
+	UpdateUniformBuffer(scene, deltaTime);
 }
 
-void Actor::UpdateUniformBuffer(Camera* camera, float deltaTime)
+void Actor::UpdateUniformBuffer(Scene* scene, float deltaTime)
 {
 	VkDevice device = Renderer::Get()->GetDevice();
+	Camera* camera = scene->GetActiveCamera();
 
 	GeometryUniformBuffer ubo = {};
 	ubo.mWVPMatrix = camera->GetViewProjectionMatrix() * mWorldMatrix;
 	ubo.mWorldMatrix = mWorldMatrix;
 	ubo.mNormalMatrix = glm::transpose(glm::inverse(mWorldMatrix));
+	ubo.mLightWVPMatrix = (scene->GetDirectionalLight().GetViewProjectionMatrix() * mWorldMatrix);
 	ubo.mReflectivity = mMesh->GetMaterial()->GetReflectivity();
 
 	void* data;

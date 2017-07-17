@@ -8,6 +8,7 @@ using namespace std;
 Pipeline::Pipeline() :
 	mPipeline(VK_NULL_HANDLE),
 	mPipelineLayout(VK_NULL_HANDLE),
+	mRenderpass(VK_NULL_HANDLE),
 	mSubpass(0),
 	mVertexShaderPath("Shaders/bin/geometryShader.vert"),
 	mFragmentShaderPath("Shaders/bin/geometryShader.frag"),
@@ -183,7 +184,7 @@ void Pipeline::Create()
 	ciPipeline.pColorBlendState = &colorBlending;
 	ciPipeline.pDynamicState = nullptr;
 	ciPipeline.layout = mPipelineLayout;
-	ciPipeline.renderPass = renderer->GetRenderPass();
+	ciPipeline.renderPass = (mRenderpass == VK_NULL_HANDLE) ? renderer->GetRenderPass() : mRenderpass;
 	ciPipeline.subpass = mSubpass;
 	ciPipeline.basePipelineHandle = VK_NULL_HANDLE;
 	ciPipeline.basePipelineIndex = -1;

@@ -19,5 +19,5 @@ out gl_PerVertex
 
 void main()
 {
-    gl_Position = uboGeometry.mWVP * vec4(inPosition, 1.0);
+    gl_Position = uboGeometry.mLightMVP * vec4(inPosition, 1.0);
 }

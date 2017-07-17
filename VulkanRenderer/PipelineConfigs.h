@@ -138,11 +138,11 @@ public:
 	}
 };
 
-class EnvironmentCaptureDebugPipeline : public DeferredPipeline
+class BaseDebugPipeline: public DeferredPipeline
 {
 public:
 
-	EnvironmentCaptureDebugPipeline()
+	BaseDebugPipeline()
 	{
 		mFragmentShaderPath = "Shaders/bin/environmentCaptureDebug.frag";
 	}
@@ -153,6 +153,39 @@ public:
 
 		PushSet();
 		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
 
+};
+
+class EnvironmentCaptureDebugPipeline : public BaseDebugPipeline
+{
+public:
+
+	EnvironmentCaptureDebugPipeline()
+	{
+		mFragmentShaderPath = "Shaders/bin/environmentCaptureDebug.frag";
+	}
+
+	virtual void PopulateLayoutBindings() override
+	{
+		BaseDebugPipeline::PopulateLayoutBindings();
+	}
+};
+
+class ShadowMapDebugPipeline : public DeferredPipeline
+{
+public:
+
+	ShadowMapDebugPipeline()
+	{
+
+	}
+
+	virtual void PopulateLayoutBindings() override
+	{
+		DeferredPipeline::PopulateLayoutBindings();
+
+		PushSet();
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 };

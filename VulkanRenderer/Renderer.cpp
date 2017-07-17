@@ -101,6 +101,7 @@ void Renderer::DestroySwapchain()
 	mLightPipeline.Destroy();
 	mDebugDeferredPipeline.Destroy();
 	mEnvironmentCaptureDebugPipeline.Destroy();
+	mShadowMapDebugPipeline.Destroy();
 
 	mGBuffer.Destroy();
 
@@ -159,7 +160,7 @@ void Renderer::Initialize()
 	CreatePipelines();
 	mGBuffer.CreateSampler();
 	CreateGlobalDescriptorSet();
-	CreateEnvironmentCaptureDebugDescriptorSet();
+	CreateDebugDescriptorSet();
 	CreateFramebuffers();
 	
 	CreateCommandBuffers();
@@ -917,7 +918,7 @@ void Renderer::UpdateDeferredDescriptorSet()
     vkUpdateDescriptorSets(mDevice, GB_COUNT, descriptorWrite, 0, nullptr);
 }
 
-void Renderer::CreateEnvironmentCaptureDebugDescriptorSet()
+void Renderer::CreateDebugDescriptorSet()
 {
 	VkDescriptorSetLayout layouts[] = { mEnvironmentCaptureDebugPipeline.GetDescriptorSetLayout(2) };
 	VkDescriptorSetAllocateInfo allocInfo = {};
@@ -926,7 +927,7 @@ void Renderer::CreateEnvironmentCaptureDebugDescriptorSet()
 	allocInfo.descriptorSetCount = 1;
 	allocInfo.pSetLayouts = layouts;
 
-	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mEnvironmentCaptureDebugDescriptorSet) != VK_SUCCESS)
+	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mDebugDescriptorSet) != VK_SUCCESS)
 	{
 		throw exception("Failed to create descriptor set");
 	}
@@ -950,7 +951,7 @@ void Renderer::CreateEnvironmentCaptureDebugDescriptorSet()
 	//vkUpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
 }
 
-void Renderer::UpdateEnvironmentCaptureDebugDescriptorSet()
+void Renderer::UpdateDebugDescriptorSet()
 {
 	// Update image descriptors
 	VkDescriptorImageInfo imageInfo = {};
@@ -962,26 +963,35 @@ void Renderer::UpdateEnvironmentCaptureDebugDescriptorSet()
 		return;
 	}
 
-	std::vector<EnvironmentCapture>& captures = mScene->GetEnvironmentCaptures();
-
-	if (captures.size() == 0)
+	if (mDebugMode == DEBUG_ENVIRONMENT_CAPTURE)
 	{
-		return;
+		std::vector<EnvironmentCapture>& captures = mScene->GetEnvironmentCaptures();
+
+		if (captures.size() == 0)
+		{
+			return;
+		}
+
+		EnvironmentCapture& capture = captures[0];
+
+		if (capture.GetFaceImageView(0) == VK_NULL_HANDLE)
+		{
+			return;
+		}
+
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = capture.GetFaceImageView(mEnvironmentDebugFace);
+		imageInfo.sampler = capture.GetFaceSampler();
 	}
-
-	EnvironmentCapture& capture = captures[0];
-
-	if (capture.GetFaceImageView(0) == VK_NULL_HANDLE)
+	else if (mDebugMode == DEBUG_SHADOW_MAP)
 	{
-		return;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = mShadowCaster.GetShadowMapImageView();
+		imageInfo.sampler = mShadowCaster.GetShadowMapSampler();
 	}
-
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	imageInfo.imageView = capture.GetFaceImageView(mEnvironmentDebugFace);
-	imageInfo.sampler = capture.GetFaceSampler();
 
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.dstSet = mEnvironmentCaptureDebugDescriptorSet;
+	descriptorWrite.dstSet = mDebugDescriptorSet;
 	descriptorWrite.dstBinding = 0;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1094,9 +1104,17 @@ void Renderer::CreateCommandBuffers()
 			mEnvironmentCaptureDebugPipeline.BindPipeline(mCommandBuffers[i]);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
 			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 2, 1, &mEnvironmentCaptureDebugDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 2, 1, &mDebugDescriptorSet, 0, 0);
             vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
         }
+		else if (mDebugMode == DEBUG_SHADOW_MAP)
+		{
+			mShadowMapDebugPipeline.BindPipeline(mCommandBuffers[i]);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 2, 1, &mDebugDescriptorSet, 0, 0);
+			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+		}
 		else
 		{
 			mLightPipeline.BindPipeline(mCommandBuffers[i]);
@@ -1112,6 +1130,11 @@ void Renderer::CreateCommandBuffers()
 			throw exception("Failed to record command buffer");
 		}
 	}
+}
+
+void Renderer::RenderShadowMaps()
+{
+	mShadowCaster.RenderShadowMap(mScene);
 }
 
 void Renderer::CreateSemaphores()
@@ -1246,7 +1269,7 @@ void Renderer::RecreateSwapchain()
 	CreatePipelines();
 	CreateFramebuffers();
 	CreateGlobalDescriptorSet();
-	CreateEnvironmentCaptureDebugDescriptorSet();
+	CreateDebugDescriptorSet();
 	CreateCommandBuffers();
 }
 
@@ -1568,20 +1591,21 @@ void Renderer::CreatePipelines()
 	mLightPipeline.Create();
 	mDebugDeferredPipeline.Create();
 	mEnvironmentCaptureDebugPipeline.Create();
+	mShadowMapDebugPipeline.Create();
 }
 
 void Renderer::SetDebugMode(DebugMode mode)
 {
 	mDebugMode = mode;
 	UpdateGlobalUniformBuffer();
-    UpdateEnvironmentCaptureDebugDescriptorSet();
+    UpdateDebugDescriptorSet();
 	CreateCommandBuffers();
 }
 
 void Renderer::SetEnvironmentDebugFace(uint32_t index)
 {
     mEnvironmentDebugFace = index;
-    UpdateEnvironmentCaptureDebugDescriptorSet();
+    UpdateDebugDescriptorSet();
     CreateCommandBuffers();
 }
 

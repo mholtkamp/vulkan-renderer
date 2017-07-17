@@ -62,6 +62,12 @@ void DebugActionHandler::Update()
 		Renderer::Get()->SetDebugMode(DEBUG_ENVIRONMENT_CAPTURE);
 	}
 
+	if (GetAsyncKeyState(VK_CONTROL) &&
+		GetAsyncKeyState('M'))
+	{
+		Renderer::Get()->SetDebugMode(DEBUG_SHADOW_MAP);
+	}
+
     if (GetAsyncKeyState('F') &&
         GetAsyncKeyState('1'))
     {
