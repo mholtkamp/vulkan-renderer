@@ -6,7 +6,7 @@
 
 using namespace std;
 
-static const int numLights = 300;
+static const int numLights = 100;
 static const glm::vec3 minExtents(-80.0f, 1.0f, -40.0f);
 static const glm::vec3 maxExtents(80.0f, 60.0f, 40.0f);
 static const glm::vec3 ranges = maxExtents - minExtents;
@@ -62,7 +62,7 @@ void Scene::Load(const std::string& directory,
 		LoadActors(*scene);
 		//LoadCameras(*scene);
 
-		//SpawnTestLights();
+		SpawnTestLights();
 		SpawnTestEnvironmentCapture();
 		SetTestDirectionalLight();
 
