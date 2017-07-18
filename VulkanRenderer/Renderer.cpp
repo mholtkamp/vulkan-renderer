@@ -251,7 +251,7 @@ void Renderer::PreparePresentation()
 void Renderer::Render()
 {
     UpdateGlobalUniformData();
-	UpdateGlobalUniformBuffer();
+	UpdateGlobalDescriptorSet();
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -825,7 +825,7 @@ void Renderer::CreateGlobalUniformBuffer()
 {
 	VkDeviceSize bufferSize = sizeof(GlobalUniformData);
 	CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, mGlobalUniformBuffer, mGlobalUniformBufferMemory);
-	UpdateGlobalUniformBuffer();
+	UpdateGlobalDescriptorSet();
 }
 
 void Renderer::UpdateGlobalUniformData()
@@ -837,6 +837,7 @@ void Renderer::UpdateGlobalUniformData()
         mGlobalUniformData.mViewPosition = glm::vec4(mScene->GetActiveCamera()->GetPosition(), 1.0f);
         mGlobalUniformData.mSunDirection = glm::vec4(mScene->GetDirectionalLight().GetDirection(), 0.0f);
         mGlobalUniformData.mSunColor = mScene->GetDirectionalLight().GetColor();
+        mGlobalUniformData.mSunVP = mScene->GetDirectionalLight().GetViewProjectionMatrix();
     }
 }
 
@@ -845,7 +846,7 @@ GlobalUniformData& Renderer::GetGlobalUniformData()
     return mGlobalUniformData;
 }
 
-void Renderer::UpdateGlobalUniformBuffer()
+void Renderer::UpdateGlobalDescriptorSet()
 {
 	void* data;
 	vkMapMemory(mDevice, mGlobalUniformBufferMemory, 0, sizeof(GlobalUniformData), 0, &data);
@@ -901,6 +902,9 @@ void Renderer::CreateGlobalDescriptorSet()
 
 void Renderer::UpdateDeferredDescriptorSet()
 {
+    Renderer* renderer = Renderer::Get();
+    VkDevice device = renderer->GetDevice();
+
     // Update image descriptors (for each gbuffer output)
     VkDescriptorImageInfo imageInfo[GB_COUNT] = {};
     VkWriteDescriptorSet descriptorWrite[GB_COUNT] = {};
@@ -921,6 +925,30 @@ void Renderer::UpdateDeferredDescriptorSet()
     }
 
     vkUpdateDescriptorSets(mDevice, GB_COUNT, descriptorWrite, 0, nullptr);
+
+    VkImageView shadowMapImageView = renderer->GetShadowMapImageView();
+    VkSampler shadowMapSampler = renderer->GetShadowMapSampler();
+
+    if (shadowMapImageView != VK_NULL_HANDLE &&
+        shadowMapSampler != VK_NULL_HANDLE)
+    {
+        VkDescriptorImageInfo imageInfo = {};
+        VkWriteDescriptorSet descriptorWrite = {};
+
+        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        imageInfo.imageView = shadowMapImageView;
+        imageInfo.sampler = shadowMapSampler;
+
+        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet = mDeferredDescriptorSet;
+        descriptorWrite.dstBinding = DD_TEXTURE_SHADOW_MAP;
+        descriptorWrite.dstArrayElement = 0;
+        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorWrite.descriptorCount = 1;
+        descriptorWrite.pImageInfo = &imageInfo;
+
+        vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+    }
 }
 
 void Renderer::CreateDebugDescriptorSet()
@@ -1159,6 +1187,7 @@ VkSampler Renderer::GetShadowMapSampler()
 void Renderer::RenderShadowMaps()
 {
 	mShadowCaster.RenderShadowMap(mScene);
+    UpdateDeferredDescriptorSet();
 }
 
 void Renderer::CreateSemaphores()
@@ -1592,20 +1621,20 @@ void Renderer::SetVisualizationMode(int32_t mode)
 	assert(mode >= -1);
 	assert(mode < GB_COUNT);
 	mGlobalUniformData.mVisualizationMode = mode;
-	UpdateGlobalUniformBuffer();
+	UpdateGlobalDescriptorSet();
 }
 
 void Renderer::SetDirectionalLightColor(glm::vec4 color)
 {
 	mGlobalUniformData.mSunColor = color;
-	UpdateGlobalUniformBuffer();
+	UpdateGlobalDescriptorSet();
 }
 
 void Renderer::SetDirectionalLightDirection(glm::vec3 direction)
 {
 	direction = glm::normalize(direction);
 	mGlobalUniformData.mSunDirection = glm::vec4(direction, 0.0);
-	UpdateGlobalUniformBuffer();
+	UpdateGlobalDescriptorSet();
 }
 
 void Renderer::CreatePipelines()
@@ -1622,7 +1651,7 @@ void Renderer::CreatePipelines()
 void Renderer::SetDebugMode(DebugMode mode)
 {
 	mDebugMode = mode;
-	UpdateGlobalUniformBuffer();
+	UpdateGlobalDescriptorSet();
     UpdateDebugDescriptorSet();
 	CreateCommandBuffers();
 }

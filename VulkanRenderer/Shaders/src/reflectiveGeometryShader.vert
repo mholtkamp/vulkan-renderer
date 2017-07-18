@@ -23,12 +23,6 @@ layout(location = 4) out vec3 outBitangent;
 layout(location = 5) out vec4 outShadowCoordinate;
 layout(location = 6) out mat3 outTBN;
 
-const mat4 biasMat = mat4( 
-	0.5, 0.0, 0.0, 0.0,
-	0.0, 0.5, 0.0, 0.0,
-	0.0, 0.0, 1.0, 0.0,
-	0.5, 0.5, 0.0, 1.0 );
-
 out gl_PerVertex 
 {
     vec4 gl_Position;
@@ -46,7 +40,5 @@ void main()
     outTBN = mat3(outTangent, outBitangent, outNormal);
 
 	// Shadow map coordinate computation
-
-
-	outShadowCoordinate = (biasMat * uboGeometry.mLightMVP) * vec4(inPosition, 1.0);
+	outShadowCoordinate = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 }

@@ -81,7 +81,7 @@ void EnvironmentCapture::Capture()
     glm::vec2 trueDimensions = globalData.mScreenDimensions;
     globalData.mScreenDimensions = glm::vec2(mResolution, mResolution);
 
-    renderer->UpdateGlobalUniformBuffer();
+    renderer->UpdateGlobalDescriptorSet();
     UpdateDeferredDescriptor();
 
 	uint32_t i = 0;
@@ -142,7 +142,7 @@ void EnvironmentCapture::Capture()
 
     // Revert the fake changes we made to global data
     globalData.mScreenDimensions = trueDimensions;
-    renderer->UpdateGlobalUniformBuffer();
+    renderer->UpdateGlobalDescriptorSet();
     renderer->UpdateDeferredDescriptorSet();
 
 	mCapturedResolution = mResolution;

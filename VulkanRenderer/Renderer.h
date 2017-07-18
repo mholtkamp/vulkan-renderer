@@ -20,6 +20,7 @@
 
 struct GlobalUniformData
 {
+    glm::mat4 mSunVP;
 	glm::vec4 mSunDirection;
 	glm::vec4 mSunColor;
 	glm::vec4 mViewPosition;
@@ -119,7 +120,7 @@ public:
 
     void SetEnvironmentDebugFace(uint32_t index);
 
-    void UpdateGlobalUniformBuffer();
+    void UpdateGlobalDescriptorSet();
 
     void UpdateGlobalUniformData();
 

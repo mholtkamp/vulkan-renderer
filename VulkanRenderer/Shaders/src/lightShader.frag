@@ -3,6 +3,7 @@
 
 layout (set = 0, binding = 0) uniform GlobalUniformBuffer
 {
+	mat4 mSunVP;
     vec4 mSunDirection;
     vec4 mSunColor;
     vec4 mViewPosition;
