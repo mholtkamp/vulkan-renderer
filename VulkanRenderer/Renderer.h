@@ -244,6 +244,7 @@ private:
 	EarlyDepthPipeline mEarlyDepthPipeline;
 	GeometryPipeline mGeometryPipeline;
 	LightPipeline mLightPipeline;
+    DirectionalLightPipeline mDirectionalLightPipeline;
 	DebugDeferredPipeline mDebugDeferredPipeline;
 	EnvironmentCaptureDebugPipeline mEnvironmentCaptureDebugPipeline;
 	ShadowMapDebugPipeline mShadowMapDebugPipeline;

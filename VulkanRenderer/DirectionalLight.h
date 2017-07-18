@@ -15,6 +15,10 @@ public:
 
 	void SetColor(glm::vec4 color);
 
+    glm::vec3 GetDirection();
+
+    glm::vec4 GetColor();
+
 	void SetEnabled(bool enabled);
 
 	void Update();

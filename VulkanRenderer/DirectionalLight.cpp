@@ -38,6 +38,16 @@ glm::mat4 DirectionalLight::GetViewProjectionMatrix()
 	return mViewProjectionMatrix;
 }
 
+glm::vec3 DirectionalLight::GetDirection()
+{
+    return mDirection;
+}
+
+glm::vec4 DirectionalLight::GetColor()
+{
+    return mColor;
+}
+
 void DirectionalLight::GenerateViewProjectionMatrix()
 {
 	glm::mat4 view;

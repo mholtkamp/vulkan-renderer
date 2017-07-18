@@ -181,6 +181,8 @@
     <None Include="Shaders\src\deferredShader.frag" />
     <None Include="Shaders\src\deferredShader.vert" />
     <None Include="Shaders\src\depthShader.vert" />
+    <None Include="Shaders\src\directionalLightShader.frag" />
+    <None Include="Shaders\src\directionalLightShader.vert" />
     <None Include="Shaders\src\environmentCaptureDebug.frag" />
     <None Include="Shaders\src\geometryShader.frag" />
     <None Include="Shaders\src\geometryShader.vert" />

@@ -190,5 +190,11 @@
     <None Include="Shaders\src\reflectiveGeometryShader.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="Shaders\src\directionalLightShader.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\src\directionalLightShader.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>

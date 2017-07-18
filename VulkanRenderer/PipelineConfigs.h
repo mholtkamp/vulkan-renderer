@@ -122,6 +122,35 @@ public:
 	}
 };
 
+class DirectionalLightPipeline : public DeferredPipeline
+{
+public:
+
+    DirectionalLightPipeline()
+    {
+        mVertexShaderPath = "Shaders/bin/directionalLightShader.vert";
+        mFragmentShaderPath = "Shaders/bin/directionalLightShader.frag";
+        mBlendEnabled = true;
+        mCullMode = VK_CULL_MODE_NONE;
+
+        assert(mBlendAttachments.size() > 0);
+
+        mBlendAttachments[0].blendEnable = VK_TRUE;
+        mBlendAttachments[0].colorBlendOp = VK_BLEND_OP_ADD;
+        mBlendAttachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        mBlendAttachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+        mBlendAttachments[0].alphaBlendOp = VK_BLEND_OP_MAX;
+    }
+
+    virtual void PopulateLayoutBindings() override
+    {
+        DeferredPipeline::PopulateLayoutBindings();
+
+        PushSet();
+        AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+    }
+};
+
 class DebugDeferredPipeline : public DeferredPipeline
 {
 public:

@@ -61,7 +61,7 @@ void main()
     
 	// Determine if colors should be shadowed
 	float visibility = 1.0;
-	float bias = 0.001f;
+	float bias = 0.004f;
 
 	vec4 shadowCoord = inShadowCoordinate;// / inShadowCoordinate.w;
 

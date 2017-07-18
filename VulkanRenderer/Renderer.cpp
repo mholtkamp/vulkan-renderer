@@ -99,6 +99,7 @@ void Renderer::DestroySwapchain()
 	mEarlyDepthPipeline.Destroy();
 	mGeometryPipeline.Destroy();
 	mLightPipeline.Destroy();
+    mDirectionalLightPipeline.Destroy();
 	mDebugDeferredPipeline.Destroy();
 	mEnvironmentCaptureDebugPipeline.Destroy();
 	mShadowMapDebugPipeline.Destroy();
@@ -834,6 +835,8 @@ void Renderer::UpdateGlobalUniformData()
         mScene->GetActiveCamera() != nullptr)
     {
         mGlobalUniformData.mViewPosition = glm::vec4(mScene->GetActiveCamera()->GetPosition(), 1.0f);
+        mGlobalUniformData.mSunDirection = glm::vec4(mScene->GetDirectionalLight().GetDirection(), 0.0f);
+        mGlobalUniformData.mSunColor = mScene->GetDirectionalLight().GetColor();
     }
 }
 
@@ -1125,9 +1128,12 @@ void Renderer::CreateCommandBuffers()
 		}
 		else
 		{
+            mDirectionalLightPipeline.BindPipeline(mCommandBuffers[i]);
+            vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+            vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
+            vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+
 			mLightPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
 			mScene->RenderLightVolumes(mCommandBuffers[i]);
 		}
 
@@ -1607,6 +1613,7 @@ void Renderer::CreatePipelines()
 	mEarlyDepthPipeline.Create();
 	mGeometryPipeline.Create();
 	mLightPipeline.Create();
+    mDirectionalLightPipeline.Create();
 	mDebugDeferredPipeline.Create();
 	mEnvironmentCaptureDebugPipeline.Create();
 	mShadowMapDebugPipeline.Create();

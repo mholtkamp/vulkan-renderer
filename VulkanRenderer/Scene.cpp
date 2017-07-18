@@ -62,7 +62,7 @@ void Scene::Load(const std::string& directory,
 		LoadActors(*scene);
 		//LoadCameras(*scene);
 
-		SpawnTestLights();
+		//SpawnTestLights();
 		SpawnTestEnvironmentCapture();
 		SetTestDirectionalLight();
 
