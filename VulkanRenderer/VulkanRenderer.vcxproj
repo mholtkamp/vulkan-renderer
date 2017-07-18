@@ -184,8 +184,6 @@
     <None Include="Shaders\src\directionalLightShader.frag" />
     <None Include="Shaders\src\directionalLightShader.vert" />
     <None Include="Shaders\src\environmentCaptureDebug.frag" />
-    <None Include="Shaders\src\geometryShader.frag" />
-    <None Include="Shaders\src\geometryShader.vert" />
     <None Include="Shaders\src\lightShader.frag" />
     <None Include="Shaders\src\lightShader.vert" />
     <None Include="Shaders\src\reflectiveGeometryShader.frag" />

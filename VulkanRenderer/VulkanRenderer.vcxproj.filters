@@ -172,12 +172,6 @@
     <None Include="Shaders\src\environmentCaptureDebug.frag">
       <Filter>Shaders</Filter>
     </None>
-    <None Include="Shaders\src\geometryShader.frag">
-      <Filter>Shaders</Filter>
-    </None>
-    <None Include="Shaders\src\geometryShader.vert">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="Shaders\src\lightShader.frag">
       <Filter>Shaders</Filter>
     </None>

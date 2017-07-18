@@ -39,6 +39,8 @@ layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outColor;
 layout(location = 3) out vec4 outSpecularColor;
 
+const float AMBIENT_POWER = 0.2;
+
 void main()
 {
     outPosition = vec4(inPosition, 1.0);
@@ -65,21 +67,19 @@ void main()
 
 	vec4 shadowCoord = inShadowCoordinate;// / inShadowCoordinate.w;
 
-	if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
-	{
-		float dist = texture(shadowMapSampler, shadowCoord.st).r + bias;
-		if (shadowCoord.w > 0.0 && dist < shadowCoord.z) 
-		{
-			visibility = 0.2;
-		}
-	}
-
-	//if (texture(shadowMapSampler, shadowCoord.xy ).z  <  shadowCoord.z)
+	//if (shadowCoord.z > -1.0 && shadowCoord.z < 1.0)
 	//{
-	//	visibility = 0.5;
-	//	outColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
-	//	outSpecularColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	//	float dist = texture(shadowMapSampler, shadowCoord.st).r + bias;
+	//	if (shadowCoord.w > 0.0 && dist < shadowCoord.z) 
+	//	{
+	//		visibility = 0.2;
+	//	}
 	//}
+
+	if (texture(shadowMapSampler, shadowCoord.xy).z + bias <  shadowCoord.z)
+	{
+		visibility = AMBIENT_POWER;
+	}
 
 	outColor *= visibility;
 	outSpecularColor *= visibility;
