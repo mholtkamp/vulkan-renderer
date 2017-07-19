@@ -17,6 +17,8 @@ layout(set = 1, binding = 0) uniform GeometryUniformBuffer
     mat4 mNormalMatrix;
     mat4 mLightMVP;
     float mReflectivity;
+	float mMetallic;
+	float mRoughness;
 } uboGeometry;
 
 layout(set = 1, binding = 1) uniform sampler2D diffuseSampler;
@@ -39,6 +41,8 @@ layout(location = 0) out vec4 outPosition;
 layout(location = 1) out vec4 outNormal;
 layout(location = 2) out vec4 outColor;
 layout(location = 3) out vec4 outSpecularColor;
+layout(location = 4) out float outMetallic;
+layout(location = 5) out float outRoughness;
 
 void main()
 {
@@ -59,4 +63,7 @@ void main()
     vec3 reflection = reflect(incident, outNormal.xyz);
     vec4 environmentColor = vec4(texture(environmentSampler, reflection).rgb, 1.0);
     outColor = mix(outColor, environmentColor, uboGeometry.mReflectivity);
+
+	outMetallic = uboGeometry.mMetallic;
+	outRoughness = uboGeometry.mRoughness;
 }

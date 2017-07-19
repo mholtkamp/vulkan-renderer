@@ -102,10 +102,10 @@ void EnvironmentCapture::Capture()
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = renderAreaExtent;
 
-		VkClearValue clearValues[GB_COUNT + 2] = {};
+		VkClearValue clearValues[ATTACHMENT_COUNT] = {};
 		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		clearValues[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = GB_COUNT + 2;
+		renderPassInfo.clearValueCount = ATTACHMENT_COUNT;
 		renderPassInfo.pClearValues = clearValues;
 
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);

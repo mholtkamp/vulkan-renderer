@@ -27,6 +27,10 @@ public:
 
 	float GetReflectivity();
 
+    float GetMetallic();
+
+    float GetRoughness();
+
 	void SetReflectivity(float reflectivity);
 
 private:
@@ -47,6 +51,8 @@ private:
 	glm::vec4 mSpecularColor;
 
 	float mReflectivity;
+    float mMetallic;
+    float mRoughness;
 
 	Texture* mTextures[SLOT_COUNT];
 };

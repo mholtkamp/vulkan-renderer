@@ -11,7 +11,9 @@ Material::Material() :
 	mName("Material"),
 	mDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f),
 	mSpecularColor(1.0f, 1.0f, 1.0f, 1.0f),
-	mReflectivity(0.0f)
+	mReflectivity(0.0f),
+    mMetallic(0.0f),
+    mRoughness(0.0f)
 {
 	for (uint32_t i = 0; i < SLOT_COUNT; ++i)
 	{
@@ -52,13 +54,9 @@ void Material::Create(const Scene& scene,
 		mSpecularColor.a = 1.0f;
 
 		mReflectivity = specularColor.r;
+        mMetallic = specularColor.g;
+        mRoughness = specularColor.b;
 	}
-
-	//aiColor3D ambientColor;
-	//if (material.Get(AI_MATKEY_COLOR_AMBIENT, ambientColor) == aiReturn_SUCCESS)
-	//{
-	//	mReflectivity = 1.0f - ambientColor.r;
-	//}
 
 	aiString diffuseTexture;
 	if (material.GetTextureCount(aiTextureType_DIFFUSE) > 0)
@@ -148,6 +146,16 @@ void Material::SetTexture(const Scene& scene,
 	{
 		texture = &textures[name];
 	}
+}
+
+float Material::GetMetallic()
+{
+    return mMetallic;
+}
+
+float Material::GetRoughness()
+{
+    return mRoughness;
 }
 
 void Material::SetDefaultTexture(const Scene& scene,

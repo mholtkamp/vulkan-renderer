@@ -5,6 +5,8 @@ layout (set = 1, binding = 0) uniform sampler2D samplerPosition;
 layout (set = 1, binding = 1) uniform sampler2D samplerNormal;
 layout (set = 1, binding = 2) uniform sampler2D samplerColor;
 layout (set = 1, binding = 3) uniform sampler2D samplerSpecularColor;
+layout (set = 1, binding = 4) uniform sampler2D samplerMetallic;
+layout (set = 1, binding = 5) uniform sampler2D samplerRoughness;
 
 layout (set = 0, binding = 0) uniform GlobalUniformBuffer
 {
@@ -26,6 +28,8 @@ void main()
     vec3 normal = texture(samplerNormal, inTexcoord).rgb;
     vec4 color = texture(samplerColor, inTexcoord);
     vec4 specularColor = texture(samplerSpecularColor, inTexcoord);
+	float metallic = texture(samplerMetallic, inTexcoord).r;
+	float roughness = texture(samplerRoughness, inTexcoord).r;
     
     vec3 lightVector = -1.0 * normalize(ubo.mSunDirection.rgb);
     float diffuseFactor = clamp(dot(normal, lightVector), 0.0, 1.0);
@@ -59,4 +63,14 @@ void main()
         // SPECULAR
         outFinalColor = specularColor;
     }
+	else if (ubo.mVisualizationMode == 4)
+	{
+		// METALLIC
+		outFinalColor = vec4(metallic, 0.0, 0.0, 1.0);
+	}
+	else if (ubo.mVisualizationMode == 5)
+	{
+		// ROUGHNESS
+		outFinalColor = vec4(0.0, 0.0, roughness, 1.0);
+	}
 }

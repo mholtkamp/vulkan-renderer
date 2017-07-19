@@ -191,6 +191,8 @@ void Actor::UpdateUniformBuffer(Scene* scene, float deltaTime)
 	ubo.mNormalMatrix = glm::transpose(glm::inverse(mWorldMatrix));
 	ubo.mLightWVPMatrix = scene->GetDirectionalLight().GetViewProjectionMatrix() * mWorldMatrix;
 	ubo.mReflectivity = mMesh->GetMaterial()->GetReflectivity();
+    ubo.mMetallic = mMesh->GetMaterial()->GetMetallic();
+    ubo.mRoughness = mMesh->GetMaterial()->GetRoughness();
 
 	void* data;
 	vkMapMemory(device, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);

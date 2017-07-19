@@ -15,7 +15,9 @@ layout (set = 1, binding = 0) uniform sampler2D samplerPosition;
 layout (set = 1, binding = 1) uniform sampler2D samplerNormal;
 layout (set = 1, binding = 2) uniform sampler2D samplerColor;
 layout (set = 1, binding = 3) uniform sampler2D samplerSpecularColor;
-layout (set = 1, binding = 4) uniform sampler2D samplerShadowMap;
+layout (set = 1, binding = 4) uniform sampler2D samplerMetallic;
+layout (set = 1, binding = 5) uniform sampler2D samplerRoughness;
+layout (set = 1, binding = 6) uniform sampler2D samplerShadowMap;
 
 layout (location = 0) in vec2 inTexcoord;
 
