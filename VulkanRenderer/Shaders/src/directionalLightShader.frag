@@ -29,27 +29,89 @@ const mat4 BIAS_MAT = mat4(
 	0.0, 0.0, 1.0, 0.0,
 	0.5, 0.5, 0.0, 1.0 );
 
-const float AMBIENT_POWER = 0.2;
+const float AMBIENT_POWER = 0.03;
+
+const float PI = 3.14159265359;
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+	float NdotH = max(dot(N, H), 0.0);
+	float NdotH2 = NdotH * NdotH;
+
+	float numer = a2;
+	float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+	denom = PI * denom * denom;
+
+	return numer / denom;
+}
+
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+	float r = (roughness + 1.0);
+	float k = (r * r) / 8.0;
+
+	float numer = NdotV;
+	float denom = NdotV * (1.0 - k) + k;
+
+	return numer / denom;
+}
+
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+	float NdotV = max(dot(N, V), 0.0);
+	float NdotL = max(dot(N, L), 0.0);
+	float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+	float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+	return ggx1 * ggx2;
+}
 
 void main()
 {
     vec2 texcoord = gl_FragCoord.xy/ubo.mScreenDimensions;
     vec3 position = texture(samplerPosition, texcoord).rgb;
     vec3 normal = texture(samplerNormal, texcoord).rgb;
-    vec4 color = texture(samplerColor, texcoord);
+    vec3 albedo = texture(samplerColor, texcoord).rgb;
     vec4 specularColor = texture(samplerSpecularColor, texcoord);
+	float metallic = texture(samplerMetallic, texcoord).r;
+	float roughness = texture(samplerRoughness, texcoord).r;
     
-    // Diffuse Factor
-    vec3 lightVector = -1.0 * normalize(ubo.mSunDirection.rgb);
-    float diffuseFactor = clamp(dot(normal, lightVector), 0.0, 1.0);
+    vec3 N = normalize(normal);
+	vec3 V = normalize(ubo.mViewPosition.xyz - position);
+	vec3 L = normalize(-ubo.mSunDirection.rgb);
+	vec3 H = normalize(V + L);
+
+	vec3 radiance = ubo.mSunColor.rgb;
     
-    // Specular Factor
-    vec3 viewVector = normalize(ubo.mViewPosition.xyz - position);
-    vec3 halfwayVector = normalize(lightVector + viewVector);
-    float specularFactor = pow(max(dot(normal, halfwayVector), 0.0), 10.0);
+    vec3 F0 = vec3(0.04);
+	F0 = mix(F0, albedo, metallic);
+	vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+    
+    float NDF = DistributionGGX(N, H, roughness);
+	float G = GeometrySmith(N, V, L, roughness);
+    
+    vec3 numerator = NDF * G * F;
+	float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+	vec3 specular = numerator / denominator;
+
+	vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+	kD *= 1.0 - metallic;
+
+	float NdotL = max(dot(N, L), 0.0);
+	vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
+    
+    vec3 ambient = vec3(0.03) * albedo;
     
     // Output final, lit image.
-    outFinalColor = (diffuseFactor * color * ubo.mSunColor) + (specularFactor * specularColor * ubo.mSunColor);
+    outFinalColor = vec4(Lo + ambient, 1.0);
 
 	// Determine if color should be shadowed
 	float visibility = 1.0;
