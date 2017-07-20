@@ -103,6 +103,8 @@ void Renderer::DestroySwapchain()
 	mDebugDeferredPipeline.Destroy();
 	mEnvironmentCaptureDebugPipeline.Destroy();
 	mShadowMapDebugPipeline.Destroy();
+	mPostProcessPipeline.Destroy();
+	mNullPostProcessPipeline.Destroy();
 
 	mGBuffer.Destroy();
 
@@ -155,6 +157,7 @@ void Renderer::Initialize()
 	CreateLogicalDevice();
 	CreateSwapchain();
 	CreateImageViews();
+	CreateLitColorImage();
 	CreateCommandPool();
 	CreateDepthImage();
 	CreateDescriptorPool();
@@ -163,6 +166,7 @@ void Renderer::Initialize()
 	CreatePipelines();
 	mGBuffer.CreateSampler();
 	CreateGlobalDescriptorSet();
+	CreatePostProcessDescriptorSet();
 	CreateDebugDescriptorSet();
 	CreateFramebuffers();
 	
@@ -565,6 +569,50 @@ void Renderer::CreateImageViews()
 	{
 		mSwapchainImageViews[i] = Texture::CreateImageView(mSwapchainImages[i], mSwapchainImageFormat, VK_IMAGE_ASPECT_COLOR_BIT);
 	}
+
+}
+
+void Renderer::CreateLitColorImage()
+{
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	Texture::CreateImage(mSwapchainExtent.width,
+		mSwapchainExtent.height,
+		VK_FORMAT_R16G16B16A16_SFLOAT,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		mLitColorImage,
+		mLitColorImageMemory);
+
+	mLitColorImageView = Texture::CreateImageView(mLitColorImage,
+		VK_FORMAT_R16G16B16A16_SFLOAT,
+		VK_IMAGE_ASPECT_COLOR_BIT);
+
+	VkSamplerCreateInfo ciSampler = {};
+	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	ciSampler.magFilter = VK_FILTER_LINEAR;
+	ciSampler.minFilter = VK_FILTER_LINEAR;
+	ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	ciSampler.addressModeV = ciSampler.addressModeU;
+	ciSampler.addressModeW = ciSampler.addressModeU;
+	ciSampler.mipLodBias = 0.0f;
+	ciSampler.compareOp = VK_COMPARE_OP_ALWAYS;
+	ciSampler.compareEnable = VK_FALSE;
+	ciSampler.minLod = 0.0f;
+	ciSampler.maxLod = 0.0f;
+	ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	ciSampler.maxAnisotropy = 1.0f;
+	ciSampler.anisotropyEnable = VK_FALSE;
+
+	if (vkCreateSampler(device, &ciSampler, nullptr, &mLitColorSampler) != VK_SUCCESS)
+	{
+		throw std::exception("Failed to create texture sampler");
+	}
+
+	vkDeviceWaitIdle(device);
 }
 
 VkFormat Renderer::GetSwapchainFormat()
@@ -624,6 +672,21 @@ void Renderer::CreateRenderPass()
 		);
 	}
 
+	// Lit color attachment
+	attachments.push_back(
+		{
+			0,
+			VK_FORMAT_R16G16B16A16_SFLOAT,
+			VK_SAMPLE_COUNT_1_BIT,
+			VK_ATTACHMENT_LOAD_OP_CLEAR,
+			VK_ATTACHMENT_STORE_OP_STORE,
+			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+			VK_ATTACHMENT_STORE_OP_DONT_CARE,
+			VK_IMAGE_LAYOUT_UNDEFINED,
+			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+		}
+	);
+
 	// Early Depth Pass 
 	VkAttachmentReference depthAttachmentReference =
 	{
@@ -656,6 +719,26 @@ void Renderer::CreateRenderPass()
 			}
 		);
 	}
+
+	// Light output attachment reference
+	VkAttachmentReference litColorAttachmentReference[] =
+	{
+		{
+			ATTACHMENT_LIT_COLOR,
+			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+		}
+	};
+
+	VkAttachmentReference litColorInputAttachmentReference[] =
+	{
+		{
+			ATTACHMENT_LIT_COLOR,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		}
+	};
+
+	uint32_t litColorReferenceCount = ARRAYSIZE(litColorAttachmentReference);
+	uint32_t litColorInputReferenceCount = ARRAYSIZE(litColorInputAttachmentReference);
 
 	// Final Pass
 	VkAttachmentReference backAttachmentReference[] =
@@ -704,6 +787,20 @@ void Renderer::CreateRenderPass()
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			geometryInputAttachmentReference.size(), // input attachments
 			geometryInputAttachmentReference.data(),
+			litColorReferenceCount,
+			litColorAttachmentReference,
+			nullptr, // resolve attachments
+			nullptr, // depth attachment
+			0, // preserve attachments
+			nullptr
+		},
+
+		// Subpass 4 - post processing
+		{
+			0,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			litColorInputReferenceCount, // input attachments
+			litColorInputAttachmentReference,
 			backReferenceCount,
 			backAttachmentReference,
 			nullptr, // resolve attachments
@@ -726,10 +823,21 @@ void Renderer::CreateRenderPass()
 			VK_DEPENDENCY_BY_REGION_BIT
 		},
 
-		// Final lighting pass depends on gbuffer generation
+		// lighting pass depends on gbuffer generation
 		{
 			PASS_GEOMETRY,
 			PASS_DEFERRED,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_DEPENDENCY_BY_REGION_BIT
+		},
+
+		// Post processing pass depends on lighting pass
+		{
+			PASS_DEFERRED,
+			PASS_POST_PROCESS,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -771,6 +879,8 @@ void Renderer::CreateFramebuffers()
 		{
 			attachments.push_back(mGBuffer.GetImageViews()[j]);
 		}
+
+		attachments.push_back(mLitColorImageView);
 
 		VkFramebufferCreateInfo ciFramebuffer = {};
 		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -898,6 +1008,41 @@ void Renderer::CreateGlobalDescriptorSet()
 	bufferWrite.pTexelBufferView = nullptr;
 
 	vkUpdateDescriptorSets(mDevice, 1, &bufferWrite, 0, nullptr);
+}
+
+void Renderer::CreatePostProcessDescriptorSet()
+{
+	VkDescriptorSetLayout layouts[] = { mPostProcessPipeline.GetDescriptorSetLayout(1) };
+	VkDescriptorSetAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = mDescriptorPool;
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = layouts;
+
+	if (vkAllocateDescriptorSets(mDevice, &allocInfo, &mPostProcessDescriptorSet) != VK_SUCCESS)
+	{
+		throw exception("Failed to create descriptor set");
+	}
+
+
+	// Update image to the correct lit image
+	VkDescriptorImageInfo imageInfo = {};
+	imageInfo.imageView = mLitColorImageView;
+	imageInfo.sampler = mLitColorSampler;
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VkWriteDescriptorSet iamgeWrite = {};
+	iamgeWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	iamgeWrite.dstSet = mPostProcessDescriptorSet;
+	iamgeWrite.dstBinding = 0;
+	iamgeWrite.dstArrayElement = 0;
+	iamgeWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	iamgeWrite.descriptorCount = 1;
+	iamgeWrite.pBufferInfo = nullptr;
+	iamgeWrite.pImageInfo = &imageInfo;
+	iamgeWrite.pTexelBufferView = nullptr;
+
+	vkUpdateDescriptorSets(mDevice, 1, &iamgeWrite, 0, nullptr);
 }
 
 void Renderer::UpdateDeferredDescriptorSet()
@@ -1105,10 +1250,10 @@ void Renderer::CreateCommandBuffers()
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = mSwapchainExtent;
 
-		VkClearValue clearValues[GB_COUNT + 2] = {};
+		VkClearValue clearValues[ATTACHMENT_COUNT] = {};
 		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		clearValues[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = GB_COUNT + 2;
+		renderPassInfo.clearValueCount = ATTACHMENT_COUNT;
 		renderPassInfo.pClearValues = clearValues;
 
 		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -1165,6 +1310,24 @@ void Renderer::CreateCommandBuffers()
 			mScene->RenderLightVolumes(mCommandBuffers[i]);
 		}
 
+		// ******************
+		//  Post Process
+		// ******************
+		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
+		if (mDebugMode == DEBUG_NONE)
+		{
+			mPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
+			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+		}
+		else
+		{
+			mNullPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
+			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
+			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+		}
+
+
 		vkCmdEndRenderPass(mCommandBuffers[i]);
 
 		if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
@@ -1172,6 +1335,11 @@ void Renderer::CreateCommandBuffers()
 			throw exception("Failed to record command buffer");
 		}
 	}
+}
+
+VkDescriptorSet& Renderer::GetPostProcessDescriptorSet()
+{
+	return mPostProcessDescriptorSet;
 }
 
 VkImageView Renderer::GetShadowMapImageView()
@@ -1317,11 +1485,13 @@ void Renderer::RecreateSwapchain()
 	CreateSwapchain();
 	CreateImageViews();
 	CreateDepthImage();
+	CreateLitColorImage();
 	mGBuffer.Create(mSwapchainExtent.width, mSwapchainExtent.height);
 	CreateRenderPass();
 	CreatePipelines();
 	CreateFramebuffers();
 	CreateGlobalDescriptorSet();
+	CreatePostProcessDescriptorSet();
 	CreateDebugDescriptorSet();
 	CreateCommandBuffers();
 }
@@ -1646,6 +1816,8 @@ void Renderer::CreatePipelines()
 	mDebugDeferredPipeline.Create();
 	mEnvironmentCaptureDebugPipeline.Create();
 	mShadowMapDebugPipeline.Create();
+	mPostProcessPipeline.Create();
+	mNullPostProcessPipeline.Create();
 }
 
 void Renderer::SetDebugMode(DebugMode mode)

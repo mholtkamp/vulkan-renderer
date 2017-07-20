@@ -51,6 +51,7 @@ void EnvironmentCapture::Capture()
     EarlyDepthPipeline earlyDepthPipeline;
     GeometryPipeline geometryPipeline;
     LightPipeline lightPipeline;
+	PostProcessPipeline postProcessPipeline;
 
     earlyDepthPipeline.mViewportWidth = mResolution;
     earlyDepthPipeline.mViewportHeight = mResolution;
@@ -58,10 +59,13 @@ void EnvironmentCapture::Capture()
     geometryPipeline.mViewportHeight = mResolution;
     lightPipeline.mViewportWidth = mResolution;
     lightPipeline.mViewportHeight = mResolution;
+	postProcessPipeline.mViewportWidth = mResolution;
+	postProcessPipeline.mViewportHeight = mResolution;
 
     earlyDepthPipeline.Create();
     geometryPipeline.Create();
     lightPipeline.Create();
+	postProcessPipeline.Create();
 
     CreateGBuffer();
     CreateFramebuffers();
@@ -132,6 +136,14 @@ void EnvironmentCapture::Capture()
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 1, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
         mScene->RenderLightVolumes(commandBuffer);
+		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+
+		// *******************
+		//  Post Process Pass
+		// *******************
+		postProcessPipeline.BindPipeline(commandBuffer);
+vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipeline.GetPipelineLayout(), 1, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
+		vkCmdDraw(commandBuffer, 4, 1, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffer);
 
@@ -352,6 +364,8 @@ void EnvironmentCapture::CreateCubemap()
 
 	CreateDepthImage();
 
+	CreateLitColorImage();
+
 	CreateImageViews();
 
 	vkDeviceWaitIdle(device);
@@ -436,6 +450,8 @@ void EnvironmentCapture::CreateFramebuffers()
 			attachments.push_back(mGBuffer.GetImageViews()[g]);
 		}
 
+		attachments.push_back(mLitColorImageView);
+
 		VkFramebufferCreateInfo ciFramebuffer = {};
 		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		ciFramebuffer.renderPass = renderer->GetRenderPass();
@@ -498,6 +514,49 @@ void EnvironmentCapture::CreateImageViews()
 void EnvironmentCapture::CreateRenderPass()
 {
 	
+}
+
+void EnvironmentCapture::CreateLitColorImage()
+{
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	Texture::CreateImage(mResolution,
+		mResolution,
+		VK_FORMAT_R16G16B16A16_SFLOAT,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		mLitColorImage,
+		mLitColorImageMemory);
+
+	mLitColorImageView = Texture::CreateImageView(mLitColorImage,
+		VK_FORMAT_R16G16B16A16_SFLOAT,
+		VK_IMAGE_ASPECT_COLOR_BIT);
+
+	VkSamplerCreateInfo ciSampler = {};
+	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	ciSampler.magFilter = VK_FILTER_LINEAR;
+	ciSampler.minFilter = VK_FILTER_LINEAR;
+	ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	ciSampler.addressModeV = ciSampler.addressModeU;
+	ciSampler.addressModeW = ciSampler.addressModeU;
+	ciSampler.mipLodBias = 0.0f;
+	ciSampler.compareOp = VK_COMPARE_OP_ALWAYS;
+	ciSampler.compareEnable = VK_FALSE;
+	ciSampler.minLod = 0.0f;
+	ciSampler.maxLod = 0.0f;
+	ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	ciSampler.maxAnisotropy = 1.0f;
+	ciSampler.anisotropyEnable = VK_FALSE;
+
+	if (vkCreateSampler(device, &ciSampler, nullptr, &mLitColorSampler) != VK_SUCCESS)
+	{
+		throw std::exception("Failed to create texture sampler");
+	}
+
+	vkDeviceWaitIdle(device);
 }
 
 void EnvironmentCapture::UpdateDesriptorSet(VkDescriptorSet descriptorSet)

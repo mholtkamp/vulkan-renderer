@@ -84,7 +84,7 @@ void main()
 	float roughness = texture(samplerRoughness, texcoord).r;
     
     vec3 N = normalize(normal);
-	vec3 V = normalize(ubo.mViewPosition.xyz - position);
+	vec3 V = normalize(ubo.mViewPosition.rgb - position);
 	vec3 L = normalize(-ubo.mSunDirection.rgb);
 	vec3 H = normalize(V + L);
 
@@ -97,33 +97,40 @@ void main()
     float NDF = DistributionGGX(N, H, roughness);
 	float G = GeometrySmith(N, V, L, roughness);
     
+    vec3 kS = F;
+	vec3 kD = vec3(1.0) - kS;
+	kD *= 1.0 - metallic;
+    
     vec3 numerator = NDF * G * F;
 	float denominator = 4 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
 	vec3 specular = numerator / denominator;
-
-	vec3 kS = F;
-	vec3 kD = vec3(1.0) - kS;
-	kD *= 1.0 - metallic;
 
 	float NdotL = max(dot(N, L), 0.0);
 	vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
     
     vec3 ambient = vec3(0.03) * albedo;
-    
+
     // Output final, lit image.
-    outFinalColor = vec4(Lo + ambient, 1.0);
+    vec3 color = Lo + ambient;
+    
+    // // HDR tonemapping
+    // color = color / (color + vec3(1.0));
+    // // gamma correct
+    // color = pow(color, vec3(1.0/2.2)); 
+    
+    outFinalColor = vec4(color, 1.0);
 
 	// Determine if color should be shadowed
 	float visibility = 1.0;
 	float bias = 0.004f;
 
 	vec4 shadowCoord = (BIAS_MAT * ubo.mSunVP) * vec4(position, 1.0);
-	//shadowCoord = shadowCoord / shadowCoord.w;
+	shadowCoord = shadowCoord / shadowCoord.w;
 
 	if (texture(samplerShadowMap, shadowCoord.xy).r + bias <  shadowCoord.z)
 	{
 		visibility = AMBIENT_POWER;
 	}
-
-	outFinalColor *= visibility;
+    
+	//outFinalColor *= visibility;
 }

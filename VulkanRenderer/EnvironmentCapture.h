@@ -50,6 +50,8 @@ private:
 
     void DestroyGBuffer();
 
+	void CreateLitColorImage();
+
 private:
 
     void UpdateDeferredDescriptor();
@@ -64,6 +66,11 @@ private:
 	VkImage mDepthImage;
 	VkDeviceMemory mDepthImageMemory;
 	VkImageView mDepthImageView;
+
+	VkImage mLitColorImage;
+	VkDeviceMemory mLitColorImageMemory;
+	VkImageView mLitColorImageView;
+	VkSampler mLitColorSampler;
 
 	uint32_t mCapturedResolution;
 

@@ -53,9 +53,20 @@ void Material::Create(const Scene& scene,
 		mSpecularColor.b = specularColor.b;
 		mSpecularColor.a = 1.0f;
 
-		mReflectivity = specularColor.r;
-        mMetallic = specularColor.g;
-        mRoughness = specularColor.b;
+		if (specularColor.r == 0.0f &&
+			specularColor.g == 0.0f &&
+			specularColor.b == 0.0f)
+		{
+			mReflectivity = 0.0f;
+			mMetallic = 0.01f;
+			mRoughness = 1.0f;
+		}
+		else
+		{
+			mReflectivity = specularColor.r;
+			mMetallic = specularColor.g;
+			mRoughness = specularColor.b;
+		}
 	}
 
 	aiString diffuseTexture;

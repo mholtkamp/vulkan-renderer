@@ -97,4 +97,6 @@ private:
 	Camera* mActiveCamera;
 
 	bool mLoaded;
+
+	bool mDebugMoveLights;
 };

@@ -112,21 +112,13 @@ void main()
 	float NdotL = max(dot(N, L), 0.0);
 	vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
 
-	//vec3 ambient = vec3(0.03) * albedo;
-	outFinalColor = vec4(Lo, 1.0);
-
-    //// Diffuse Factor
-    //vec3 lightVector = normalize(light.mPosition.xyz - position);
-    //float dist = length(light.mPosition.xyz - position);
-    //float diffuseFactor = clamp(dot(normal, lightVector), 0.0, 1.0);
-    //diffuseFactor = clamp(diffuseFactor  * (1 - (dist/light.mRadius)), 0.0, 1.0);
+    // Output final, lit image.
+    vec3 color = Lo;
     
-    //// Specular Factor
-    //vec3 viewVector = normalize(ubo.mViewPosition.xyz - position);
-    //vec3 halfwayVector = normalize(lightVector + viewVector);
-    //float specularFactor = pow(max(dot(normal, halfwayVector), 0.0), 10.0);
-    //specularFactor = clamp(specularFactor * (1 - (dist/light.mRadius)), 0.0, 1.0);
+    // // HDR tonemapping
+    // color = color / (color + vec3(1.0));
+    // // gamma correct
+    // color = pow(color, vec3(1.0/2.2)); 
     
-    //// Output final, lit image.
-    //outFinalColor = (diffuseFactor * color * light.mColor) + (specularFactor * specularColor * light.mColor);
+	outFinalColor = vec4(color, 1.0);
 }

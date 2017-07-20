@@ -116,6 +116,8 @@ public:
 
 	VkDescriptorSet& GetDeferredDescriptorSet();
 
+	VkDescriptorSet& GetPostProcessDescriptorSet();
+
 	void CreateCommandBuffers();
 
     void SetEnvironmentDebugFace(uint32_t index);
@@ -183,6 +185,10 @@ private:
 
 	void CreateDepthImage();
 
+	void CreatePostProcessDescriptorSet();
+
+	void CreateLitColorImage();
+
 	void DestroySwapchain();
 
 	bool IsDeviceSuitable(VkPhysicalDevice device);
@@ -238,7 +244,12 @@ private:
 	VkDeviceMemory mDepthImageMemory;
 	VkImageView mDepthImageView;
 
-	// GBuffer images
+	// Lit Color image
+	VkImage mLitColorImage;
+	VkDeviceMemory mLitColorImageMemory;
+	VkImageView mLitColorImageView;
+	VkSampler mLitColorSampler;
+
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;
 
@@ -249,6 +260,8 @@ private:
 	DebugDeferredPipeline mDebugDeferredPipeline;
 	EnvironmentCaptureDebugPipeline mEnvironmentCaptureDebugPipeline;
 	ShadowMapDebugPipeline mShadowMapDebugPipeline;
+	PostProcessPipeline mPostProcessPipeline;
+	NullPostProcessPipeline mNullPostProcessPipeline;
 
 	VkDescriptorSet mGlobalDescriptorSet;
 	VkBuffer mGlobalUniformBuffer;
@@ -256,6 +269,7 @@ private:
 
 	VkDescriptorSet mDeferredDescriptorSet;
 	VkDescriptorSet mDebugDescriptorSet;
+	VkDescriptorSet mPostProcessDescriptorSet;
 
 	GlobalUniformData mGlobalUniformData;
 

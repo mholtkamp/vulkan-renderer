@@ -10,14 +10,15 @@ static const int numLights = 100;
 static const glm::vec3 minExtents(-80.0f, 1.0f, -40.0f);
 static const glm::vec3 maxExtents(80.0f, 60.0f, 40.0f);
 static const glm::vec3 ranges = maxExtents - minExtents;
-static const float lightMultiplier = 2.0f;
+static const float lightMultiplier = 1.0f;
 static const float minSpeed = 0.5f;
 static const float maxSpeed = 8.0f;
 static const float speedRange = maxSpeed - minSpeed;
 static const float radiusGrowSpeed = 2.0f;
 
-Scene::Scene() : 
-	mLoaded(false)
+Scene::Scene() :
+	mLoaded(false),
+	mDebugMoveLights(true)
 {
 	// TODO: Active camera should point to one of the
 	// cameras loaded from the .dae file.
@@ -73,7 +74,7 @@ void Scene::Load(const std::string& directory,
 void Scene::SetTestDirectionalLight()
 {
 	mDirectionalLight.SetEnabled(true);
-	mDirectionalLight.SetColor(glm::vec4(10.0f, 9.0f, 9.0f, 1.0f));
+	mDirectionalLight.SetColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
 	mDirectionalLight.SetDirection(glm::normalize(glm::vec3(1.0f, -1.0f, 0.2f)));
 }
 
@@ -133,6 +134,24 @@ void Scene::UpdateDebug(float deltaTime)
 	else
 	{
 		sDown = false;
+	}
+
+	static bool pDown = false;
+	if (GetAsyncKeyState('P') &&
+		GetAsyncKeyState(VK_CONTROL))
+	{
+		if (!pDown)
+		{
+			mDebugMoveLights = !mDebugMoveLights;
+
+			Renderer::Get()->CreateCommandBuffers();
+		}
+
+		pDown = true;
+	}
+	else
+	{
+		pDown = false;
 	}
 }
 
@@ -320,29 +339,32 @@ const std::string& Scene::GetDirectory() const
 
 void Scene::UpdateLightPositions(float deltaTime)
 {
-	for (uint32_t i = 0; i < mPointLights.size(); ++i)
+	if (mDebugMoveLights)
 	{
-		glm::vec3 velocity = mPointLights[i].GetVelocity();
-		glm::vec3 position = mPointLights[i].GetPosition();
+		for (uint32_t i = 0; i < mPointLights.size(); ++i)
+		{
+			glm::vec3 velocity = mPointLights[i].GetVelocity();
+			glm::vec3 position = mPointLights[i].GetPosition();
 
-		position += velocity * deltaTime;
+			position += velocity * deltaTime;
 
-		mPointLights[i].SetPosition(position);
+			mPointLights[i].SetPosition(position);
 
-		if (position.x < minExtents.x)
-			velocity.x = abs(velocity.x);
-		if (position.y < minExtents.y)
-			velocity.y = abs(velocity.y);
-		if (position.z < minExtents.z)
-			velocity.z = abs(velocity.z);
-		if (position.x > maxExtents.x)
-			velocity.x = -abs(velocity.x);
-		if (position.y > maxExtents.y)
-			velocity.y = -abs(velocity.y);
-		if (position.z > maxExtents.z)
-			velocity.z = -abs(velocity.z);
+			if (position.x < minExtents.x)
+				velocity.x = abs(velocity.x);
+			if (position.y < minExtents.y)
+				velocity.y = abs(velocity.y);
+			if (position.z < minExtents.z)
+				velocity.z = abs(velocity.z);
+			if (position.x > maxExtents.x)
+				velocity.x = -abs(velocity.x);
+			if (position.y > maxExtents.y)
+				velocity.y = -abs(velocity.y);
+			if (position.z > maxExtents.z)
+				velocity.z = -abs(velocity.z);
 
-		mPointLights[i].SetVelocity(velocity);
+			mPointLights[i].SetVelocity(velocity);
+		}
 	}
 }
 

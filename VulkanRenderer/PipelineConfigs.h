@@ -221,3 +221,37 @@ public:
 		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 };
+
+class PostProcessPipeline : public Pipeline
+{
+public:
+
+	PostProcessPipeline()
+	{
+		mVertexShaderPath = "Shaders/bin/deferredShader.vert";
+		mFragmentShaderPath = "Shaders/bin/tonemapShader.frag";
+		mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		mCullMode = VK_CULL_MODE_NONE;
+		mSubpass = PASS_POST_PROCESS;
+		mDepthTestEnabled = VK_FALSE;
+	}
+
+	virtual void PopulateLayoutBindings() override
+	{
+		Pipeline::PopulateLayoutBindings();
+
+		PushSet();
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
+};
+
+class NullPostProcessPipeline : public PostProcessPipeline
+{
+public:
+
+	NullPostProcessPipeline()
+	{
+		mFragmentShaderPath = "Shaders/bin/nullPostProcessShader.frag";
+	}
+
+};
