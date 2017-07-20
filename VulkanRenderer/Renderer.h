@@ -273,6 +273,10 @@ private:
 
 	GlobalUniformData mGlobalUniformData;
 
+	VkRenderPass mPostProcessRenderPass;
+	VkFramebuffer mLightOutputFramebuffer;
+	VkCommandBuffer mLightingCommandBuffer;
+
 	GBuffer mGBuffer;
 
 	Scene* mScene;
