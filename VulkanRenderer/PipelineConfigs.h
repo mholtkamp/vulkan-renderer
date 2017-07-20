@@ -232,7 +232,7 @@ public:
 		mFragmentShaderPath = "Shaders/bin/tonemapShader.frag";
 		mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		mCullMode = VK_CULL_MODE_NONE;
-//		mSubpass = PASS_POST_PROCESS;
+		mSubpass = PASS_POST_PROCESS;
 		mDepthTestEnabled = VK_FALSE;
 	}
 
