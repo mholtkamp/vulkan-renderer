@@ -157,8 +157,8 @@ void Renderer::Initialize()
 	CreateLogicalDevice();
 	CreateSwapchain();
 	CreateImageViews();
-	CreateLitColorImage();
 	CreateCommandPool();
+    CreateLitColorImage();
 	CreateDepthImage();
 	CreateDescriptorPool();
 	CreateGBuffer();
@@ -577,35 +577,59 @@ void Renderer::CreateLitColorImage()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	Texture::CreateImage(mSwapchainExtent.width,
-		mSwapchainExtent.height,
-		VK_FORMAT_R16G16B16A16_SFLOAT,
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		mLitColorImage,
-		mLitColorImageMemory);
+	//Texture::CreateImage(mSwapchainExtent.width,
+	//	mSwapchainExtent.height,
+	//	VK_FORMAT_R16G16B16A16_SFLOAT, //VK_FORMAT_R16G16B16A16_SFLOAT,
+	//	VK_IMAGE_TILING_OPTIMAL,
+	//	VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+	//	VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+	//	mLitColorImage,
+	//	mLitColorImageMemory);
 
-	mLitColorImageView = Texture::CreateImageView(mLitColorImage,
-		VK_FORMAT_R16G16B16A16_SFLOAT,
-		VK_IMAGE_ASPECT_COLOR_BIT);
+	//mLitColorImageView = Texture::CreateImageView(mLitColorImage,
+ //       VK_FORMAT_R16G16B16A16_SFLOAT,
+	//	VK_IMAGE_ASPECT_COLOR_BIT);
 
-	VkSamplerCreateInfo ciSampler = {};
-	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	ciSampler.magFilter = VK_FILTER_LINEAR;
-	ciSampler.minFilter = VK_FILTER_LINEAR;
-	ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	ciSampler.addressModeV = ciSampler.addressModeU;
-	ciSampler.addressModeW = ciSampler.addressModeU;
-	ciSampler.mipLodBias = 0.0f;
-	ciSampler.compareOp = VK_COMPARE_OP_ALWAYS;
-	ciSampler.compareEnable = VK_FALSE;
-	ciSampler.minLod = 0.0f;
-	ciSampler.maxLod = 0.0f;
-	ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	ciSampler.maxAnisotropy = 1.0f;
-	ciSampler.anisotropyEnable = VK_FALSE;
+    VkImageUsageFlags usage;
+    VkImageAspectFlags aspect;
+    VkImageLayout layout;
+
+    usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+    aspect = VK_IMAGE_ASPECT_COLOR_BIT;
+    layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    Texture::CreateImage(mSwapchainExtent.width,
+        mSwapchainExtent.height,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_IMAGE_TILING_OPTIMAL,
+        usage,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        mLitColorImage,
+        mLitColorImageMemory);
+
+    mLitColorImageView = Texture::CreateImageView(mLitColorImage,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        aspect);
+
+    Texture::TransitionImageLayout(mLitColorImage,
+        VK_FORMAT_R16G16B16A16_SFLOAT,
+        VK_IMAGE_LAYOUT_UNDEFINED,
+        layout);
+
+    // Create sampler to sample from the color attachments
+    VkSamplerCreateInfo ciSampler = {};
+    ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    ciSampler.magFilter = VK_FILTER_NEAREST;
+    ciSampler.minFilter = VK_FILTER_NEAREST;
+    ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    ciSampler.addressModeV = ciSampler.addressModeU;
+    ciSampler.addressModeW = ciSampler.addressModeU;
+    ciSampler.mipLodBias = 0.0f;
+    ciSampler.maxAnisotropy = 1.0f;
+    ciSampler.minLod = 0.0f;
+    ciSampler.maxLod = 1.0f;
+    ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 
 	if (vkCreateSampler(device, &ciSampler, nullptr, &mLitColorSampler) != VK_SUCCESS)
 	{
@@ -679,11 +703,11 @@ void Renderer::CreateRenderPass()
 			VK_FORMAT_R16G16B16A16_SFLOAT,
 			VK_SAMPLE_COUNT_1_BIT,
 			VK_ATTACHMENT_LOAD_OP_CLEAR,
-			VK_ATTACHMENT_STORE_OP_STORE,
+            VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
 			VK_ATTACHMENT_STORE_OP_DONT_CARE,
 			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+            VK_IMAGE_LAYOUT_UNDEFINED
 		}
 	);
 
@@ -733,7 +757,7 @@ void Renderer::CreateRenderPass()
 	{
 		{
 			ATTACHMENT_LIT_COLOR,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 		}
 	};
 
