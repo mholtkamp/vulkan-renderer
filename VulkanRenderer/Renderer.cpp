@@ -166,7 +166,7 @@ void Renderer::Initialize()
 	CreatePipelines();
 	mGBuffer.CreateSampler();
 	CreateGlobalDescriptorSet();
-	CreatePostProcessDescriptorSet();
+	//CreatePostProcessDescriptorSet();
 	CreateDebugDescriptorSet();
 	CreateFramebuffers();
 	
@@ -673,19 +673,19 @@ void Renderer::CreateRenderPass()
 	}
 
 	// Lit color attachment
-	attachments.push_back(
-		{
-			0,
-			VK_FORMAT_R16G16B16A16_SFLOAT,
-			VK_SAMPLE_COUNT_1_BIT,
-			VK_ATTACHMENT_LOAD_OP_CLEAR,
-			VK_ATTACHMENT_STORE_OP_STORE,
-			VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-			VK_ATTACHMENT_STORE_OP_DONT_CARE,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
-		}
-	);
+	//attachments.push_back(
+	//	{
+	//		0,
+	//		VK_FORMAT_R16G16B16A16_SFLOAT,
+	//		VK_SAMPLE_COUNT_1_BIT,
+	//		VK_ATTACHMENT_LOAD_OP_CLEAR,
+	//		VK_ATTACHMENT_STORE_OP_STORE,
+	//		VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+	//		VK_ATTACHMENT_STORE_OP_DONT_CARE,
+	//		VK_IMAGE_LAYOUT_UNDEFINED,
+	//		VK_IMAGE_LAYOUT_PRESENT_SRC_KHR
+	//	}
+	//);
 
 	// Early Depth Pass 
 	VkAttachmentReference depthAttachmentReference =
@@ -720,25 +720,25 @@ void Renderer::CreateRenderPass()
 		);
 	}
 
-	// Light output attachment reference
-	VkAttachmentReference litColorAttachmentReference[] =
-	{
-		{
-			ATTACHMENT_LIT_COLOR,
-			VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-		}
-	};
+	//// Light output attachment reference
+	//VkAttachmentReference litColorAttachmentReference[] =
+	//{
+	//	{
+	//		ATTACHMENT_LIT_COLOR,
+	//		VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	//	}
+	//};
 
-	VkAttachmentReference litColorInputAttachmentReference[] =
-	{
-		{
-			ATTACHMENT_LIT_COLOR,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-		}
-	};
+	//VkAttachmentReference litColorInputAttachmentReference[] =
+	//{
+	//	{
+	//		ATTACHMENT_LIT_COLOR,
+	//		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	//	}
+	//};
 
-	uint32_t litColorReferenceCount = ARRAYSIZE(litColorAttachmentReference);
-	uint32_t litColorInputReferenceCount = ARRAYSIZE(litColorInputAttachmentReference);
+	//uint32_t litColorReferenceCount = ARRAYSIZE(litColorAttachmentReference);
+	//uint32_t litColorInputReferenceCount = ARRAYSIZE(litColorInputAttachmentReference);
 
 	// Final Pass
 	VkAttachmentReference backAttachmentReference[] =
@@ -787,27 +787,27 @@ void Renderer::CreateRenderPass()
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			geometryInputAttachmentReference.size(), // input attachments
 			geometryInputAttachmentReference.data(),
-			litColorReferenceCount,
-			litColorAttachmentReference,
+			backReferenceCount, //litColorReferenceCount,
+			backAttachmentReference, //litColorAttachmentReference,
 			nullptr, // resolve attachments
 			nullptr, // depth attachment
 			0, // preserve attachments
 			nullptr
 		},
 
-		// Subpass 4 - post processing
-		{
-			0,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			litColorInputReferenceCount, // input attachments
-			litColorInputAttachmentReference,
-			backReferenceCount,
-			backAttachmentReference,
-			nullptr, // resolve attachments
-			nullptr, // depth attachment
-			0, // preserve attachments
-			nullptr
-		}
+		//// Subpass 4 - post processing
+		//{
+		//	0,
+		//	VK_PIPELINE_BIND_POINT_GRAPHICS,
+		//	litColorInputReferenceCount, // input attachments
+		//	litColorInputAttachmentReference,
+		//	backReferenceCount,
+		//	backAttachmentReference,
+		//	nullptr, // resolve attachments
+		//	nullptr, // depth attachment
+		//	0, // preserve attachments
+		//	nullptr
+		//}
 	};
 
 	VkSubpassDependency dependencies[] =
@@ -834,16 +834,16 @@ void Renderer::CreateRenderPass()
 			VK_DEPENDENCY_BY_REGION_BIT
 		},
 
-		// Post processing pass depends on lighting pass
-		{
-			PASS_DEFERRED,
-			PASS_POST_PROCESS,
-			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-			VK_ACCESS_SHADER_READ_BIT,
-			VK_DEPENDENCY_BY_REGION_BIT
-		}
+		//// Post processing pass depends on lighting pass
+		//{
+		//	PASS_DEFERRED,
+		//	PASS_POST_PROCESS,
+		//	VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		//	VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+		//	VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+		//	VK_ACCESS_SHADER_READ_BIT,
+		//	VK_DEPENDENCY_BY_REGION_BIT
+		//}
 	};
 
 	VkRenderPassCreateInfo ciRenderPass =
@@ -880,7 +880,7 @@ void Renderer::CreateFramebuffers()
 			attachments.push_back(mGBuffer.GetImageViews()[j]);
 		}
 
-		attachments.push_back(mLitColorImageView);
+		//attachments.push_back(mLitColorImageView);
 
 		VkFramebufferCreateInfo ciFramebuffer = {};
 		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -1313,19 +1313,19 @@ void Renderer::CreateCommandBuffers()
 		// ******************
 		//  Post Process
 		// ******************
-		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
-		if (mDebugMode == DEBUG_NONE)
-		{
-			mPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
-			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-		}
-		else
-		{
-			mNullPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
-			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-		}
+		//vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
+		//if (mDebugMode == DEBUG_NONE)
+		//{
+		//	mPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
+		//	vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
+		//	vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+		//}
+		//else
+		//{
+		//	mNullPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
+		//	vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
+		//	vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
+		//}
 
 
 		vkCmdEndRenderPass(mCommandBuffers[i]);
@@ -1491,7 +1491,7 @@ void Renderer::RecreateSwapchain()
 	CreatePipelines();
 	CreateFramebuffers();
 	CreateGlobalDescriptorSet();
-	CreatePostProcessDescriptorSet();
+	//CreatePostProcessDescriptorSet();
 	CreateDebugDescriptorSet();
 	CreateCommandBuffers();
 }
@@ -1816,8 +1816,8 @@ void Renderer::CreatePipelines()
 	mDebugDeferredPipeline.Create();
 	mEnvironmentCaptureDebugPipeline.Create();
 	mShadowMapDebugPipeline.Create();
-	mPostProcessPipeline.Create();
-	mNullPostProcessPipeline.Create();
+	//mPostProcessPipeline.Create();
+	//mNullPostProcessPipeline.Create();
 }
 
 void Renderer::SetDebugMode(DebugMode mode)
