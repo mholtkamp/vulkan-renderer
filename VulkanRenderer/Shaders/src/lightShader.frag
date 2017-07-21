@@ -91,7 +91,7 @@ void main()
 	vec3 H = normalize(V + L);
 
 	float dist = length(light.mPosition.xyz - position);
-	float attenuation = 1 - (dist/light.mRadius); //1.0 / (distance * distance);
+	float attenuation = 1 - (dist/(light.mRadius * 0.95f)); //1.0 / (distance * distance);
 	vec3 radiance = light.mColor.rgb * attenuation;
 
 	vec3 F0 = vec3(0.04);
@@ -114,11 +114,6 @@ void main()
 
     // Output final, lit image.
     vec3 color = Lo;
-    
-    // // HDR tonemapping
-    // color = color / (color + vec3(1.0));
-    // // gamma correct
-    // color = pow(color, vec3(1.0/2.2)); 
     
 	outFinalColor = vec4(color, 1.0);
     

@@ -10,7 +10,7 @@ static const int numLights = 100;
 static const glm::vec3 minExtents(-80.0f, 1.0f, -40.0f);
 static const glm::vec3 maxExtents(80.0f, 60.0f, 40.0f);
 static const glm::vec3 ranges = maxExtents - minExtents;
-static const float lightMultiplier = 1.0f;
+static const float lightMultiplier = 5;
 static const float minSpeed = 0.5f;
 static const float maxSpeed = 8.0f;
 static const float speedRange = maxSpeed - minSpeed;
