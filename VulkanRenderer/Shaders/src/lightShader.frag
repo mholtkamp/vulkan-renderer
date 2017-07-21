@@ -121,4 +121,6 @@ void main()
     // color = pow(color, vec3(1.0/2.2)); 
     
 	outFinalColor = vec4(color, 1.0);
+    
+    outFinalColor = max(vec4(0.0), outFinalColor);
 }

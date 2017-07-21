@@ -133,4 +133,6 @@ void main()
 	}
     
 	//outFinalColor *= visibility;
+   
+    outFinalColor = max(vec4(0.0), outFinalColor);
 }

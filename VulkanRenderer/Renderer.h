@@ -249,6 +249,7 @@ private:
 	VkDeviceMemory mLitColorImageMemory;
 	VkImageView mLitColorImageView;
 	VkSampler mLitColorSampler;
+	VkFormat mLitColorImageFormat;
 
 	VkSemaphore mImageAvailableSemaphore;
 	VkSemaphore mRenderFinishedSemaphore;

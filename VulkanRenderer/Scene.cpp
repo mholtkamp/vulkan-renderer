@@ -73,8 +73,9 @@ void Scene::Load(const std::string& directory,
 
 void Scene::SetTestDirectionalLight()
 {
+	float lightValue = 5.0f;
 	mDirectionalLight.SetEnabled(true);
-	mDirectionalLight.SetColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+	mDirectionalLight.SetColor(glm::vec4(lightValue, 4.0f, 3.5f, 1.0f));
 	mDirectionalLight.SetDirection(glm::normalize(glm::vec3(1.0f, -1.0f, 0.2f)));
 }
 

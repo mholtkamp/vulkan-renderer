@@ -47,7 +47,8 @@ Renderer::Renderer() :
 	mScene(nullptr),
 	mDebugMode(DEBUG_NONE),
 	mInitialized(false),
-    mEnvironmentDebugFace(0)
+    mEnvironmentDebugFace(0),
+	mLitColorImageFormat(VK_FORMAT_R16G16B16A16_SFLOAT)
 {
 	mGlobalUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	mGlobalUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
@@ -590,17 +591,19 @@ void Renderer::CreateLitColorImage()
  //       VK_FORMAT_R16G16B16A16_SFLOAT,
 	//	VK_IMAGE_ASPECT_COLOR_BIT);
 
+	VkFormat format;
     VkImageUsageFlags usage;
     VkImageAspectFlags aspect;
     VkImageLayout layout;
-
+	
+	format = mLitColorImageFormat;
     usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     aspect = VK_IMAGE_ASPECT_COLOR_BIT;
     layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     Texture::CreateImage(mSwapchainExtent.width,
         mSwapchainExtent.height,
-        VK_FORMAT_R16G16B16A16_SFLOAT,
+        format,
         VK_IMAGE_TILING_OPTIMAL,
         usage,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -608,11 +611,11 @@ void Renderer::CreateLitColorImage()
         mLitColorImageMemory);
 
     mLitColorImageView = Texture::CreateImageView(mLitColorImage,
-        VK_FORMAT_R16G16B16A16_SFLOAT,
+        format,
         aspect);
 
     Texture::TransitionImageLayout(mLitColorImage,
-        VK_FORMAT_R16G16B16A16_SFLOAT,
+        format,
         VK_IMAGE_LAYOUT_UNDEFINED,
         layout);
 
@@ -700,7 +703,7 @@ void Renderer::CreateRenderPass()
 	attachments.push_back(
 		{
 			0,
-			VK_FORMAT_R16G16B16A16_SFLOAT,
+			mLitColorImageFormat,
 			VK_SAMPLE_COUNT_1_BIT,
 			VK_ATTACHMENT_LOAD_OP_CLEAR,
             VK_ATTACHMENT_STORE_OP_DONT_CARE,

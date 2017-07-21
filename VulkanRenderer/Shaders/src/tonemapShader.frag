@@ -9,17 +9,15 @@ layout (location = 0) out vec4 outFinalColor;
 
 void main()
 {
-    // vec3 color = texture(samplerLitColor, inTexcoord).rgb;
+    vec3 color = texture(samplerLitColor, inTexcoord).rgb;
     
-    // // HDR tonemapping
-    // color = color / (color + vec3(1.0));
-    // // gamma correct
-    // color = pow(color, vec3(1.0/2.2)); 
+    // HDR tonemapping
+    color = color / (color + vec3(1.0));
+    // gamma correct
+    //color = pow(color, vec3(1.0/2.2)); 
     
-	// outFinalColor = vec4(color, 1.0);
+	outFinalColor = vec4(color, 1.0);
     
     
-	
-    
-    outFinalColor = texture(samplerLitColor, inTexcoord);
+    //outFinalColor = texture(samplerLitColor, inTexcoord);
 }
