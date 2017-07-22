@@ -29,7 +29,7 @@ const mat4 BIAS_MAT = mat4(
 	0.0, 0.0, 1.0, 0.0,
 	0.5, 0.5, 0.0, 1.0 );
 
-const float AMBIENT_POWER = 0.03;
+const float AMBIENT_POWER = 0.2;
 
 const float PI = 3.14159265359;
 

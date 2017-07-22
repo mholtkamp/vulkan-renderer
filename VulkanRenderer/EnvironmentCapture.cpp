@@ -51,6 +51,7 @@ void EnvironmentCapture::Capture()
     EarlyDepthPipeline earlyDepthPipeline;
     GeometryPipeline geometryPipeline;
     LightPipeline lightPipeline;
+	DirectionalLightPipeline directionalLightPipeline;
 	PostProcessPipeline postProcessPipeline;
 
     earlyDepthPipeline.mViewportWidth = mResolution;
@@ -59,12 +60,15 @@ void EnvironmentCapture::Capture()
     geometryPipeline.mViewportHeight = mResolution;
     lightPipeline.mViewportWidth = mResolution;
     lightPipeline.mViewportHeight = mResolution;
+	directionalLightPipeline.mViewportWidth = mResolution;
+	directionalLightPipeline.mViewportHeight = mResolution;
 	postProcessPipeline.mViewportWidth = mResolution;
 	postProcessPipeline.mViewportHeight = mResolution;
 
     earlyDepthPipeline.Create();
     geometryPipeline.Create();
     lightPipeline.Create();
+	directionalLightPipeline.Create();
 	postProcessPipeline.Create();
 
     CreateGBuffer();
@@ -132,17 +136,20 @@ void EnvironmentCapture::Capture()
 		// ******************
 		//  Light Pass
 		// ******************
+		directionalLightPipeline.BindPipeline(commandBuffer);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline.GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, lightPipeline.GetPipelineLayout(), 1, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
+		vkCmdDraw(commandBuffer, 4, 1, 0, 0);
+
 		lightPipeline.BindPipeline(commandBuffer);
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 0, 1, &renderer->GetGlobalDescriptorSet(), 0, 0);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, renderer->GetLightPipeline().GetPipelineLayout(), 1, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
-        mScene->RenderLightVolumes(commandBuffer);
-		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
+		mScene->RenderLightVolumes(commandBuffer);
 
 		// *******************
 		//  Post Process Pass
 		// *******************
+		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 		postProcessPipeline.BindPipeline(commandBuffer);
-vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipeline.GetPipelineLayout(), 1, 1, &renderer->GetDeferredDescriptorSet(), 0, 0);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipeline.GetPipelineLayout(), 1, 1, &renderer->GetPostProcessDescriptorSet(), 0, 0);
 		vkCmdDraw(commandBuffer, 4, 1, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffer);
