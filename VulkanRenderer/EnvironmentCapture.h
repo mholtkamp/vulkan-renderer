@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include "Camera.h"
 #include "GBuffer.h"
+#include "DescriptorSet.h"
 
 class EnvironmentCapture
 {
@@ -71,6 +72,8 @@ private:
 	VkDeviceMemory mLitColorImageMemory;
 	VkImageView mLitColorImageView;
 	VkSampler mLitColorSampler;
+
+	DescriptorSet mPostProcessDescriptorSet;
 
 	uint32_t mCapturedResolution;
 

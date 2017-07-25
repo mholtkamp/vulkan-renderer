@@ -71,6 +71,11 @@ void EnvironmentCapture::Capture()
 	directionalLightPipeline.Create();
 	postProcessPipeline.Create();
 
+
+	mPostProcessDescriptorSet.Destroy();
+	mPostProcessDescriptorSet.Create(postProcessPipeline.GetDescriptorSetLayout(1));
+	mPostProcessDescriptorSet.UpdateImageDescriptor(0, mLitColorImageView, mLitColorSampler);
+
     CreateGBuffer();
     CreateFramebuffers();
 
@@ -149,7 +154,8 @@ void EnvironmentCapture::Capture()
 		// *******************
 		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 		postProcessPipeline.BindPipeline(commandBuffer);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipeline.GetPipelineLayout(), 1, 1, &renderer->GetPostProcessDescriptorSet(), 0, 0);
+		VkDescriptorSet postProcessDescriptorSet = mPostProcessDescriptorSet.GetDescriptorSet();
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, postProcessPipeline.GetPipelineLayout(), 1, 1, &postProcessDescriptorSet, 0, 0);
 		vkCmdDraw(commandBuffer, 4, 1, 0, 0);
 
 		vkCmdEndRenderPass(commandBuffer);

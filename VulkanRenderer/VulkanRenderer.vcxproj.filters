@@ -78,6 +78,9 @@
     <ClCompile Include="ShadowCaster.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DescriptorSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Renderer.h">
@@ -150,6 +153,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ShadowCaster.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DescriptorSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

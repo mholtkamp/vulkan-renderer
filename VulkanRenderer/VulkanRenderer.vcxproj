@@ -133,6 +133,7 @@
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
+    <ClCompile Include="DescriptorSet.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
     <ClCompile Include="EnvironmentCapture.cpp" />
     <ClCompile Include="GBuffer.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DebugActionHandler.h" />
+    <ClInclude Include="DescriptorSet.h" />
     <ClInclude Include="DirectionalLight.h" />
     <ClInclude Include="Enums.h" />
     <ClInclude Include="EnvironmentCapture.h" />
