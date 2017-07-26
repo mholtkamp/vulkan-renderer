@@ -15,7 +15,7 @@ DescriptorSet::~DescriptorSet()
 	Destroy();
 }
 
-void DescriptorSet::Create(VkPipelineLayout layout, VkDescriptorPool pool)
+void DescriptorSet::Create(VkDescriptorSetLayout layout, VkDescriptorPool pool)
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
@@ -51,7 +51,7 @@ void DescriptorSet::Destroy()
 	}
 }
 
-void DescriptorSet::UpdateImageDescriptor(int32_t binding, VkImageView imageView, VkSampler sampler)
+void DescriptorSet::UpdateImageDescriptor(int32_t binding, VkImageView imageView, VkSampler sampler, VkImageLayout layout)
 {
 	assert(mDescriptorSet != VK_NULL_HANDLE);
 
@@ -59,7 +59,7 @@ void DescriptorSet::UpdateImageDescriptor(int32_t binding, VkImageView imageView
 	VkDevice device = renderer->GetDevice();
 
 	VkDescriptorImageInfo imageInfo = {};
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageLayout = layout;
 	imageInfo.imageView = imageView;
 	imageInfo.sampler = sampler;
 

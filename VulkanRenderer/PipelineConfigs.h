@@ -67,6 +67,16 @@ public:
 	}
 };
 
+class ReflectionlessGeometryPipeline : public GeometryPipeline
+{
+public:
+
+	ReflectionlessGeometryPipeline()
+	{
+		mFragmentShaderPath = "Shaders/bin/nonreflectiveGeometryShader.frag";
+	}
+};
+
 class DeferredPipeline : public Pipeline
 {
 public:
@@ -254,4 +264,24 @@ public:
 		mFragmentShaderPath = "Shaders/bin/nullPostProcessShader.frag";
 	}
 
+};
+
+class IrradianceConvolutionPipeline : public Pipeline
+{
+public:
+
+	IrradianceConvolutionPipeline()
+	{
+		mVertexShaderPath = "Shaders/bin/irradianceConvolutionShader.vert";
+		mFragmentShaderPath = "Shaders/bin/irradianceConvolutionShader.frag";
+	}
+
+	virtual void PopulateLayoutBindings() override
+	{
+		Pipeline::PopulateLayoutBindings();
+
+		PushSet();
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
 };

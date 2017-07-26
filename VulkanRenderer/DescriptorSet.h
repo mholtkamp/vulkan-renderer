@@ -11,11 +11,11 @@ public:
 
 	~DescriptorSet();
 
-	void Create(VkPipelineLayout layout, VkDescriptorPool pool = VK_NULL_HANDLE);
+	void Create(VkDescriptorSetLayout layout, VkDescriptorPool pool = VK_NULL_HANDLE);
 
 	void Destroy();
 
-	void UpdateImageDescriptor(int32_t binding, VkImageView imageView, VkSampler sampler);
+	void UpdateImageDescriptor(int32_t binding, VkImageView imageView, VkSampler sampler, VkImageLayout layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	void UpdateUniformDescriptor(int32_t binding, VkBuffer buffer, int32_t size);
 

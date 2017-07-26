@@ -132,6 +132,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="Cubemap.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
     <ClCompile Include="DescriptorSet.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
@@ -158,6 +159,7 @@
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
+    <ClInclude Include="Cubemap.h" />
     <ClInclude Include="DebugActionHandler.h" />
     <ClInclude Include="DescriptorSet.h" />
     <ClInclude Include="DirectionalLight.h" />

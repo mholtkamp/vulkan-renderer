@@ -6,6 +6,7 @@
 #include "Camera.h"
 #include "GBuffer.h"
 #include "DescriptorSet.h"
+#include "Cubemap.h"
 
 class EnvironmentCapture
 {
@@ -31,7 +32,13 @@ public:
 
 private:
 
-	static void CreateRenderPass();
+	void CreateIrradianceRenderPass();
+
+	void RenderIrradiance();
+
+	void CreateIrradianceUniformBuffer();
+
+	void CreateIrradianceFramebuffers();
 
 	void DestroyCubemap();
 
@@ -40,8 +47,6 @@ private:
 	void DestroyFramebuffers();
 
 	void CreateFramebuffers();
-
-	void CreateImageViews();
 
 	void CreateDepthImage();
 
@@ -59,10 +64,11 @@ private:
 
 	static VkRenderPass sRenderPass;
 
-	VkImage mImage;
-	VkDeviceMemory mImageMemory;
-	VkImageView mCubemapImageView;
-	VkSampler mSampler;
+	Cubemap mCubemap;
+	std::array<VkFramebuffer, 6> mFramebuffers;
+
+	Cubemap mIrradianceCubemap;
+	std::array<VkFramebuffer, 6> mIrradianceFramebuffers;
 
 	VkImage mDepthImage;
 	VkDeviceMemory mDepthImageMemory;
@@ -74,12 +80,14 @@ private:
 	VkSampler mLitColorSampler;
 
 	DescriptorSet mPostProcessDescriptorSet;
+	DescriptorSet mIrradianceDescriptorSet;
+
+	VkBuffer mIrradianceBuffer;
+	VkDeviceMemory mIrradianceBufferMemory;
+
+	VkRenderPass mIrradianceRenderPass;
 
 	uint32_t mCapturedResolution;
-
-	std::array<VkImageView, 6> mFaceImageViews;
-	VkSampler mFaceSampler;
-	std::array<VkFramebuffer, 6> mFramebuffers;
 
 	glm::vec3 mPosition;
 

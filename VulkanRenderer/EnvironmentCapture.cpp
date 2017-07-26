@@ -6,32 +6,42 @@
 VkRenderPass EnvironmentCapture::sRenderPass = VK_NULL_HANDLE;
 
 EnvironmentCapture::EnvironmentCapture() :
-	mImage(VK_NULL_HANDLE),
-	mImageMemory(VK_NULL_HANDLE),
-	mCubemapImageView(VK_NULL_HANDLE),
-	mSampler(VK_NULL_HANDLE),
-	mFaceSampler(VK_NULL_HANDLE),
 	mDepthImage(VK_NULL_HANDLE),
 	mDepthImageMemory(VK_NULL_HANDLE),
 	mDepthImageView(VK_NULL_HANDLE),
 	mResolution(DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION),
 	mCapturedResolution(0),
-	mScene(nullptr)
+	mScene(nullptr),
+	mLitColorImage(VK_NULL_HANDLE),
+	mLitColorImageMemory(VK_NULL_HANDLE),
+	mLitColorImageView(VK_NULL_HANDLE),
+	mLitColorSampler(VK_NULL_HANDLE),
+	mIrradianceRenderPass(VK_NULL_HANDLE),
+	mIrradianceBuffer(VK_NULL_HANDLE),
+	mIrradianceBufferMemory(VK_NULL_HANDLE)
 {
-	for (VkImageView& view : mFaceImageViews)
+	for (int32_t i = 0; i < 6; ++i)
 	{
-		view = VK_NULL_HANDLE;
-	}
-
-	for (VkFramebuffer& framebuffer : mFramebuffers)
-	{
-		framebuffer = VK_NULL_HANDLE;
+		mFramebuffers[i] = VK_NULL_HANDLE;
+		mIrradianceFramebuffers[i] = VK_NULL_HANDLE;
 	}
 }
 
 EnvironmentCapture::~EnvironmentCapture()
 {
 	DestroyCubemap();
+}
+
+VkImageView EnvironmentCapture::GetFaceImageView(uint32_t index)
+{
+	assert(index >= 0);
+	assert(index < 6);
+	return mIrradianceCubemap.GetFaceImageView(index);
+}
+
+VkSampler EnvironmentCapture::GetFaceSampler()
+{
+	return mCubemap.GetSampler();
 }
 
 void EnvironmentCapture::Capture()
@@ -49,7 +59,7 @@ void EnvironmentCapture::Capture()
 	}
 
     EarlyDepthPipeline earlyDepthPipeline;
-    GeometryPipeline geometryPipeline;
+    ReflectionlessGeometryPipeline geometryPipeline;
     LightPipeline lightPipeline;
 	DirectionalLightPipeline directionalLightPipeline;
 	PostProcessPipeline postProcessPipeline;
@@ -70,7 +80,6 @@ void EnvironmentCapture::Capture()
     lightPipeline.Create();
 	directionalLightPipeline.Create();
 	postProcessPipeline.Create();
-
 
 	mPostProcessDescriptorSet.Destroy();
 	mPostProcessDescriptorSet.Create(postProcessPipeline.GetDescriptorSetLayout(1));
@@ -165,6 +174,8 @@ void EnvironmentCapture::Capture()
 		++i;
 	}
 
+	RenderIrradiance();
+
     // Revert the fake changes we made to global data
     globalData.mScreenDimensions = trueDimensions;
     renderer->UpdateGlobalDescriptorSet();
@@ -180,6 +191,79 @@ void EnvironmentCapture::Capture()
     earlyDepthPipeline.Destroy();
     geometryPipeline.Destroy();
     lightPipeline.Destroy();
+}
+
+void EnvironmentCapture::RenderIrradiance()
+{
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	IrradianceConvolutionPipeline irradiancePipeline;
+	irradiancePipeline.mViewportWidth = IRRADIANCE_RESOLUTION;
+	irradiancePipeline.mViewportHeight = IRRADIANCE_RESOLUTION;
+	irradiancePipeline.mRenderpass = mIrradianceRenderPass;
+	irradiancePipeline.mSubpass = 0;
+	irradiancePipeline.Create();
+
+	mIrradianceDescriptorSet.Destroy();
+	mIrradianceDescriptorSet.Create(irradiancePipeline.GetDescriptorSetLayout(1), 0);
+	mIrradianceDescriptorSet.UpdateImageDescriptor(0, mIrradianceCubemap.GetCubemapImageView(), mIrradianceCubemap.GetSampler(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+	const float piDiv2 = glm::radians(90.0f);
+	const float pi = 3.14159265f;
+
+	glm::mat4 rotationMatrices[6];
+
+	rotationMatrices[0] = glm::rotate(glm::mat4(), piDiv2, glm::vec3(0.0f, 1.0f, 0.0f));
+	rotationMatrices[1] = glm::rotate(glm::mat4(), -piDiv2, glm::vec3(0.0f, 1.0f, 0.0f));
+	rotationMatrices[2] = glm::rotate(glm::mat4(), piDiv2, glm::vec3(1.0f, 0.0f, 0.0f));
+	rotationMatrices[3] = glm::rotate(glm::mat4(), -piDiv2, glm::vec3(1.0f, 0.0f, 0.0f));
+	rotationMatrices[4]; // Identity
+	rotationMatrices[5] = glm::rotate(glm::mat4(), pi, glm::vec3(0.0f, 1.0f, 0.0f));
+
+	VkExtent2D renderAreaExtent = {};
+	renderAreaExtent.width = IRRADIANCE_RESOLUTION;
+	renderAreaExtent.height = IRRADIANCE_RESOLUTION;
+
+	for (int32_t i = 0; i < 6; ++i)
+	{
+		mIrradianceDescriptorSet.UpdateUniformDescriptor(1, mIrradianceBuffer, sizeof(glm::mat4));
+
+		void* data = nullptr;
+		vkMapMemory(device, mIrradianceBufferMemory, 0, sizeof(glm::mat4), 0, &data);
+		memcpy(data, &rotationMatrices[i], sizeof(glm::mat4));
+		vkUnmapMemory(device, mIrradianceBufferMemory);
+
+		VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
+
+		VkRenderPassBeginInfo renderPassInfo = {};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = mIrradianceRenderPass;
+		renderPassInfo.framebuffer = mIrradianceFramebuffers[i];
+		renderPassInfo.renderArea.offset = { 0, 0 };
+		renderPassInfo.renderArea.extent = renderAreaExtent;
+
+		VkClearValue clearValues[1] = {};
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+		clearValues[0].depthStencil = { 1.0f, 0 };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = clearValues;
+
+		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+		irradiancePipeline.BindPipeline(commandBuffer);
+
+		vkCmdBindVertexBuffers(commandBuffer, 0, 0, nullptr, nullptr);
+
+		VkDescriptorSet irradianceDescriptor = mIrradianceDescriptorSet.GetDescriptorSet();
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, irradiancePipeline.GetPipelineLayout(), 1, 1, &irradianceDescriptor, 0, nullptr);
+		vkCmdDraw(commandBuffer, 4, 1, 0, 0);
+
+		vkCmdEndRenderPass(commandBuffer);
+
+		renderer->EndSingleSubmissionCommands(commandBuffer);
+
+	}
 }
 
 void EnvironmentCapture::UpdateDeferredDescriptor()
@@ -255,37 +339,13 @@ void EnvironmentCapture::DestroyCubemap()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	if (mImage != VK_NULL_HANDLE)
+	if (mCubemap.IsValid())
 	{
-		assert(mCubemapImageView != VK_NULL_HANDLE);
-		assert(mImageMemory != VK_NULL_HANDLE);
-		assert(mSampler != VK_NULL_HANDLE);
-		assert(mFaceSampler != VK_NULL_HANDLE);
+		mCubemap.Destroy();
+
 		assert(mDepthImage != VK_NULL_HANDLE);
 		assert(mDepthImageMemory != VK_NULL_HANDLE);
 		assert(mDepthImageView != VK_NULL_HANDLE);
-
-		vkDestroyImage(device, mImage, nullptr);
-		mImage = VK_NULL_HANDLE;
-
-		vkDestroyImageView(device, mCubemapImageView, nullptr);
-		mCubemapImageView = VK_NULL_HANDLE;
-
-		vkDestroySampler(device, mSampler, nullptr);
-		mSampler = VK_NULL_HANDLE;
-
-		vkFreeMemory(device, mImageMemory, nullptr);
-		mImageMemory = VK_NULL_HANDLE;
-
-		for (VkImageView& view : mFaceImageViews)
-		{
-			assert(view != VK_NULL_HANDLE);
-			vkDestroyImageView(device, view, nullptr);
-			view = VK_NULL_HANDLE;
-		}
-
-		vkDestroySampler(device, mFaceSampler, nullptr);
-		mFaceSampler = VK_NULL_HANDLE;
 
 		vkDestroyImage(device, mDepthImage, nullptr);
 		mDepthImage = VK_NULL_HANDLE;
@@ -300,100 +360,57 @@ void EnvironmentCapture::DestroyCubemap()
 
 void EnvironmentCapture::CreateCubemap()
 {
-	assert(mImage == VK_NULL_HANDLE);
-	assert(mImageMemory == VK_NULL_HANDLE);
-	assert(mSampler == VK_NULL_HANDLE);
-	assert(mCubemapImageView == VK_NULL_HANDLE);
+	assert(!mCubemap.IsValid());
 
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	// Create optimal tiled target image
-	VkImageCreateInfo imageCreateInfo = {};
-	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageCreateInfo.format = renderer->GetSwapchainFormat();
-	imageCreateInfo.mipLevels = 1;
-	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageCreateInfo.extent = { mResolution, mResolution, 1 };
-	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-	imageCreateInfo.arrayLayers = 6;
-	imageCreateInfo.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-
-	if (vkCreateImage(device, &imageCreateInfo, nullptr, &mImage) != VK_SUCCESS)
-	{
-		throw std::exception("Failed to create cubemap image in evironment capture");
-	}
-
-	VkMemoryRequirements memReqs;
-	vkGetImageMemoryRequirements(device, mImage, &memReqs);
-
-	VkMemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memReqs.size;
-	allocInfo.memoryTypeIndex = renderer->FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	if (vkAllocateMemory(device, &allocInfo, nullptr, &mImageMemory) != VK_SUCCESS)
-	{
-		throw std::exception("Failed to allocate image memory for cubemap");
-	}
-
-	if (vkBindImageMemory(device, mImage, mImageMemory, 0) != VK_SUCCESS)
-	{
-		throw std::exception("Failed to bind memory to image for cubemap");
-	}
-
-	//Texture::TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
-
-	VkSamplerCreateInfo ciSampler = {};
-	ciSampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	ciSampler.magFilter = VK_FILTER_LINEAR;
-	ciSampler.minFilter = VK_FILTER_LINEAR;
-	ciSampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	ciSampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	ciSampler.addressModeV = ciSampler.addressModeU;
-	ciSampler.addressModeW = ciSampler.addressModeU;
-	ciSampler.mipLodBias = 0.0f;
-	ciSampler.compareOp = VK_COMPARE_OP_ALWAYS;
-	ciSampler.compareEnable = VK_FALSE;
-	ciSampler.minLod = 0.0f;
-	ciSampler.maxLod = 0.0f;
-	ciSampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	ciSampler.maxAnisotropy = 1.0f;
-	ciSampler.anisotropyEnable = VK_FALSE;
-
-	if (vkCreateSampler(device, &ciSampler, nullptr, &mSampler) != VK_SUCCESS)
-	{
-		throw std::exception("Failed to create texture sampler");
-	}
-
-	if (vkCreateSampler(device, &ciSampler, nullptr, &mFaceSampler) != VK_SUCCESS)
-	{
-		throw std::exception("Failed to create individual face sampler.");
-	}
+	mCubemap.Create(mResolution, renderer->GetSwapchainFormat());
+	mIrradianceCubemap.Create(IRRADIANCE_RESOLUTION);
 
 	CreateDepthImage();
 
 	CreateLitColorImage();
 
-	CreateImageViews();
-
 	vkDeviceWaitIdle(device);
+
+	CreateIrradianceRenderPass();
+
+	CreateIrradianceFramebuffers();
+
+	CreateIrradianceUniformBuffer();
 }
 
-VkImageView EnvironmentCapture::GetFaceImageView(uint32_t index)
+void EnvironmentCapture::CreateIrradianceUniformBuffer()
 {
-	assert(index >= 0);
-	assert(index < 6);
-	return mFaceImageViews[index];
+	Renderer* renderer = Renderer::Get();
+	renderer->CreateBuffer(sizeof(glm::mat4), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT | VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, mIrradianceBuffer, mIrradianceBufferMemory);
 }
 
-VkSampler EnvironmentCapture::GetFaceSampler()
+void EnvironmentCapture::CreateIrradianceFramebuffers()
 {
-	return mFaceSampler;
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	for (uint32_t i = 0; i < 6; ++i)
+	{
+		std::vector<VkImageView> attachments;
+		attachments.push_back(mIrradianceCubemap.GetFaceImageView(i));
+
+		VkFramebufferCreateInfo ciFramebuffer = {};
+		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		ciFramebuffer.renderPass = mIrradianceRenderPass;
+		ciFramebuffer.attachmentCount = attachments.size();
+		ciFramebuffer.pAttachments = attachments.data();
+		ciFramebuffer.width = IRRADIANCE_RESOLUTION;
+		ciFramebuffer.height = IRRADIANCE_RESOLUTION;
+		ciFramebuffer.layers = 1;
+
+		if (vkCreateFramebuffer(device, &ciFramebuffer, nullptr, &mIrradianceFramebuffers[i]) != VK_SUCCESS)
+		{
+			throw std::exception("Failed to create framebuffer.");
+		}
+	}
 }
 
 void EnvironmentCapture::CreateDepthImage()
@@ -455,7 +472,7 @@ void EnvironmentCapture::CreateFramebuffers()
 	for (uint32_t i = 0; i < 6; ++i)
 	{
 		std::vector<VkImageView> attachments;
-		attachments.push_back(mFaceImageViews[i]);
+		attachments.push_back(mCubemap.GetFaceImageView(i));
 		attachments.push_back(mDepthImageView);
 
 		for (uint32_t g = 0; g < mGBuffer.GetImageViews().size(); ++g)
@@ -481,52 +498,44 @@ void EnvironmentCapture::CreateFramebuffers()
 	}
 }
 
-void EnvironmentCapture::CreateImageViews()
+void EnvironmentCapture::CreateIrradianceRenderPass()
 {
-	// Create the cubemap image view first
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	VkImageViewCreateInfo viewInfo = {};
-	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	viewInfo.image = mImage;
-	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_CUBE;
-	viewInfo.format = renderer->GetSwapchainFormat();
-	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = 1;
-	viewInfo.subresourceRange.baseArrayLayer = 0;
-	viewInfo.subresourceRange.layerCount = 6;
-
-	if (vkCreateImageView(device, &viewInfo, nullptr, &mCubemapImageView) != VK_SUCCESS)
+	if (mIrradianceRenderPass == VK_NULL_HANDLE)
 	{
-		throw std::exception("Failed to create texture image view");
-	}
+		VkAttachmentDescription attachmentDesc = {};
+		attachmentDesc.format = VK_FORMAT_R8G8B8A8_UNORM;
+		attachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+		attachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		attachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-	// Now create individual image views 
-	for (uint32_t i = 0; i < 6; ++i)
-	{
-		VkImageViewCreateInfo ciImageView = {};
-		ciImageView.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		ciImageView.image = mImage;
-		ciImageView.viewType = VK_IMAGE_VIEW_TYPE_2D;
-		ciImageView.format = renderer->GetSwapchainFormat();
-		ciImageView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		ciImageView.subresourceRange.baseMipLevel = 0;
-		ciImageView.subresourceRange.levelCount = 1;
-		ciImageView.subresourceRange.baseArrayLayer = i;
-		ciImageView.subresourceRange.layerCount = 1;
+		VkAttachmentReference attachmentRef = {};
+		attachmentRef.attachment = 0;
+		attachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-		if (vkCreateImageView(device, &ciImageView, nullptr, &mFaceImageViews[i]) != VK_SUCCESS)
+		VkSubpassDescription subpass = {};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &attachmentRef;
+
+		VkRenderPassCreateInfo ciRenderPass = {};
+		ciRenderPass.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		ciRenderPass.attachmentCount = 1;
+		ciRenderPass.pAttachments = &attachmentDesc;
+		ciRenderPass.subpassCount = 1;
+		ciRenderPass.pSubpasses = &subpass;
+
+		if (vkCreateRenderPass(device, &ciRenderPass, nullptr, &mIrradianceRenderPass) != VK_SUCCESS)
 		{
-			throw std::exception("Failed to create texture image view");
+			throw std::exception("Failed to create renderpass");
 		}
 	}
-}
-
-void EnvironmentCapture::CreateRenderPass()
-{
-	
 }
 
 void EnvironmentCapture::CreateLitColorImage()
@@ -580,8 +589,8 @@ void EnvironmentCapture::UpdateDesriptorSet(VkDescriptorSet descriptorSet)
 	VkWriteDescriptorSet descriptorWrite = {};
 
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.imageView = mCubemapImageView;
-	imageInfo.sampler = mSampler;
+	imageInfo.imageView = mCubemap.GetCubemapImageView();
+	imageInfo.sampler = mCubemap.GetSampler();
 
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = descriptorSet;
