@@ -55,6 +55,8 @@ public:
 
 	DirectionalLight& GetDirectionalLight();
 
+	Cubemap* GetIrradianceMap();
+
 private:
 
 	void LoadMaterials(const aiScene& scene);

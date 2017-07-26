@@ -466,6 +466,11 @@ void EnvironmentCapture::DestroyFramebuffers()
 	}
 }
 
+Cubemap* EnvironmentCapture::GetIrradianceMap()
+{
+	return &mIrradianceCubemap;
+}
+
 void EnvironmentCapture::CreateFramebuffers()
 {
 	Renderer* renderer = Renderer::Get();

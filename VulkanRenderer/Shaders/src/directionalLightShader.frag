@@ -18,6 +18,7 @@ layout (set = 1, binding = 3) uniform sampler2D samplerSpecularColor;
 layout (set = 1, binding = 4) uniform sampler2D samplerMetallic;
 layout (set = 1, binding = 5) uniform sampler2D samplerRoughness;
 layout (set = 1, binding = 6) uniform sampler2D samplerShadowMap;
+layout (set = 1, binding = 7) uniform samplerCube samplerIrradianceMap;
 
 layout (location = 0) in vec2 inTexcoord;
 
@@ -108,7 +109,7 @@ void main()
 	float NdotL = max(dot(N, L), 0.0);
 	vec3 Lo = (kD * albedo / PI + specular) * radiance * NdotL;
     
-    vec3 ambient = vec3(0.03) * albedo;
+    vec3 ambient = texture(samplerIrradianceMap, N).rgb;
 
     // Output final, lit image.
     vec3 color = Lo + ambient;

@@ -30,6 +30,8 @@ public:
 
 	VkSampler GetFaceSampler();
 
+	Cubemap* GetIrradianceMap();
+
 private:
 
 	void CreateIrradianceRenderPass();

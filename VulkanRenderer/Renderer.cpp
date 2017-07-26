@@ -1121,6 +1121,35 @@ void Renderer::UpdateDeferredDescriptorSet()
 
         vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
     }
+
+	if (mScene != nullptr &&
+		mScene->GetIrradianceMap() != nullptr)
+	{
+		Cubemap* irradianceMap = mScene->GetIrradianceMap();
+		VkImageView irradianceImageView = irradianceMap->GetCubemapImageView();
+		VkSampler irradianceSampler = irradianceMap->GetSampler();
+
+		if (irradianceImageView != VK_NULL_HANDLE &&
+			irradianceSampler != VK_NULL_HANDLE)
+		{
+			VkDescriptorImageInfo imageInfo = {};
+			VkWriteDescriptorSet descriptorWrite = {};
+
+			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo.imageView = irradianceImageView;
+			imageInfo.sampler = irradianceSampler;
+
+			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+			descriptorWrite.dstSet = mDeferredDescriptorSet;
+			descriptorWrite.dstBinding = DD_TEXTURE_IRRADIANCE_MAP;
+			descriptorWrite.dstArrayElement = 0;
+			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			descriptorWrite.descriptorCount = 1;
+			descriptorWrite.pImageInfo = &imageInfo;
+
+			vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+		}
+	}
 }
 
 void Renderer::CreateDebugDescriptorSet()

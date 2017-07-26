@@ -79,6 +79,16 @@ void Scene::SetTestDirectionalLight()
 	mDirectionalLight.SetDirection(glm::normalize(glm::vec3(1.0f, -1.0f, 0.2f)));
 }
 
+Cubemap* Scene::GetIrradianceMap()
+{
+	if (mEnvironmentCaptures.size() > 0)
+	{
+		return mEnvironmentCaptures[0].GetIrradianceMap();
+	}
+
+	return nullptr;
+}
+
 void Scene::UpdateDebug(float deltaTime)
 {
 	// Change Radii
