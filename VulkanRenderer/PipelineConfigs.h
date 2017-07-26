@@ -274,6 +274,11 @@ public:
 	{
 		mVertexShaderPath = "Shaders/bin/irradianceConvolutionShader.vert";
 		mFragmentShaderPath = "Shaders/bin/irradianceConvolutionShader.frag";
+
+        mDepthTestEnabled = false;
+        mCullMode = VK_CULL_MODE_NONE;
+        mBlendEnabled = false;
+        mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	}
 
 	virtual void PopulateLayoutBindings() override

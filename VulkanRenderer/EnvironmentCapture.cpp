@@ -5,6 +5,9 @@
 
 VkRenderPass EnvironmentCapture::sRenderPass = VK_NULL_HANDLE;
 
+//static float sQuadVertices = {0.0f, 0.0f,
+//                              }
+//
 EnvironmentCapture::EnvironmentCapture() :
 	mDepthImage(VK_NULL_HANDLE),
 	mDepthImageMemory(VK_NULL_HANDLE),
@@ -207,7 +210,7 @@ void EnvironmentCapture::RenderIrradiance()
 
 	mIrradianceDescriptorSet.Destroy();
 	mIrradianceDescriptorSet.Create(irradiancePipeline.GetDescriptorSetLayout(1), 0);
-	mIrradianceDescriptorSet.UpdateImageDescriptor(0, mIrradianceCubemap.GetCubemapImageView(), mIrradianceCubemap.GetSampler(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+	mIrradianceDescriptorSet.UpdateImageDescriptor(0, mCubemap.GetCubemapImageView(), mCubemap.GetSampler());
 
 	const float piDiv2 = glm::radians(90.0f);
 	const float pi = 3.14159265f;
