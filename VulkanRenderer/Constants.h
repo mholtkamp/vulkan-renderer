@@ -14,6 +14,7 @@
 #define DEFAULT_NORMAL_TEXTURE_NAME "DefaultNormalTexture.png"
 #define DEFAULT_REFLECTIVE_TEXTURE_NAME "DefaultReflectiveTexture.png"
 #define DEFAULT_EMISSIVE_TEXTURE_NAME "DefaultEmissiveTexture.png"
+#define DEFAULT_ORM_TEXTURE_NAME "DefaultORMTexture.png"
 
 #define ENVIRONMENT_CAPTURE_TEXTURE_COUNT 6
 #define DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION 512

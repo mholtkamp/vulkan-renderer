@@ -36,9 +36,9 @@ void main()
     
     outPosition = (uboGeometry.mWorldMatrix * vec4(inPosition, 1.0)).xyz;    
     outTexcoord = inTexcoord;    
-    outNormal = (uboGeometry.mNormalMatrix * vec4(inNormal, 0.0)).xyz;
-    outTangent = (uboGeometry.mNormalMatrix * vec4(inTangent, 0.0)).xyz;
-    outBitangent = cross(outNormal, outTangent);
+    outNormal = normalize((uboGeometry.mNormalMatrix * vec4(inNormal, 0.0)).xyz);
+    outTangent = normalize((uboGeometry.mNormalMatrix * vec4(inTangent, 0.0)).xyz);
+    outBitangent = normalize(cross(outNormal, outTangent));
     outTBN = mat3(outTangent, outBitangent, outNormal);
 
 	// Shadow map coordinate computation

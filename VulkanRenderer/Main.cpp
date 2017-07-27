@@ -154,9 +154,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 	renderer->Initialize();
 
 	//scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene2.dae");
-	scene->Load("C:/Sponza/", "Sponza.dae");
+	//scene->Load("C:/Sponza/", "Sponza.dae");
 	//scene->Load("C:/Sponza/", "Sponza_minimal.dae");
-	//scene->Load("D:/Courtyard/Collada/", "courtyard_minimal.dae");
+	scene->Load("D:/Courtyard/Collada/", "courtyard_minimal.dae");
 
 	sCameraController.SetCamera(scene->GetActiveCamera());
 	sClock.Start();

@@ -99,6 +99,17 @@ void Material::Create(const Scene& scene,
 		SetDefaultTexture(scene, textures, mTextures[SLOT_SPECULAR], DEFAULT_SPECULAR_TEXTURE_NAME);
 	}
 
+	aiString ormTexture;
+	if (material.GetTextureCount(aiTextureType_EMISSIVE) > 0)
+	{
+		material.GetTexture(aiTextureType_EMISSIVE, 0, &ormTexture);
+		SetTexture(scene, textures, mTextures[SLOT_ORM], ormTexture.C_Str());
+	}
+	else
+	{
+		SetDefaultTexture(scene, textures, mTextures[SLOT_ORM], DEFAULT_ORM_TEXTURE_NAME);
+	}
+
 	aiString normalTexture;
 	if (material.GetTextureCount(aiTextureType_NORMALS) > 0)
 	{
