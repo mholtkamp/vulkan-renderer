@@ -31,7 +31,7 @@ const mat4 BIAS_MAT = mat4(
 	0.5, 0.5, 0.0, 1.0 );
 
 const float AMBIENT_POWER = 0.2;
-
+const float BIAS = 0.004f;
 const float PI = 3.14159265359;
 
 vec3 fresnelSchlick(float cosTheta, vec3 F0)
@@ -72,6 +72,34 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 	float ggx1 = GeometrySchlickGGX(NdotL, roughness);
 
 	return ggx1 * ggx2;
+}
+
+float filterPCF(vec4 sc)
+{
+	ivec2 texDim = textureSize(samplerShadowMap, 0);
+	float scale = 1.5;
+	float dx = scale * 1.0 / float(texDim.x);
+	float dy = scale * 1.0 / float(texDim.y);
+
+	float shadowFactor = 0.0;
+	int count = 0;
+	int range = 1;
+	
+	for (int x = -range; x <= range; x++)
+	{
+		for (int y = -range; y <= range; y++)
+		{
+        	if (texture(samplerShadowMap, sc.xy + vec2(dx*x, dy*y)).r + BIAS >=  sc.z)
+            {
+                shadowFactor += 1.0;
+            }
+    
+			count++;
+		}
+	
+	}
+	
+    return max(shadowFactor/count, AMBIENT_POWER);
 }
 
 void main()
@@ -118,15 +146,11 @@ void main()
 
 	// Determine if color should be shadowed
 	float visibility = 1.0;
-	float bias = 0.004f;
 
 	vec4 shadowCoord = (BIAS_MAT * ubo.mSunVP) * vec4(position, 1.0);
 	shadowCoord = shadowCoord / shadowCoord.w;
-
-	if (texture(samplerShadowMap, shadowCoord.xy).r + bias <  shadowCoord.z)
-	{
-		visibility = AMBIENT_POWER;
-	}
+    
+    visibility = filterPCF(shadowCoord);
     
 	outFinalColor *= visibility;
    

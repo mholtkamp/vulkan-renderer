@@ -1,4 +1,5 @@
 #include "DirectionalLight.h"
+#include "Constants.h"
 
 DirectionalLight::DirectionalLight() :
 	mPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -54,7 +55,7 @@ void DirectionalLight::GenerateViewProjectionMatrix()
 	glm::mat4 proj;
 
 	view = glm::lookAtRH(mPosition, mPosition + mDirection, glm::vec3(0.0f, 1.0f, 0.0f));
-	proj = glm::orthoRH(-100.0f, 100.0f, -100.0f, 100.0f, -100.0f, 100.0f);
+	proj = glm::orthoRH(-SHADOW_RANGE, SHADOW_RANGE, -SHADOW_RANGE, SHADOW_RANGE, -SHADOW_RANGE, SHADOW_RANGE);
 
     // Needed for adjusting to NDC
     const glm::mat4 clip(1.0f, 0.0f, 0.0f, 0.0f,

@@ -61,6 +61,14 @@ void Material::Create(const Scene& scene,
 			mMetallic = 0.01f;
 			mRoughness = 1.0f;
 		}
+		if (specularColor.r == 0.5f &&
+			specularColor.g == 0.5f &&
+			specularColor.b == 0.5f)
+		{
+			mReflectivity = 0.0f;
+			mMetallic = 0.01f;
+			mRoughness = 1.0f;
+		}
 		else
 		{
 			mReflectivity = specularColor.r;

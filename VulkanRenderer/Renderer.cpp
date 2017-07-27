@@ -1317,8 +1317,8 @@ void Renderer::CreateCommandBuffers()
 		// ******************
 		//  Early Depth Pass
 		// ******************
-		mEarlyDepthPipeline.BindPipeline(mCommandBuffers[i]);
-		mScene->RenderGeometry(mCommandBuffers[i]);
+		//mEarlyDepthPipeline.BindPipeline(mCommandBuffers[i]);
+		//mScene->RenderGeometry(mCommandBuffers[i]);
 		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
 
 		// ******************

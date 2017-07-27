@@ -8,6 +8,8 @@ layout(set = 1, binding = 0) uniform GeometryUniformBuffer
     mat4 mNormalMatrix;
     mat4 mLightMVP;
     float mReflectivity;
+	float mMetallic;
+	float mRoughness;
 } uboGeometry;
 
 layout(location = 0) in vec3 inPosition;
