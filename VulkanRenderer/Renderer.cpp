@@ -978,6 +978,11 @@ void Renderer::UpdateGlobalUniformData()
     }
 }
 
+VkPhysicalDevice Renderer::GetPhysicalDevice()
+{
+	return mPhysicalDevice;
+}
+
 GlobalUniformData& Renderer::GetGlobalUniformData()
 {
     return mGlobalUniformData;

@@ -73,6 +73,8 @@ public:
 
 	void WaitOnExecutionFinished();
 
+	VkPhysicalDevice GetPhysicalDevice();
+
 	void RecreateSwapchain();
 
 	VkDescriptorPool GetDescriptorPool();

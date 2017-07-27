@@ -10,7 +10,10 @@ Texture::Texture() :
 	mImage(VK_NULL_HANDLE),
 	mImageMemory(VK_NULL_HANDLE),
 	mImageView(VK_NULL_HANDLE),
-	mSampler(VK_NULL_HANDLE)
+	mSampler(VK_NULL_HANDLE),
+	mWidth(0),
+	mHeight(0),
+	mMipLevels(0)
 {
 
 }
@@ -42,44 +45,299 @@ void Texture::Load(const std::string& path)
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
+	VkPhysicalDevice physicalDevice = renderer->GetPhysicalDevice();
+
 	int texWidth;
 	int texHeight;
 	int texChannels;
+	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
 	mName = path;
 
 	stbi_uc* pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	int32_t imageSizeInt = static_cast<int32_t>(imageSize);
 
 	if (pixels == nullptr)
 	{
 		throw exception("Failed to load texture image");
 	}
 
+	mWidth = texWidth;
+	mHeight = texHeight;
+
+	VkFormatProperties formatProperties;
+
+	// calculate num of mip maps
+	// numLevels = 1 + floor(log2(max(w, h, d)))
+	// Calculated as log2(max(width, height, depth))c + 1 (see specs)
+	mMipLevels = static_cast<int32_t>(floor(log2(std::max(mWidth, mHeight))) + 1);
+
+	// Get device properites for the requested texture format
+	vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &formatProperties);
+
+	// Mip-chain generation requires support for blit source and destination
+	assert(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT);
+	assert(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT);
+
+	VkMemoryAllocateInfo memAllocInfo = {};
+	memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	// !!!!!!!!!!!! CONTINUE HERE !!!!!!!!!!!!!!!
+	VkMemoryRequirements memReqs = {};
+
+	// Create a host-visible staging buffer that contains the raw image data
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VkDeviceMemory stagingMemory;
 
-	renderer->CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	VkBufferCreateInfo bufferCreateInfo = {};
+	bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+	bufferCreateInfo.size = imageSize;
 
+	// This buffer is used as a transfer source for the buffer copy
+	bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	if (vkCreateBuffer(device, &bufferCreateInfo, nullptr, &stagingBuffer) != VK_SUCCESS)
+	{
+		throw std::exception("Failed to create staging buffer");
+	}
+
+	vkGetBufferMemoryRequirements(device, stagingBuffer, &memReqs);
+	memAllocInfo.allocationSize = memReqs.size;
+	memAllocInfo.memoryTypeIndex = renderer->FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	if (vkAllocateMemory(device, &memAllocInfo, nullptr, &stagingMemory) != VK_SUCCESS) { throw std::exception("Failed to allocate staging buffer memory."); }
+	if (vkBindBufferMemory(device, stagingBuffer, stagingMemory, 0) != VK_SUCCESS) { throw std::exception("Failed to allocate bind staging buffer to memory."); }
+
+	// Copy texture data into staging buffer
 	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(device, stagingBufferMemory);
+	vkMapMemory(device, stagingMemory, 0, memReqs.size, 0, &data);
+	memcpy(data, pixels, imageSizeInt);
+	vkUnmapMemory(device, stagingMemory);
 
-	stbi_image_free(pixels);
+	// Create optimal tiled target image
+	VkImageCreateInfo imageCreateInfo = {};
+	imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+	imageCreateInfo.format = format;
+	imageCreateInfo.mipLevels = mMipLevels;
+	imageCreateInfo.arrayLayers = 1;
+	imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	imageCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	imageCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT;
+	imageCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+	imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageCreateInfo.extent = { mWidth, mHeight, 1 };
+	imageCreateInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	if (vkCreateImage(device, &imageCreateInfo, nullptr, &mImage) != VK_SUCCESS)
+	{
+		throw exception("Failed to create image");
+	}
 
-	CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mImage, mImageMemory);
+	vkGetImageMemoryRequirements(device, mImage, &memReqs);
+	memAllocInfo.allocationSize = memReqs.size;
+	memAllocInfo.memoryTypeIndex = renderer->FindMemoryType(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	if (vkAllocateMemory(device, &memAllocInfo, nullptr, &mImageMemory) != VK_SUCCESS) { throw exception("Failed to allocate memory."); }
+	if (vkBindImageMemory(device, mImage, mImageMemory, 0) != VK_SUCCESS) { throw exception("Failed to bind image to memory."); }
+
+	VkCommandBuffer copyCmd = renderer->BeginSingleSubmissionCommands();
+
+	VkImageSubresourceRange subresourceRange = {};
+	subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	subresourceRange.levelCount = 1;
+	subresourceRange.layerCount = 1;
+
+	// Copy the first mip of the chain, remaining mips will be generated
+	VkBufferImageCopy bufferCopyRegion = {};
+	bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	bufferCopyRegion.imageSubresource.mipLevel = 0;
+	bufferCopyRegion.imageSubresource.baseArrayLayer = 0;
+	bufferCopyRegion.imageSubresource.layerCount = 1;
+	bufferCopyRegion.imageExtent.width = mWidth;
+	bufferCopyRegion.imageExtent.height = mHeight;
+	bufferCopyRegion.imageExtent.depth = 1;
+
+	vkCmdCopyBufferToImage(copyCmd, stagingBuffer, mImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
 
 	TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 	CopyBufferToImage(stagingBuffer, mImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 	TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	renderer->EndSingleSubmissionCommands(copyCmd);
 
-	mImageView = CreateImageView(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
-	CreateTextureSampler();
+	// Clean up staging resources
+	vkFreeMemory(device, stagingMemory, nullptr);
+	vkDestroyBuffer(device, stagingBuffer, nullptr);
+
+	// Generate the mip chain
+	// ---------------------------------------------------------------
+	// We copy down the whole mip chain doing a blit from mip-1 to mip
+	// An alternative way would be to always blit from the first mip level and sample that one down
+	VkCommandBuffer blitCmd = renderer->BeginSingleSubmissionCommands();
+
+	// Copy down mips from n-1 to n
+	for (uint32_t i = 1; i < mMipLevels; i++)
+	{
+		VkImageBlit imageBlit{};
+
+		// Source
+		imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageBlit.srcSubresource.layerCount = 1;
+		imageBlit.srcSubresource.mipLevel = i - 1;
+		imageBlit.srcOffsets[1].x = int32_t(mWidth >> (i - 1));
+		imageBlit.srcOffsets[1].y = int32_t(mHeight >> (i - 1));
+		imageBlit.srcOffsets[1].z = 1;
+
+		// Destination
+		imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		imageBlit.dstSubresource.layerCount = 1;
+		imageBlit.dstSubresource.mipLevel = i;
+		imageBlit.dstOffsets[1].x = int32_t(mWidth >> i);
+		imageBlit.dstOffsets[1].y = int32_t(mHeight >> i);
+		imageBlit.dstOffsets[1].z = 1;
+
+		VkImageSubresourceRange mipSubRange = {};
+		mipSubRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		mipSubRange.baseMipLevel = i;
+		mipSubRange.levelCount = 1;
+		mipSubRange.layerCount = 1;
+
+		// Transiton current mip level to transfer dest
+		//vks::tools::setImageLayout(
+		//	blitCmd,
+		//	texture.image,
+		//	VK_IMAGE_LAYOUT_UNDEFINED,
+		//	VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		//	mipSubRange,
+		//	VK_PIPELINE_STAGE_TRANSFER_BIT,
+		//	VK_PIPELINE_STAGE_HOST_BIT);
+
+		// Blit from previous level
+		vkCmdBlitImage(
+			blitCmd,
+			mImage,
+			VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			mImage,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			1,
+			&imageBlit,
+			VK_FILTER_LINEAR);
+
+		// Transiton current mip level to transfer source for read in next iteration
+		//vks::tools::setImageLayout(
+		//	blitCmd,
+		//	texture.image,
+		//	VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		//	VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		//	mipSubRange,
+		//	VK_PIPELINE_STAGE_HOST_BIT,
+		//	VK_PIPELINE_STAGE_TRANSFER_BIT);
+	}
+
+	// After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
+	subresourceRange.levelCount = mMipLevels;
+	//vks::tools::setImageLayout(
+	//	blitCmd,
+	//	texture.image,
+	//	VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	//	texture.imageLayout,
+	//	subresourceRange);
+
+	renderer->EndSingleSubmissionCommands(blitCmd);
+	// ---------------------------------------------------------------
+
+	// Create samplers
+
+	VkSamplerCreateInfo sampler = {};
+	sampler.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+	sampler.magFilter = VK_FILTER_LINEAR;
+	sampler.minFilter = VK_FILTER_LINEAR;
+	sampler.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+	sampler.addressModeU = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+	sampler.addressModeV = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+	sampler.addressModeW = VK_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT;
+	sampler.mipLodBias = 0.0f;
+	sampler.compareOp = VK_COMPARE_OP_NEVER;
+	sampler.minLod = 0.0f;
+	sampler.maxLod = 0.0f;
+	sampler.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
+	sampler.maxAnisotropy = 1.0;
+	sampler.anisotropyEnable = VK_FALSE;
+
+	//// Without mip mapping
+	//if (vkCreateSampler(device, &sampler, nullptr, &samplers[0]) != VK_SUCCESS)
+	//{
+	//	throw exception("Failed to create sampler")
+	//}
+
+	// With mip mapping
+	sampler.maxLod = (float) mMipLevels;
+	vkCreateSampler(device, &sampler, nullptr, &mSampler);
+
+	// With mip mapping and anisotropic filtering
+	//if (vulkanDevice->features.samplerAnisotropy)
+	//{
+	//	sampler.maxAnisotropy = vulkanDevice->properties.limits.maxSamplerAnisotropy;
+	//	sampler.anisotropyEnable = VK_TRUE;
+	//}
+	//VK_CHECK_RESULT(vkCreateSampler(device, &sampler, nullptr, &samplers[2]));
+
+	// Create image view
+	VkImageViewCreateInfo view = {};
+	view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	view.image = mImage;
+	view.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	view.format = format;
+	view.components = { VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A };
+	view.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	view.subresourceRange.baseMipLevel = 0;
+	view.subresourceRange.baseArrayLayer = 0;
+	view.subresourceRange.layerCount = 1;
+	view.subresourceRange.levelCount = mMipLevels;
+	vkCreateImageView(device, &view, nullptr, &mImageView);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//VkBuffer stagingBuffer;
+	//VkDeviceMemory stagingBufferMemory;
+
+	//renderer->CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	//void* data;
+	//vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+	//memcpy(data, pixels, static_cast<size_t>(imageSize));
+	//vkUnmapMemory(device, stagingBufferMemory);
+
+	//stbi_image_free(pixels);
+
+	//CreateImage(texWidth, texHeight, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mImage, mImageMemory);
+
+	//TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_PREINITIALIZED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	//CopyBufferToImage(stagingBuffer, mImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	//TransitionImageLayout(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+	//vkDestroyBuffer(device, stagingBuffer, nullptr);
+	//vkFreeMemory(device, stagingBufferMemory, nullptr);
+
+	//mImageView = CreateImageView(mImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+	//CreateTextureSampler();
 }
 
 const std::string& Texture::GetName() const

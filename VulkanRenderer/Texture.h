@@ -43,4 +43,8 @@ private:
 	VkDeviceMemory mImageMemory;
 	VkImageView mImageView;
 	VkSampler mSampler;
+
+	uint32_t mWidth;
+	uint32_t mHeight;
+	uint32_t mMipLevels;
 };
