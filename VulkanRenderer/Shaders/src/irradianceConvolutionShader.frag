@@ -29,6 +29,7 @@ void main()
 {
     vec3 irradiance = vec3(0.0);  
     vec3 normal = vec3(inPosition, 1.0);
+    normal.y = -normal.y;
     normal = (irr.mRotation * vec4(normal, 0.0)).xyz;
     
     vec3 up    = vec3(0.0, 1.0, 0.0);

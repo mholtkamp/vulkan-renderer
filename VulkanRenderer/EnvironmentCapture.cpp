@@ -219,8 +219,8 @@ void EnvironmentCapture::RenderIrradiance()
 
 	rotationMatrices[0] = glm::rotate(glm::mat4(), piDiv2, glm::vec3(0.0f, 1.0f, 0.0f));
 	rotationMatrices[1] = glm::rotate(glm::mat4(), -piDiv2, glm::vec3(0.0f, 1.0f, 0.0f));
-	rotationMatrices[2] = glm::rotate(glm::mat4(), piDiv2, glm::vec3(1.0f, 0.0f, 0.0f));
-	rotationMatrices[3] = glm::rotate(glm::mat4(), -piDiv2, glm::vec3(1.0f, 0.0f, 0.0f));
+	rotationMatrices[2] = glm::rotate(glm::mat4(), -piDiv2, glm::vec3(1.0f, 0.0f, 0.0f));
+	rotationMatrices[3] = glm::rotate(glm::mat4(), piDiv2, glm::vec3(1.0f, 0.0f, 0.0f));
 	rotationMatrices[4]; // Identity
 	rotationMatrices[5] = glm::rotate(glm::mat4(), pi, glm::vec3(0.0f, 1.0f, 0.0f));
 
