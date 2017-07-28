@@ -30,6 +30,9 @@ static uint32_t sNumValidationLayers = 1;
 static const char* sDeviceExtensions[] = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 static uint32_t sNumDeviceExtensions = 1;
 
+static bool sDebugIrradiance = false;
+static int sDebugEnvironmentCaptureIndex = 0;
+
 Renderer* Renderer::sInstance = nullptr;
 
 Renderer::Renderer() :
@@ -48,7 +51,8 @@ Renderer::Renderer() :
 	mDebugMode(DEBUG_NONE),
 	mInitialized(false),
     mEnvironmentDebugFace(0),
-	mLitColorImageFormat(VK_FORMAT_R16G16B16A16_SFLOAT)
+	mLitColorImageFormat(VK_FORMAT_R16G16B16A16_SFLOAT),
+	mInputEnabled(false)
 {
 	mGlobalUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	mGlobalUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
@@ -70,6 +74,20 @@ void Renderer::Destroy()
 		delete sInstance;
 		sInstance = nullptr;
 	}
+}
+
+void Renderer::ToggleIrradianceDebug()
+{
+	sDebugIrradiance = !sDebugIrradiance;
+	UpdateDebugDescriptorSet();
+	CreateCommandBuffers();
+}
+
+void Renderer::ToggleEnvironmentCaptureDebug()
+{
+	sDebugEnvironmentCaptureIndex++;
+	UpdateDebugDescriptorSet();
+	CreateCommandBuffers();
 }
 
 Renderer* Renderer::Get()
@@ -253,10 +271,28 @@ void Renderer::PreparePresentation()
 
 }
 
+void Renderer::UpdateInputEnabled()
+{
+	if (GetAsyncKeyState(VK_CONTROL) &&
+		GetAsyncKeyState(VK_SHIFT) &&
+		GetAsyncKeyState('U'))
+	{
+		mInputEnabled = false;
+	}
+
+	if (GetAsyncKeyState(VK_CONTROL) &&
+		GetAsyncKeyState(VK_SHIFT) &&
+		GetAsyncKeyState('I'))
+	{
+		mInputEnabled = true;
+	}
+}
+
 void Renderer::Render()
 {
     UpdateGlobalUniformData();
 	UpdateGlobalDescriptorSet();
+	UpdateInputEnabled();
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -1190,6 +1226,11 @@ void Renderer::CreateDebugDescriptorSet()
 	//vkUpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
 }
 
+bool Renderer::IsInputEnabled()
+{
+	return mInputEnabled;
+}
+
 void Renderer::UpdateDebugDescriptorSet()
 {
 	// Update image descriptors
@@ -1217,16 +1258,26 @@ void Renderer::UpdateDebugDescriptorSet()
 			return;
 		}
 
-		EnvironmentCapture& capture = captures[0];
+		EnvironmentCapture& capture = captures[sDebugEnvironmentCaptureIndex % captures.size()];
 
 		if (capture.GetFaceImageView(0) == VK_NULL_HANDLE)
 		{
 			return;
 		}
 
+		if (sDebugIrradiance)
+		{
+			imageInfo.imageView = capture.GetIrradianceFaceImageView(mEnvironmentDebugFace);
+			imageInfo.sampler = capture.GetIrradianceFaceSampler();
+		}
+		else
+		{
+			imageInfo.imageView = capture.GetFaceImageView(mEnvironmentDebugFace);
+			imageInfo.sampler = capture.GetFaceSampler();
+		}
+
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = capture.GetFaceImageView(mEnvironmentDebugFace);
-		imageInfo.sampler = capture.GetFaceSampler();
+
 	}
 	else if (mDebugMode == DEBUG_SHADOW_MAP)
 	{

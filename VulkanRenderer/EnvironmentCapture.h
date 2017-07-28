@@ -30,7 +30,15 @@ public:
 
 	VkSampler GetFaceSampler();
 
+	VkImageView GetIrradianceFaceImageView(uint32_t index = 0);
+
+	VkSampler GetIrradianceFaceSampler();
+
 	Cubemap* GetIrradianceMap();
+
+	glm::vec3 GetPosition();
+
+
 
 private:
 

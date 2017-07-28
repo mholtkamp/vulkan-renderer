@@ -16,6 +16,8 @@ static const float maxSpeed = 8.0f;
 static const float speedRange = maxSpeed - minSpeed;
 static const float radiusGrowSpeed = 2.0f;
 
+static bool spawnedTestLights = false;
+
 Scene::Scene() :
 	mLoaded(false),
 	mDebugMoveLights(true)
@@ -49,9 +51,7 @@ void Scene::Load(const std::string& directory,
 
 		const aiScene* scene = importer.ReadFile(path.c_str(),
 			aiProcess_CalcTangentSpace |
-			aiProcess_Triangulate |
-			aiProcess_JoinIdenticalVertices |
-			aiProcess_SortByPType);
+			aiProcess_FlipUVs);
 
 		if (scene == nullptr)
 		{
@@ -62,9 +62,10 @@ void Scene::Load(const std::string& directory,
 		LoadMeshes(*scene);
 		LoadActors(*scene);
 		//LoadCameras(*scene);
+		AssignEnvironmentCaptures();
 
-		SpawnTestLights();
-		SpawnTestEnvironmentCapture();
+		//SpawnTestLights();
+		//SpawnTestEnvironmentCapture();
 		SetTestDirectionalLight();
 
 		mLoaded = true;
@@ -91,6 +92,11 @@ Cubemap* Scene::GetIrradianceMap()
 
 void Scene::UpdateDebug(float deltaTime)
 {
+	if (!Renderer::Get()->IsInputEnabled())
+	{
+		return;
+	}
+
 	// Change Radii
 	if (GetAsyncKeyState('T'))
 	{
@@ -133,18 +139,38 @@ void Scene::UpdateDebug(float deltaTime)
 	if (GetAsyncKeyState('S') &&
 		GetAsyncKeyState(VK_CONTROL))
 	{
-		//if (!sDown)
-		//{
+		if (!sDown)
+		{
 			Renderer::Get()->RenderShadowMaps();
             UpdateShadowMapDescriptors();
 			Renderer::Get()->CreateCommandBuffers();
-		//}
+		}
 
 		sDown = true;
 	}
 	else
 	{
 		sDown = false;
+	}
+
+	static bool oDown = false;
+	if (GetAsyncKeyState('O') &&
+		GetAsyncKeyState(VK_CONTROL))
+	{
+		if (!oDown &&
+			!spawnedTestLights)
+		{
+			spawnedTestLights = true;
+			mPointLights.clear();
+			SpawnTestLights();
+			Renderer::Get()->CreateCommandBuffers();
+		}
+
+		oDown = true;
+	}
+	else
+	{
+		oDown = false;
 	}
 
 	static bool pDown = false;
@@ -237,7 +263,18 @@ void Scene::LoadActors(const aiScene& scene)
 
 	for (int i = 0; i < numNodes; ++i)
 	{
-		if (nodes[i]->mNumMeshes > 0)
+		std::string actorName = nodes[i]->mName.C_Str();
+
+		if (actorName.find("Capture") == 0)
+		{
+			EnvironmentCapture capture;
+
+			aiMatrix4x4 transform = nodes[i]->mTransformation;
+			capture.SetPosition(glm::vec3(transform.a4, transform.b4, transform.c4));
+			capture.SetScene(this);
+			mEnvironmentCaptures.push_back(capture);
+		}
+		else if (nodes[i]->mNumMeshes > 0)
 		{
 			mActors.push_back(Actor());
 			Actor& actor = mActors.back();
@@ -251,12 +288,14 @@ void Scene::LoadActors(const aiScene& scene)
 			// determining its transform.
 			aiLight& lightDesc = pointLightDescriptions.find(nodes[i]->mName.C_Str())->second;
 			aiMatrix4x4 transform = nodes[i]->mTransformation;
-
 			mPointLights.push_back(PointLight());
 			PointLight& pointLight = mPointLights.back();
 			pointLight.Create(lightDesc, 
 				glm::vec3(transform.a4, transform.b4, transform.c4));
-			pointLight.SetRadius(20.5f);
+
+			glm::vec3 lowColor = pointLight.GetColor();
+			pointLight.SetColor(lowColor * 10.0f);
+			pointLight.SetRadius(15.0f);
 		}
 	}
 }
@@ -412,10 +451,40 @@ void Scene::SpawnTestEnvironmentCapture()
 	mEnvironmentCaptures.push_back(testCapture);
 	mEnvironmentCaptures.back().SetScene(this);
 
+
+}
+
+void Scene::AssignEnvironmentCaptures()
+{
 	for (Actor& actor : mActors)
 	{
-		actor.SetEnvironmentCapture(&mEnvironmentCaptures.back());
-	}	
+		EnvironmentCapture* targetCapture = nullptr;
+		float targetDistance = 999.0f;
+
+		for (EnvironmentCapture& capture : mEnvironmentCaptures)
+		{
+			if (targetCapture == nullptr)
+			{
+				targetCapture = &capture;
+				targetDistance = glm::distance(actor.GetPosition(), capture.GetPosition());
+			}
+			else
+			{
+				float distance = glm::distance(actor.GetPosition(), capture.GetPosition());
+
+				if (distance < targetDistance)
+				{
+					targetCapture = &capture;
+					targetDistance = distance;
+				}
+			}
+		}
+
+		if (targetCapture != nullptr)
+		{
+			actor.SetEnvironmentCapture(targetCapture);
+		}
+	}
 }
 
 std::vector<EnvironmentCapture>& Scene::GetEnvironmentCaptures()

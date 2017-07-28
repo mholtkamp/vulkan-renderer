@@ -15,6 +15,11 @@ DebugActionHandler::DebugActionHandler() :
 
 void DebugActionHandler::Update()
 {
+	if (!Renderer::Get()->IsInputEnabled())
+	{
+		return;
+	}
+
 	GBufferIndex currentDebugView = mGBufferViewMode;
 
 	if (GetAsyncKeyState(VK_CONTROL))
@@ -103,6 +108,38 @@ void DebugActionHandler::Update()
     {
         Renderer::Get()->SetEnvironmentDebugFace(5);
     }
+
+	bool kDown = false;
+	if (GetAsyncKeyState('K') &&
+		GetAsyncKeyState(VK_CONTROL))
+	{
+		if (!kDown)
+		{
+			Renderer::Get()->ToggleEnvironmentCaptureDebug();
+		}
+
+		kDown = true;
+	}
+	else
+	{
+		kDown = false;
+	}
+
+	bool lDown = false;
+	if (GetAsyncKeyState('L') &&
+		GetAsyncKeyState(VK_CONTROL))
+	{
+		if (!lDown)
+		{
+			Renderer::Get()->ToggleIrradianceDebug();
+		}
+
+		lDown = true;
+	}
+	else
+	{
+		lDown = false;
+	}
 
     static bool eDown = false;
 

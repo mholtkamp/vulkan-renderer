@@ -140,6 +140,12 @@ public:
 
     VkSampler GetShadowMapSampler();
 
+	bool IsInputEnabled();
+
+	void ToggleIrradianceDebug();
+
+	void ToggleEnvironmentCaptureDebug();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,
@@ -182,6 +188,8 @@ private:
 	void CreateCommandPool();
 
 	void CreateSemaphores();
+
+	void UpdateInputEnabled();
 
 	void CreateDescriptorPool();
 
@@ -289,4 +297,6 @@ private:
     uint32_t mEnvironmentDebugFace;
 
 	ShadowCaster mShadowCaster;
+
+	bool mInputEnabled;
 };

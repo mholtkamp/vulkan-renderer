@@ -34,6 +34,18 @@ public:
 	}
 };
 
+class ShadowCastPipeline : public EarlyDepthPipeline
+{
+public:
+
+	ShadowCastPipeline()
+	{
+		mVertexShaderPath = "Shaders/bin/shadowCastShader.vert";
+		mFragmentShaderPath = "Shaders/bin/shadowCastShader.frag";
+	}
+
+};
+
 class GeometryPipeline : public Pipeline
 {
 public:
@@ -44,6 +56,7 @@ public:
 		mDepthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; //VK_COMPARE_OP_EQUAL;
 		mVertexShaderPath = "Shaders/bin/reflectiveGeometryShader.vert";
 		mFragmentShaderPath = "Shaders/bin/reflectiveGeometryShader.frag";
+		//mCullMode = VK_CULL_MODE_NONE;
 
 		// Add blend states for each attachment (1 already created).
 		for (int32_t i = 0; i < GB_COUNT - 1; ++i)
@@ -291,3 +304,4 @@ public:
 		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 };
+

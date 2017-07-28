@@ -55,11 +55,11 @@ void ShadowCaster::RenderShadowMap(Scene* scene)
 	}
 
 	// Create temp pipeline
-	EarlyDepthPipeline pipeline;
+	ShadowCastPipeline pipeline;
 	pipeline.mViewportWidth = SHADOW_MAP_RESOLUTION;
 	pipeline.mViewportHeight = SHADOW_MAP_RESOLUTION;
 	pipeline.mRenderpass = mRenderPass;
-	pipeline.mVertexShaderPath = "Shaders/bin/shadowMapShader.vert";
+	//pipeline.mVertexShaderPath = "Shaders/bin/shadowMapShader.vert";
 	pipeline.Create();
 
 	VkExtent2D renderAreaExtent = {};

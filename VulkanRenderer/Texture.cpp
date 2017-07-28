@@ -160,23 +160,9 @@ void Texture::Load(const std::string& path)
 	sampler.maxAnisotropy = 1.0;
 	sampler.anisotropyEnable = VK_FALSE;
 
-	//// Without mip mapping
-	//if (vkCreateSampler(device, &sampler, nullptr, &samplers[0]) != VK_SUCCESS)
-	//{
-	//	throw exception("Failed to create sampler")
-	//}
-
 	// With mip mapping
 	sampler.maxLod = (float) mMipLevels;
 	vkCreateSampler(device, &sampler, nullptr, &mSampler);
-
-	// With mip mapping and anisotropic filtering
-	//if (vulkanDevice->features.samplerAnisotropy)
-	//{
-	//	sampler.maxAnisotropy = vulkanDevice->properties.limits.maxSamplerAnisotropy;
-	//	sampler.anisotropyEnable = VK_TRUE;
-	//}
-	//VK_CHECK_RESULT(vkCreateSampler(device, &sampler, nullptr, &samplers[2]));
 
 	// Create image view
 	VkImageViewCreateInfo view = {};

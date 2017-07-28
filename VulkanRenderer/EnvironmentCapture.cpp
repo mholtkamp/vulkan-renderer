@@ -39,12 +39,24 @@ VkImageView EnvironmentCapture::GetFaceImageView(uint32_t index)
 {
 	assert(index >= 0);
 	assert(index < 6);
-	return mIrradianceCubemap.GetFaceImageView(index);
+	return mCubemap.GetFaceImageView(index);
 }
 
 VkSampler EnvironmentCapture::GetFaceSampler()
 {
 	return mCubemap.GetSampler();
+}
+
+VkImageView EnvironmentCapture::GetIrradianceFaceImageView(uint32_t index)
+{
+	assert(index >= 0);
+	assert(index < 6);
+	return mIrradianceCubemap.GetFaceImageView(index);
+}
+
+VkSampler EnvironmentCapture::GetIrradianceFaceSampler()
+{
+	return mIrradianceCubemap.GetSampler();
 }
 
 void EnvironmentCapture::Capture()
@@ -138,8 +150,8 @@ void EnvironmentCapture::Capture()
 		// ******************
 		//  Early Depth Pass
 		// ******************
-		earlyDepthPipeline.BindPipeline(commandBuffer);
-		mScene->RenderGeometry(commandBuffer);
+		//earlyDepthPipeline.BindPipeline(commandBuffer);
+		//mScene->RenderGeometry(commandBuffer);
 		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
 		// ******************
@@ -311,13 +323,12 @@ void EnvironmentCapture::SetupCaptureCameras(std::array<Camera, 6>& cameras)
 		cameras[i].SetPerspectiveSettings(90.0f, 1.0f, 0.1f, 1024.0f);
 	}
 
-    cameras[0].SetRotation(glm::vec3(0.0f, -90.0f, 0.0f));
-    cameras[1].SetRotation(glm::vec3(00.0f, 90.0f, 0.0f));
-    cameras[2].SetRotation(glm::vec3(90.0f, 0.0f, 0.0f));
-    cameras[3].SetRotation(glm::vec3(-90.0f, 0.0f, 0.0f));
-    cameras[4].SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-    cameras[5].SetRotation(glm::vec3(0.0f, 180.0f, 0.0f));
-
+	cameras[0].SetRotation(glm::vec3(0.0f, -90.0f, 0.0f));
+	cameras[1].SetRotation(glm::vec3(00.0f, 90.0f, 0.0f));
+	cameras[2].SetRotation(glm::vec3(90.0f, 0.0f, 0.0f));
+	cameras[3].SetRotation(glm::vec3(-90.0f, 0.0f, 0.0f));
+	cameras[4].SetRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+	cameras[5].SetRotation(glm::vec3(0.0f, 180.0f, 0.0f));
 }
 
 void EnvironmentCapture::SetPosition(glm::vec3 position)
@@ -382,6 +393,11 @@ void EnvironmentCapture::CreateCubemap()
 	CreateIrradianceFramebuffers();
 
 	CreateIrradianceUniformBuffer();
+}
+
+glm::vec3 EnvironmentCapture::GetPosition()
+{
+	return mPosition;
 }
 
 void EnvironmentCapture::CreateIrradianceUniformBuffer()

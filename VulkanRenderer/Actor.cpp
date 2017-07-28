@@ -180,6 +180,16 @@ void Actor::UpdateShadowMapDescriptor()
     }
 }
 
+glm::vec3 Actor::GetPosition()
+{
+	glm::vec3 position;
+	position.x = mWorldMatrix[3][0];
+	position.y = mWorldMatrix[3][1];
+	position.z = mWorldMatrix[3][2];
+
+	return position;
+}
+
 void Actor::UpdateUniformBuffer(Scene* scene, float deltaTime)
 {
 	VkDevice device = Renderer::Get()->GetDevice();

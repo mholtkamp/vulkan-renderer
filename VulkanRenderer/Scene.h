@@ -59,6 +59,8 @@ public:
 
 private:
 
+	void AssignEnvironmentCaptures();
+
 	void LoadMaterials(const aiScene& scene);
 
 	void LoadMeshes(const aiScene& scene);

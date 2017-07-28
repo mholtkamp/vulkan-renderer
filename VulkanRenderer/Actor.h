@@ -40,6 +40,8 @@ public:
 
     void UpdateShadowMapDescriptor();
 
+	glm::vec3 GetPosition();
+
 private:
 
 	void UpdateUniformBuffer(class Scene* camera,
