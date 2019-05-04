@@ -1,3 +1,5 @@
+if not exist ".\bin" mkdir .\bin
+
 for %%f in (.\src\*) do (
 
   (%VULKAN_SDK%/Bin32/glslangValidator.exe -V %%f -o .\bin\%%~nxf) && (
