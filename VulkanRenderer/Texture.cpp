@@ -123,20 +123,25 @@ void Texture::Load(const std::string& path)
 
 		VkImageBlit imageBlit{};
 
+		int32_t srcWidth = int32_t(mWidth >> (i - 1));
+		int32_t srcHeight = int32_t(mHeight >> (i - 1));
+		int32_t dstWidth = int32_t(mWidth >> i);
+		int32_t dstHeight = int32_t(mHeight >> i);
+
 		// Source
 		imageBlit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageBlit.srcSubresource.layerCount = 1;
 		imageBlit.srcSubresource.mipLevel = i - 1;
-		imageBlit.srcOffsets[1].x = int32_t(mWidth >> (i - 1));
-		imageBlit.srcOffsets[1].y = int32_t(mHeight >> (i - 1));
+		imageBlit.srcOffsets[1].x = srcWidth > 0 ? srcWidth : 1;
+		imageBlit.srcOffsets[1].y = srcHeight > 0 ? srcHeight : 1;
 		imageBlit.srcOffsets[1].z = 1;
 
 		// Destination
 		imageBlit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		imageBlit.dstSubresource.layerCount = 1;
 		imageBlit.dstSubresource.mipLevel = i;
-		imageBlit.dstOffsets[1].x = int32_t(mWidth >> i);
-		imageBlit.dstOffsets[1].y = int32_t(mHeight >> i);
+		imageBlit.dstOffsets[1].x = dstWidth > 0 ? dstWidth : 1;
+		imageBlit.dstOffsets[1].y = dstHeight > 0 ? dstHeight : 1;
 		imageBlit.dstOffsets[1].z = 1;
 
 		VkImageSubresourceRange mipSubRange = {};
@@ -144,8 +149,6 @@ void Texture::Load(const std::string& path)
 		mipSubRange.baseMipLevel = i;
 		mipSubRange.levelCount = 1;
 		mipSubRange.layerCount = 1;
-
-		// Barrier to transition src mip to TRANSFER_SRC image layout
 
 		// Blit from previous level
 		vkCmdBlitImage(
