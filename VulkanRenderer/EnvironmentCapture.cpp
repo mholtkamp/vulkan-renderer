@@ -73,6 +73,9 @@ void EnvironmentCapture::Capture()
 		CreateCubemap();
 	}
 
+	mCubemap.TransitionToRT();
+	mIrradianceCubemap.TransitionToRT();
+
     EarlyDepthPipeline earlyDepthPipeline;
     ReflectionlessGeometryPipeline geometryPipeline;
     LightPipeline lightPipeline;
@@ -206,6 +209,10 @@ void EnvironmentCapture::Capture()
     earlyDepthPipeline.Destroy();
     geometryPipeline.Destroy();
     lightPipeline.Destroy();
+
+	// Transition cubemaps to SRVs
+	mCubemap.TransitionToSRV();
+	mIrradianceCubemap.TransitionToSRV();
 }
 
 void EnvironmentCapture::RenderIrradiance()

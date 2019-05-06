@@ -59,7 +59,6 @@ void ShadowCaster::RenderShadowMap(Scene* scene)
 	pipeline.mViewportWidth = SHADOW_MAP_RESOLUTION;
 	pipeline.mViewportHeight = SHADOW_MAP_RESOLUTION;
 	pipeline.mRenderpass = mRenderPass;
-	//pipeline.mVertexShaderPath = "Shaders/bin/shadowMapShader.vert";
 	pipeline.Create();
 
 	VkExtent2D renderAreaExtent = {};
@@ -81,6 +80,8 @@ void ShadowCaster::RenderShadowMap(Scene* scene)
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearValue;
 
+	Texture::TransitionImageLayout(mShadowMapImage, VK_FORMAT_D16_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 	pipeline.BindPipeline(commandBuffer);
@@ -90,6 +91,8 @@ void ShadowCaster::RenderShadowMap(Scene* scene)
 	renderer->EndSingleSubmissionCommands(commandBuffer);
 
 	pipeline.Destroy();
+
+	Texture::TransitionImageLayout(mShadowMapImage, VK_FORMAT_D16_UNORM, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
 
 VkImageView ShadowCaster::GetShadowMapImageView()
@@ -122,7 +125,7 @@ void ShadowCaster::CreateRenderPass()
 	attachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentReference attachmentRef = {};
 	attachmentRef.attachment = 0;

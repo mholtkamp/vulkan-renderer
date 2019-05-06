@@ -15,11 +15,6 @@ DebugActionHandler::DebugActionHandler() :
 
 void DebugActionHandler::Update()
 {
-	if (!Renderer::Get()->IsInputEnabled())
-	{
-		return;
-	}
-
 	GBufferIndex currentDebugView = mGBufferViewMode;
 
 	if (GetAsyncKeyState(VK_CONTROL))

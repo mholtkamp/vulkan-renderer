@@ -26,7 +26,6 @@ layout(set = 1, binding = 2) uniform sampler2D specularSampler;
 layout(set = 1, binding = 3) uniform sampler2D normalSampler;
 layout(set = 1, binding = 4) uniform sampler2D ormSampler;
 layout(set = 1, binding = 5) uniform samplerCube environmentSampler;
-layout(set = 1, binding = 6) uniform sampler2D shadowMapSampler;
 
 layout (set = 0, binding = 0) uniform GlobalUniformBuffer
 {

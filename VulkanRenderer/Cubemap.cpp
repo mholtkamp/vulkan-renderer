@@ -205,3 +205,13 @@ void Cubemap::CreateSampler()
 		throw std::exception("Failed to create texture sampler");
 	}
 }
+
+void Cubemap::TransitionToRT()
+{
+	Texture::TransitionImageLayout(mImage, mFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, 1, 6);
+}
+
+void Cubemap::TransitionToSRV()
+{
+	Texture::TransitionImageLayout(mImage, mFormat, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, 6);
+}

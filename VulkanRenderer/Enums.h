@@ -9,8 +9,7 @@ enum TextureSlot
 	SLOT_NORMALS,
 	SLOT_ORM,
 	SLOT_ENVIRONMENT,
-    SLOT_SHADOW_MAP,
-	SLOT_COUNT
+    SLOT_COUNT
 };
 
 enum ActorDescriptor
@@ -21,7 +20,6 @@ enum ActorDescriptor
 	AD_TEXTURE_NORMALS,
 	AD_TEXTURE_ORM,
 	AD_TEXTURE_ENVIRONMENT,
-    AD_TEXTURE_SHADOW_MAP,
 	AD_COUNT
 };
 

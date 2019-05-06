@@ -41,7 +41,7 @@ public:
 	ShadowCastPipeline()
 	{
 		mVertexShaderPath = "Shaders/bin/shadowCastShader.vert";
-		mFragmentShaderPath = "Shaders/bin/shadowCastShader.frag";
+		mFragmentShaderPath = "";
 	}
 
 };

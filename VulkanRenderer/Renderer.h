@@ -140,8 +140,6 @@ public:
 
     VkSampler GetShadowMapSampler();
 
-	bool IsInputEnabled();
-
 	void ToggleIrradianceDebug();
 
 	void ToggleEnvironmentCaptureDebug();
@@ -297,6 +295,4 @@ private:
     uint32_t mEnvironmentDebugFace;
 
 	ShadowCaster mShadowCaster;
-
-	bool mInputEnabled;
 };

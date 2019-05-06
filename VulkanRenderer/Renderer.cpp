@@ -51,8 +51,7 @@ Renderer::Renderer() :
 	mDebugMode(DEBUG_NONE),
 	mInitialized(false),
     mEnvironmentDebugFace(0),
-	mLitColorImageFormat(VK_FORMAT_R16G16B16A16_SFLOAT),
-	mInputEnabled(false)
+	mLitColorImageFormat(VK_FORMAT_R16G16B16A16_SFLOAT)
 {
 	mGlobalUniformData.mSunColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 	mGlobalUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
@@ -271,28 +270,10 @@ void Renderer::PreparePresentation()
 
 }
 
-void Renderer::UpdateInputEnabled()
-{
-	if (GetAsyncKeyState(VK_CONTROL) &&
-		GetAsyncKeyState(VK_SHIFT) &&
-		GetAsyncKeyState('U'))
-	{
-		mInputEnabled = false;
-	}
-
-	if (GetAsyncKeyState(VK_CONTROL) &&
-		GetAsyncKeyState(VK_SHIFT) &&
-		GetAsyncKeyState('I'))
-	{
-		mInputEnabled = true;
-	}
-}
-
 void Renderer::Render()
 {
     UpdateGlobalUniformData();
 	UpdateGlobalDescriptorSet();
-	UpdateInputEnabled();
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -1226,11 +1207,6 @@ void Renderer::CreateDebugDescriptorSet()
 	//vkUpdateDescriptorSets(mDevice, 1, &descriptorWrite, 0, nullptr);
 }
 
-bool Renderer::IsInputEnabled()
-{
-	return mInputEnabled;
-}
-
 void Renderer::UpdateDebugDescriptorSet()
 {
 	// Update image descriptors
@@ -1373,8 +1349,8 @@ void Renderer::CreateCommandBuffers()
 		// ******************
 		//  Early Depth Pass
 		// ******************
-		//mEarlyDepthPipeline.BindPipeline(mCommandBuffers[i]);
-		//mScene->RenderGeometry(mCommandBuffers[i]);
+		mEarlyDepthPipeline.BindPipeline(mCommandBuffers[i]);
+		mScene->RenderGeometry(mCommandBuffers[i]);
 		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
 
 		// ******************

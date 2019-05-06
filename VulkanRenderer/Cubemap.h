@@ -23,6 +23,10 @@ public:
 
 	VkSampler GetSampler();
 
+	void TransitionToRT();
+
+	void TransitionToSRV();
+
 private:
 
 	void CreateImage();

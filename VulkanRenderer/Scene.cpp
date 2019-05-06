@@ -61,11 +61,10 @@ void Scene::Load(const std::string& directory,
 		LoadMaterials(*scene);
 		LoadMeshes(*scene);
 		LoadActors(*scene);
-		//LoadCameras(*scene);
 		AssignEnvironmentCaptures();
 
 		//SpawnTestLights();
-		//SpawnTestEnvironmentCapture();
+		SpawnTestEnvironmentCapture();
 		SetTestDirectionalLight();
 
 		mLoaded = true;
@@ -92,11 +91,6 @@ Cubemap* Scene::GetIrradianceMap()
 
 void Scene::UpdateDebug(float deltaTime)
 {
-	if (!Renderer::Get()->IsInputEnabled())
-	{
-		return;
-	}
-
 	// Change Radii
 	if (GetAsyncKeyState('T'))
 	{
@@ -142,7 +136,6 @@ void Scene::UpdateDebug(float deltaTime)
 		if (!sDown)
 		{
 			Renderer::Get()->RenderShadowMaps();
-            UpdateShadowMapDescriptors();
 			Renderer::Get()->CreateCommandBuffers();
 		}
 
@@ -369,14 +362,6 @@ void Scene::Update(float deltaTime, bool updateDebug)
     }
 }
 
-void Scene::UpdateShadowMapDescriptors()
-{
-    for (Actor& actor : mActors)
-    {
-        actor.UpdateShadowMapDescriptor();
-    }
-}
-
 Camera* Scene::GetActiveCamera()
 {
 	return mActiveCamera;
@@ -450,8 +435,6 @@ void Scene::SpawnTestEnvironmentCapture()
 	testCapture.SetPosition(glm::vec3(0.0f, 5.0f, 0.0f));
 	mEnvironmentCaptures.push_back(testCapture);
 	mEnvironmentCaptures.back().SetScene(this);
-
-
 }
 
 void Scene::AssignEnvironmentCaptures()

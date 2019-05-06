@@ -38,8 +38,6 @@ public:
 
     void UpdateEnvironmentSampler();
 
-    void UpdateShadowMapDescriptor();
-
 	glm::vec3 GetPosition();
 
 private:

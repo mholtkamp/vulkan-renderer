@@ -114,7 +114,6 @@ void Actor::CreateDescriptorSet()
 	mMesh->UpdateDescriptorSets(mDescriptorSet);
 
 	UpdateEnvironmentSampler();
-    UpdateShadowMapDescriptor();
 }
 
 void Actor::Draw(VkCommandBuffer commandBuffer)
@@ -148,36 +147,6 @@ void Actor::Update(Scene* scene,
 	float deltaTime)
 {
     UpdateUniformBuffer(scene, deltaTime);
-}
-
-void Actor::UpdateShadowMapDescriptor()
-{
-    Renderer* renderer = Renderer::Get();
-    VkDevice device = renderer->GetDevice();
-
-    VkImageView shadowMapImageView = renderer->GetShadowMapImageView();
-    VkSampler shadowMapSampler = renderer->GetShadowMapSampler();
-
-    if (shadowMapImageView != VK_NULL_HANDLE &&
-        shadowMapSampler != VK_NULL_HANDLE)
-    {
-        VkDescriptorImageInfo imageInfo = {};
-        VkWriteDescriptorSet descriptorWrite = {};
-
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = shadowMapImageView;
-        imageInfo.sampler = shadowMapSampler;
-
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = mDescriptorSet;
-        descriptorWrite.dstBinding = AD_TEXTURE_SHADOW_MAP;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pImageInfo = &imageInfo;
-
-        vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-    }
 }
 
 glm::vec3 Actor::GetPosition()

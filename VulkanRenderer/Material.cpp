@@ -137,7 +137,7 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 	VkDescriptorImageInfo imageInfo[SLOT_COUNT] = {};
 	VkWriteDescriptorSet descriptorWrite[SLOT_COUNT] = {};
 
-	for (uint32_t i = 0; i < SLOT_SHADOW_MAP; ++i)
+	for (uint32_t i = 0; i < SLOT_COUNT; ++i)
 	{
 		if (mTextures[i] == nullptr)
 		{
