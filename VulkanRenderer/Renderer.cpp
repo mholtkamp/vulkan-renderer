@@ -35,6 +35,9 @@ static int sDebugEnvironmentCaptureIndex = 0;
 
 Renderer* Renderer::sInstance = nullptr;
 
+Texture2D BlackTexture;
+TextureCube BlackCubemap;
+
 Renderer::Renderer() :
 	mInstance(0),
 	mCallback(0),
@@ -146,6 +149,8 @@ void Renderer::DestroySwapchain()
 
 Renderer::~Renderer()
 {
+	DestroyDefaultTextures();
+
 	PointLight::DestroySphereMesh();
 
     mShadowCaster.Destroy();
@@ -176,6 +181,7 @@ void Renderer::Initialize()
 	CreateSwapchain();
 	CreateImageViews();
 	CreateCommandPool();
+	CreateDefaultTextures();
     CreateLitColorImage();
 	CreateDepthImage();
 	CreateDescriptorPool();
@@ -909,6 +915,21 @@ void Renderer::CreateRenderPass()
 	}
 }
 
+void Renderer::CreateDefaultTextures()
+{
+	mWhiteTexture.Create(DEFAULT_TEXTURE_SIZE, DEFAULT_TEXTURE_SIZE);
+	mWhiteTexture.Clear(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+	mBlackTexture.Create(DEFAULT_TEXTURE_SIZE, DEFAULT_TEXTURE_SIZE);
+	mBlackTexture.Clear(glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+
+	mGreenCubemap.Create(DEFAULT_TEXTURE_SIZE, DEFAULT_TEXTURE_SIZE);
+	mGreenCubemap.Clear(glm::vec4(0.0f, 1.0f, 0.0f, 1.0f));
+
+	mBlackCubemap.Create(DEFAULT_TEXTURE_SIZE, DEFAULT_TEXTURE_SIZE);
+	mBlackCubemap.Clear(glm::vec4(0.0f, 0.0f, 0.0f, 0.0f));
+}
+
 void Renderer::CreateFramebuffers()
 {
 	mSwapchainFramebuffers.resize(mSwapchainImageViews.size());
@@ -1147,8 +1168,8 @@ void Renderer::UpdateDeferredDescriptorSet()
 	if (mScene != nullptr &&
 		mScene->GetIrradianceMap() != nullptr)
 	{
-		Cubemap* irradianceMap = mScene->GetIrradianceMap();
-		VkImageView irradianceImageView = irradianceMap->GetCubemapImageView();
+		TextureCube* irradianceMap = mScene->GetIrradianceMap();
+		VkImageView irradianceImageView = irradianceMap->GetImageView();
 		VkSampler irradianceSampler = irradianceMap->GetSampler();
 
 		if (irradianceImageView != VK_NULL_HANDLE &&
@@ -1862,6 +1883,15 @@ void Renderer::DestroyDebugCallback()
 	{
 		pfnVkDestroyDebugReportCallbackEXT(mInstance, mCallback, nullptr);
 	}
+}
+
+void Renderer::DestroyDefaultTextures()
+{
+	mWhiteTexture.Destroy();
+	mBlackTexture.Destroy();
+
+	mGreenCubemap.Destroy();
+	mBlackCubemap.Destroy();
 }
 
 VkExtent2D& Renderer::GetSwapchainExtent()

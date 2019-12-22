@@ -6,7 +6,7 @@
 #include "Camera.h"
 #include "GBuffer.h"
 #include "DescriptorSet.h"
-#include "Cubemap.h"
+#include "TextureCube.h"
 
 class EnvironmentCapture
 {
@@ -34,7 +34,7 @@ public:
 
 	VkSampler GetIrradianceFaceSampler();
 
-	Cubemap* GetIrradianceMap();
+	TextureCube* GetIrradianceMap();
 
 	glm::vec3 GetPosition();
 
@@ -74,10 +74,10 @@ private:
 
 	static VkRenderPass sRenderPass;
 
-	Cubemap mCubemap;
+	TextureCube mCubemap;
 	std::array<VkFramebuffer, 6> mFramebuffers;
 
-	Cubemap mIrradianceCubemap;
+	TextureCube mIrradianceCubemap;
 	std::array<VkFramebuffer, 6> mIrradianceFramebuffers;
 
 	VkImage mDepthImage;

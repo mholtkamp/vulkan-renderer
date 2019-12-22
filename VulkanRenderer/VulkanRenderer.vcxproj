@@ -136,7 +136,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
-    <ClCompile Include="Cubemap.cpp" />
+    <ClCompile Include="TextureCube.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
     <ClCompile Include="DescriptorSet.cpp" />
     <ClCompile Include="DirectionalLight.cpp" />
@@ -153,6 +153,7 @@
     <ClCompile Include="ShadowCaster.cpp" />
     <ClCompile Include="stb_image.cpp" />
     <ClCompile Include="Texture.cpp" />
+    <ClCompile Include="Texture2D.cpp" />
     <ClCompile Include="Utilities.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -163,7 +164,7 @@
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
-    <ClInclude Include="Cubemap.h" />
+    <ClInclude Include="TextureCube.h" />
     <ClInclude Include="DebugActionHandler.h" />
     <ClInclude Include="DescriptorSet.h" />
     <ClInclude Include="DirectionalLight.h" />
@@ -180,6 +181,7 @@
     <ClInclude Include="Scene.h" />
     <ClInclude Include="ShadowCaster.h" />
     <ClInclude Include="Texture.h" />
+    <ClInclude Include="Texture2D.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="Vertex.h" />
   </ItemGroup>

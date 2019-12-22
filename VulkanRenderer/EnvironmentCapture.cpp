@@ -229,7 +229,7 @@ void EnvironmentCapture::RenderIrradiance()
 
 	mIrradianceDescriptorSet.Destroy();
 	mIrradianceDescriptorSet.Create(irradiancePipeline.GetDescriptorSetLayout(1), 0);
-	mIrradianceDescriptorSet.UpdateImageDescriptor(0, mCubemap.GetCubemapImageView(), mCubemap.GetSampler());
+	mIrradianceDescriptorSet.UpdateImageDescriptor(0, mCubemap.GetImageView(), mCubemap.GetSampler());
 
 	const float piDiv2 = glm::radians(90.0f);
 	const float pi = 3.14159265f;
@@ -386,8 +386,8 @@ void EnvironmentCapture::CreateCubemap()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	mCubemap.Create(mResolution, renderer->GetSwapchainFormat());
-	mIrradianceCubemap.Create(IRRADIANCE_RESOLUTION);
+	mCubemap.Create(mResolution, mResolution, renderer->GetSwapchainFormat());
+	mIrradianceCubemap.Create(IRRADIANCE_RESOLUTION, IRRADIANCE_RESOLUTION);
 
 	CreateDepthImage();
 
@@ -489,7 +489,7 @@ void EnvironmentCapture::DestroyFramebuffers()
 	}
 }
 
-Cubemap* EnvironmentCapture::GetIrradianceMap()
+TextureCube* EnvironmentCapture::GetIrradianceMap()
 {
 	return &mIrradianceCubemap;
 }
@@ -620,7 +620,7 @@ void EnvironmentCapture::UpdateDesriptorSet(VkDescriptorSet descriptorSet)
 	VkWriteDescriptorSet descriptorWrite = {};
 
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.imageView = mCubemap.GetCubemapImageView();
+	imageInfo.imageView = mCubemap.GetImageView();
 	imageInfo.sampler = mCubemap.GetSampler();
 
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

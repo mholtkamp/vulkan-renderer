@@ -7,7 +7,8 @@
 #include <array>
 
 #include "ApplicationState.h"
-#include "Texture.h"
+#include "Texture2D.h"
+#include "TextureCube.h"
 #include "Mesh.h"
 #include "Vertex.h"
 #include "Scene.h"
@@ -179,6 +180,8 @@ private:
 
 	void CreateRenderPass();
 
+	void CreateDefaultTextures();
+
 	void CreatePipelines();
 
 	void CreateFramebuffers();
@@ -219,6 +222,8 @@ private:
 									 uint32_t count);
 
 	void DestroyDebugCallback();
+
+	void DestroyDefaultTextures();
 
 	static Renderer* sInstance;
 
@@ -295,4 +300,12 @@ private:
     uint32_t mEnvironmentDebugFace;
 
 	ShadowCaster mShadowCaster;
+
+	public:
+
+	// Default Resources
+	Texture2D mWhiteTexture;
+	Texture2D mBlackTexture;
+	TextureCube mBlackCubemap;
+	TextureCube mGreenCubemap;
 };
