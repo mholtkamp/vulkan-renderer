@@ -145,6 +145,8 @@ public:
 
 	void ToggleEnvironmentCaptureDebug();
 
+	TextureCube* GetBlackCubemap();
+
 private:
 
 	static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(VkDebugReportFlagsEXT flags,

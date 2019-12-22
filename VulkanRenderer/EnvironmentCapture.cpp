@@ -619,7 +619,7 @@ void EnvironmentCapture::UpdateDesriptorSet(VkDescriptorSet descriptorSet)
 	VkDescriptorImageInfo imageInfo = {};
 	VkWriteDescriptorSet descriptorWrite = {};
 
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	imageInfo.imageView = mCubemap.GetImageView();
 	imageInfo.sampler = mCubemap.GetSampler();
 

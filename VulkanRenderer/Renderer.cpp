@@ -35,9 +35,6 @@ static int sDebugEnvironmentCaptureIndex = 0;
 
 Renderer* Renderer::sInstance = nullptr;
 
-Texture2D BlackTexture;
-TextureCube BlackCubemap;
-
 Renderer::Renderer() :
 	mInstance(0),
 	mCallback(0),
@@ -90,6 +87,11 @@ void Renderer::ToggleEnvironmentCaptureDebug()
 	sDebugEnvironmentCaptureIndex++;
 	UpdateDebugDescriptorSet();
 	CreateCommandBuffers();
+}
+
+TextureCube* Renderer::GetBlackCubemap()
+{
+	return &mBlackCubemap;
 }
 
 Renderer* Renderer::Get()
