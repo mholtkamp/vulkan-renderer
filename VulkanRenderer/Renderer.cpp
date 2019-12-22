@@ -89,6 +89,11 @@ void Renderer::ToggleEnvironmentCaptureDebug()
 	CreateCommandBuffers();
 }
 
+Texture2D* Renderer::GetBlackTexture()
+{
+	return &mBlackTexture;
+}
+
 TextureCube* Renderer::GetBlackCubemap()
 {
 	return &mBlackCubemap;
@@ -1146,54 +1151,53 @@ void Renderer::UpdateDeferredDescriptorSet()
     VkImageView shadowMapImageView = renderer->GetShadowMapImageView();
     VkSampler shadowMapSampler = renderer->GetShadowMapSampler();
 
-    if (shadowMapImageView != VK_NULL_HANDLE &&
-        shadowMapSampler != VK_NULL_HANDLE)
-    {
-        VkDescriptorImageInfo imageInfo = {};
-        VkWriteDescriptorSet descriptorWrite = {};
-
-        imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        imageInfo.imageView = shadowMapImageView;
-        imageInfo.sampler = shadowMapSampler;
-
-        descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-        descriptorWrite.dstSet = mDeferredDescriptorSet;
-        descriptorWrite.dstBinding = DD_TEXTURE_SHADOW_MAP;
-        descriptorWrite.dstArrayElement = 0;
-        descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        descriptorWrite.descriptorCount = 1;
-        descriptorWrite.pImageInfo = &imageInfo;
-
-        vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-    }
-
-	if (mScene != nullptr &&
-		mScene->GetIrradianceMap() != nullptr)
+	// No shadowmap texture created yet? Use the default black texture.
+	if (shadowMapImageView == VK_NULL_HANDLE)
 	{
-		TextureCube* irradianceMap = mScene->GetIrradianceMap();
-		VkImageView irradianceImageView = irradianceMap->GetImageView();
-		VkSampler irradianceSampler = irradianceMap->GetSampler();
+		shadowMapImageView = renderer->GetBlackTexture()->GetImageView();
+		shadowMapSampler = renderer->GetBlackTexture()->GetSampler();
+	}
 
-		if (irradianceImageView != VK_NULL_HANDLE &&
-			irradianceSampler != VK_NULL_HANDLE)
-		{
-			VkDescriptorImageInfo imageInfo = {};
-			VkWriteDescriptorSet descriptorWrite = {};
+	{
+		VkDescriptorImageInfo imageInfo = {};
+		VkWriteDescriptorSet descriptorWrite = {};
 
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = irradianceImageView;
-			imageInfo.sampler = irradianceSampler;
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = shadowMapImageView;
+		imageInfo.sampler = shadowMapSampler;
 
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = mDeferredDescriptorSet;
-			descriptorWrite.dstBinding = DD_TEXTURE_IRRADIANCE_MAP;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pImageInfo = &imageInfo;
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = mDeferredDescriptorSet;
+		descriptorWrite.dstBinding = DD_TEXTURE_SHADOW_MAP;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pImageInfo = &imageInfo;
 
-			vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
-		}
+		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
+	}
+
+	TextureCube* irradianceMap = mScene ? mScene->GetIrradianceMap() : nullptr;
+	VkImageView irradianceImageView = irradianceMap ? irradianceMap->GetImageView() : renderer->GetBlackCubemap()->GetImageView();
+	VkSampler irradianceSampler = irradianceMap ? irradianceMap->GetSampler() : renderer->GetBlackCubemap()->GetSampler();
+
+	{
+		VkDescriptorImageInfo imageInfo = {};
+		VkWriteDescriptorSet descriptorWrite = {};
+
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = irradianceImageView;
+		imageInfo.sampler = irradianceSampler;
+
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = mDeferredDescriptorSet;
+		descriptorWrite.dstBinding = DD_TEXTURE_IRRADIANCE_MAP;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(device, 1, &descriptorWrite, 0, nullptr);
 	}
 }
 

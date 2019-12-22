@@ -145,6 +145,7 @@ public:
 
 	void ToggleEnvironmentCaptureDebug();
 
+	Texture2D* GetBlackTexture();
 	TextureCube* GetBlackCubemap();
 
 private:
