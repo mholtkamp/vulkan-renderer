@@ -147,7 +147,7 @@ void main()
 	vec4 shadowCoord = (BIAS_MAT * globals.mSunVP) * vec4(position, 1.0);
 	shadowCoord = shadowCoord / shadowCoord.w;
     
-    visibility = filterPCF(shadowCoord);
+    visibility = mix(1.0, filterPCF(shadowCoord), globals.mShadowIntensity);
     
 	outFinalColor *= visibility;
    
