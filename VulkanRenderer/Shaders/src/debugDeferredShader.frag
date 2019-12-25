@@ -1,6 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+#include "common.glsl"
+
 layout (set = 1, binding = 0) uniform sampler2D samplerPosition;
 layout (set = 1, binding = 1) uniform sampler2D samplerNormal;
 layout (set = 1, binding = 2) uniform sampler2D samplerColor;
@@ -8,15 +10,10 @@ layout (set = 1, binding = 3) uniform sampler2D samplerSpecularColor;
 layout (set = 1, binding = 4) uniform sampler2D samplerMetallic;
 layout (set = 1, binding = 5) uniform sampler2D samplerRoughness;
 
-layout (set = 0, binding = 0) uniform GlobalUniformBuffer
+layout (set = 0, binding = 0) uniform GlobalUniformBuffer 
 {
-	mat4 mSunVP;
-    vec4 mSunDirection;
-    vec4 mSunColor;
-    vec4 mViewPosition;
-    vec2 mScreenDimensions;
-    int mVisualizationMode;
-} ubo;
+	GlobalUniforms globals;
+};
 
 layout (location = 0) in vec2 inTexcoord;
 
@@ -31,44 +28,44 @@ void main()
 	float metallic = texture(samplerMetallic, inTexcoord).r;
 	float roughness = texture(samplerRoughness, inTexcoord).r;
     
-    vec3 lightVector = -1.0 * normalize(ubo.mSunDirection.rgb);
+    vec3 lightVector = -1.0 * normalize(globals.mSunDirection.rgb);
     float diffuseFactor = clamp(dot(normal, lightVector), 0.0, 1.0);
     
-    vec3 viewVector = normalize(ubo.mViewPosition.xyz - position);
+    vec3 viewVector = normalize(globals.mViewPosition.xyz - position);
     vec3 halfwayVector = normalize(lightVector + viewVector);
     float specularFactor = pow(max(dot(normal, halfwayVector), 0.0), 10.0);
     
-    if (ubo.mVisualizationMode == -1)
+    if (globals.mVisualizationMode == -1)
     {
         // Output final, lit image.
         outFinalColor = diffuseFactor *  color + specularFactor * specularColor;
     }
-    else if (ubo.mVisualizationMode == 0)
+    else if (globals.mVisualizationMode == 0)
     {
         // POSITION
         outFinalColor = vec4(position, 1.0);
     }
-    else if (ubo.mVisualizationMode == 1)
+    else if (globals.mVisualizationMode == 1)
     {
         // NORMAL
         outFinalColor = vec4(normal, 0.0);
     }
-    else if (ubo.mVisualizationMode == 2)
+    else if (globals.mVisualizationMode == 2)
     {
         // COLOR
         outFinalColor = color;
     }
-    else if (ubo.mVisualizationMode == 3)
+    else if (globals.mVisualizationMode == 3)
     {
         // SPECULAR
         outFinalColor = specularColor;
     }
-	else if (ubo.mVisualizationMode == 4)
+	else if (globals.mVisualizationMode == 4)
 	{
 		// METALLIC
 		outFinalColor = vec4(metallic, 0.0, 0.0, 1.0);
 	}
-	else if (ubo.mVisualizationMode == 5)
+	else if (globals.mVisualizationMode == 5)
 	{
 		// ROUGHNESS
 		outFinalColor = vec4(0.0, 0.0, roughness, 1.0);

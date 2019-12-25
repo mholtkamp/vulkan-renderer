@@ -1,17 +1,14 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+#include "common.glsl"
+
 const float PI = 3.14159265359;
 
-layout (set = 0, binding = 0) uniform GlobalUniformBuffer
+layout (set = 0, binding = 0) uniform GlobalUniformBuffer 
 {
-	mat4 mSunVP;
-    vec4 mSunDirection;
-    vec4 mSunColor;
-    vec4 mViewPosition;
-    vec2 mScreenDimensions;
-    int mVisualizationMode;
-} ubo;
+	GlobalUniforms globals;
+};
 
 layout (set = 1, binding = 0) uniform samplerCube environmentSampler;
 
