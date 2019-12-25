@@ -326,11 +326,14 @@ void Scene::RenderShadowCasters(VkCommandBuffer commandBuffer)
 
 void Scene::RenderLightVolumes(VkCommandBuffer commandBuffer)
 {
-	PointLight::BindSphereMeshBuffers(commandBuffer);
-
-	for (PointLight& pointLight : mPointLights)
+	if (mPointLights.size() > 0)
 	{
-		pointLight.Draw(commandBuffer);
+		PointLight::BindSphereMeshBuffers(commandBuffer);
+
+		for (PointLight& pointLight : mPointLights)
+		{
+			pointLight.Draw(commandBuffer);
+		}
 	}
 }
 
