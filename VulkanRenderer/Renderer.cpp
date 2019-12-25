@@ -476,7 +476,7 @@ void Renderer::CreateDebugCallback()
 		return;
 	}
 
-	VkDebugReportCallbackCreateInfoEXT ciDebugCallback;
+	VkDebugReportCallbackCreateInfoEXT ciDebugCallback = { };
 	ciDebugCallback.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
 	ciDebugCallback.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 	ciDebugCallback.pfnCallback = DebugCallback;
@@ -1178,8 +1178,20 @@ void Renderer::UpdateDeferredDescriptorSet()
 	}
 
 	TextureCube* irradianceMap = mScene ? mScene->GetIrradianceMap() : nullptr;
-	VkImageView irradianceImageView = irradianceMap ? irradianceMap->GetImageView() : renderer->GetBlackCubemap()->GetImageView();
-	VkSampler irradianceSampler = irradianceMap ? irradianceMap->GetSampler() : renderer->GetBlackCubemap()->GetSampler();
+	
+	VkImageView irradianceImageView;
+	VkSampler irradianceSampler;
+
+	if (irradianceMap && irradianceMap->GetImageView() != VK_NULL_HANDLE)
+	{
+		irradianceImageView = irradianceMap->GetImageView();
+		irradianceSampler = irradianceMap->GetSampler();
+	}
+	else
+	{
+		irradianceImageView = renderer->GetBlackCubemap()->GetImageView();
+		irradianceSampler = renderer->GetBlackCubemap()->GetSampler();
+	}
 
 	{
 		VkDescriptorImageInfo imageInfo = {};
