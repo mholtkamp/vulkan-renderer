@@ -28,6 +28,8 @@ public:
 
 	virtual void Clear(glm::vec4 color);
 
+	void SetLayout(VkImageLayout newLayout);
+
 	void GenerateMips();
 
 	bool IsValid() const;

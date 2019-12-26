@@ -192,6 +192,10 @@ void EnvironmentCapture::Capture()
 		++i;
 	}
 
+	mCubemap.SetLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); // Override cached layout because it was modified by renderpass.
+	mCubemap.TransitionToSRV(); // The cubemap needs to be blurred to create the irradiance cubemap, so we need this as an SRV now.
+	mIrradianceCubemap.TransitionToRT(); // Rendering to irradiance map now.
+
 	RenderIrradiance();
 
     // Revert the fake changes we made to global data
@@ -209,10 +213,6 @@ void EnvironmentCapture::Capture()
     earlyDepthPipeline.Destroy();
     geometryPipeline.Destroy();
     lightPipeline.Destroy();
-
-	// Transition cubemaps to SRVs
-	mCubemap.TransitionToSRV();
-	mIrradianceCubemap.TransitionToSRV();
 }
 
 void EnvironmentCapture::RenderIrradiance()
@@ -542,7 +542,7 @@ void EnvironmentCapture::CreateIrradianceRenderPass()
 		attachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference attachmentRef = {};
 		attachmentRef.attachment = 0;

@@ -383,6 +383,18 @@ void Texture::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayou
 		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_PRESENT_SRC_KHR &&
+		newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL &&
+		newLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	}
 	else
 	{
 		throw std::invalid_argument("Unsupported layout transition!");
@@ -462,12 +474,19 @@ void Texture::Clear(glm::vec4 color)
 	}
 }
 
+void Texture::SetLayout(VkImageLayout newLayout)
+{
+	// Render passes can inherantly change image layouts.
+	// This function is meant to be used to rectify these under-the-hood transitions.
+	mLayout = newLayout;
+}
+
 void Texture::TransitionToRT()
 {
-	Texture::TransitionImageLayout(mImage, mFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, mMipLevels, mLayers);
+	TransitionLayout(VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 }
 
 void Texture::TransitionToSRV()
 {
-	Texture::TransitionImageLayout(mImage, mFormat, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mMipLevels, mLayers);
+	TransitionLayout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
