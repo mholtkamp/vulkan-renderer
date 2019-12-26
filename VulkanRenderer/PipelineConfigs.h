@@ -258,6 +258,7 @@ public:
 		mCullMode = VK_CULL_MODE_NONE;
 		mSubpass = PASS_POST_PROCESS;
 		mDepthTestEnabled = VK_FALSE;
+		mUseVertexBinding = false;
 	}
 
 	virtual void PopulateLayoutBindings() override
@@ -293,6 +294,7 @@ public:
         mCullMode = VK_CULL_MODE_NONE;
         mBlendEnabled = false;
         mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+		mUseVertexBinding = false;
 	}
 
 	virtual void PopulateLayoutBindings() override

@@ -275,8 +275,6 @@ void EnvironmentCapture::RenderIrradiance()
 
 		irradiancePipeline.BindPipeline(commandBuffer);
 
-		vkCmdBindVertexBuffers(commandBuffer, 0, 0, nullptr, nullptr);
-
 		VkDescriptorSet irradianceDescriptor = mIrradianceDescriptorSet.GetDescriptorSet();
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, irradiancePipeline.GetPipelineLayout(), 1, 1, &irradianceDescriptor, 0, nullptr);
 		vkCmdDraw(commandBuffer, 4, 1, 0, 0);
