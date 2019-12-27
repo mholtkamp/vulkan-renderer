@@ -119,7 +119,6 @@ void Scene::UpdateDebug(float deltaTime)
 		if (!cDown)
 		{
 			CaptureEnvironment();
-			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		cDown = true;
@@ -136,7 +135,6 @@ void Scene::UpdateDebug(float deltaTime)
 		if (!sDown)
 		{
 			Renderer::Get()->RenderShadowMaps();
-			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		sDown = true;
@@ -156,7 +154,6 @@ void Scene::UpdateDebug(float deltaTime)
 			spawnedTestLights = true;
 			mPointLights.clear();
 			SpawnTestLights();
-			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		oDown = true;
@@ -173,8 +170,6 @@ void Scene::UpdateDebug(float deltaTime)
 		if (!pDown)
 		{
 			mDebugMoveLights = !mDebugMoveLights;
-
-			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		pDown = true;

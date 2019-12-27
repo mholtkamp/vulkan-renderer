@@ -79,14 +79,12 @@ void Renderer::ToggleIrradianceDebug()
 {
 	sDebugIrradiance = !sDebugIrradiance;
 	UpdateDebugDescriptorSet();
-	CreateCommandBuffers();
 }
 
 void Renderer::ToggleEnvironmentCaptureDebug()
 {
 	sDebugEnvironmentCaptureIndex++;
 	UpdateDebugDescriptorSet();
-	CreateCommandBuffers();
 }
 
 Texture2D* Renderer::GetBlackTexture()
@@ -200,7 +198,6 @@ void Renderer::Initialize()
 	CreatePostProcessDescriptorSet();
 	CreateDebugDescriptorSet();
 	CreateFramebuffers();
-	
 	CreateCommandBuffers();
 	CreateSemaphores();
 
@@ -285,8 +282,16 @@ void Renderer::PreparePresentation()
 
 void Renderer::Render()
 {
-    UpdateGlobalUniformData();
-	UpdateGlobalDescriptorSet();
+	if (mScene == nullptr)
+	{
+		// Cannot create command buffers yet.
+		return;
+	}
+
+	if (mCommandBuffers.size() == 0)
+	{
+		CreateCommandBuffers();
+	}
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(mDevice, mSwapchain, std::numeric_limits<uint64_t>::max(), mImageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
@@ -301,6 +306,111 @@ void Renderer::Render()
 	{
 		throw exception("Failed to acquire swapchain image");
 	}
+
+	// Reset our command buffer to record a fresh set of commands for this frame.
+	vkResetCommandBuffer(mCommandBuffers[imageIndex], 0);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	beginInfo.pInheritanceInfo = nullptr;
+
+	vkBeginCommandBuffer(mCommandBuffers[imageIndex], &beginInfo);
+
+	VkRenderPassBeginInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	renderPassInfo.renderPass = mRenderPass;
+	renderPassInfo.framebuffer = mSwapchainFramebuffers[imageIndex];
+	renderPassInfo.renderArea.offset = { 0, 0 };
+	renderPassInfo.renderArea.extent = mSwapchainExtent;
+
+	VkClearValue clearValues[ATTACHMENT_COUNT] = {};
+	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+	renderPassInfo.clearValueCount = ATTACHMENT_COUNT;
+	renderPassInfo.pClearValues = clearValues;
+
+	vkCmdBeginRenderPass(mCommandBuffers[imageIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	// ******************
+	//  Early Depth Pass
+	// ******************
+	mEarlyDepthPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+	mScene->RenderGeometry(mCommandBuffers[imageIndex]);
+	vkCmdNextSubpass(mCommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
+
+	// ******************
+	//  Geometry Pass
+	// ******************
+	mGeometryPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+	vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mGeometryPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+	mScene->RenderGeometry(mCommandBuffers[imageIndex]);
+	vkCmdNextSubpass(mCommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
+
+	// ******************
+	//  Deferred Pass
+	// ******************
+	if (mDebugMode == DEBUG_GBUFFER)
+	{
+		mDebugDeferredPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
+		vkCmdDraw(mCommandBuffers[imageIndex], 4, 1, 0, 0);
+	}
+	else if (mDebugMode == DEBUG_ENVIRONMENT_CAPTURE)
+	{
+		mEnvironmentCaptureDebugPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 2, 1, &mDebugDescriptorSet, 0, 0);
+		vkCmdDraw(mCommandBuffers[imageIndex], 4, 1, 0, 0);
+	}
+	else if (mDebugMode == DEBUG_SHADOW_MAP)
+	{
+		mShadowMapDebugPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 2, 1, &mDebugDescriptorSet, 0, 0);
+		vkCmdDraw(mCommandBuffers[imageIndex], 4, 1, 0, 0);
+	}
+	else
+	{
+		mDirectionalLightPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
+		vkCmdDraw(mCommandBuffers[imageIndex], 4, 1, 0, 0);
+
+		mLightPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+		mScene->RenderLightVolumes(mCommandBuffers[imageIndex]);
+	}
+
+	// ******************
+	//  Post Process
+	// ******************
+	vkCmdNextSubpass(mCommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
+	if (mDebugMode == DEBUG_NONE)
+	{
+		mPostProcessPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
+		vkCmdDraw(mCommandBuffers[imageIndex], 4, 1, 0, 0);
+	}
+	else
+	{
+		mNullPostProcessPipeline.BindPipeline(mCommandBuffers[imageIndex]);
+		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
+		vkCmdDraw(mCommandBuffers[imageIndex], 4, 1, 0, 0);
+	}
+
+
+	vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
+
+	if (vkEndCommandBuffer(mCommandBuffers[imageIndex]) != VK_SUCCESS)
+	{
+		throw exception("Failed to record command buffer");
+	}
+
+	UpdateGlobalUniformData();
+	UpdateGlobalDescriptorSet();
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -348,7 +458,6 @@ void Renderer::SetScene(Scene* scene)
 	if (mScene != scene)
 	{
 		mScene = scene;
-		CreateCommandBuffers();
 	}
 }
 
@@ -1330,12 +1439,6 @@ void Renderer::CreateCommandPool()
 
 void Renderer::CreateCommandBuffers()
 {
-	if (mScene == nullptr)
-	{
-		// Cannot create command buffers yet.
-		return;
-	}
-
 	if (mCommandBuffers.size() == 0)
 	{
 		mCommandBuffers.resize(mSwapchainFramebuffers.size());
@@ -1349,118 +1452,6 @@ void Renderer::CreateCommandBuffers()
 		if (vkAllocateCommandBuffers(mDevice, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS)
 		{
 			throw exception("Failed to create command buffers");
-		}
-	}
-	else
-	{
-		// Command buffers cannot be in pending state when reset
-		vkQueueWaitIdle(mGraphicsQueue);
-
-		for (size_t i = 0; i < mCommandBuffers.size(); ++i)
-		{
-			vkResetCommandBuffer(mCommandBuffers[i], 0);
-		}
-	}
-
-	for (size_t i = 0; i < mCommandBuffers.size(); ++i)
-	{
-		VkCommandBufferBeginInfo beginInfo = {};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-		beginInfo.pInheritanceInfo = nullptr;
-
-		vkBeginCommandBuffer(mCommandBuffers[i], &beginInfo);
-
-		VkRenderPassBeginInfo renderPassInfo = {};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = mRenderPass;
-		renderPassInfo.framebuffer = mSwapchainFramebuffers[i];
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = mSwapchainExtent;
-
-		VkClearValue clearValues[ATTACHMENT_COUNT] = {};
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
-		clearValues[1].depthStencil = { 1.0f, 0 };
-		renderPassInfo.clearValueCount = ATTACHMENT_COUNT;
-		renderPassInfo.pClearValues = clearValues;
-
-		vkCmdBeginRenderPass(mCommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-		// ******************
-		//  Early Depth Pass
-		// ******************
-		mEarlyDepthPipeline.BindPipeline(mCommandBuffers[i]);
-		mScene->RenderGeometry(mCommandBuffers[i]);
-		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
-
-		// ******************
-		//  Geometry Pass
-		// ******************
-		mGeometryPipeline.BindPipeline(mCommandBuffers[i]);
-		vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mGeometryPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
-		mScene->RenderGeometry(mCommandBuffers[i]);
-		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
-
-		// ******************
-		//  Deferred Pass
-		// ******************
-		if (mDebugMode == DEBUG_GBUFFER)
-		{
-			mDebugDeferredPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
-			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-		}
-		else if (mDebugMode == DEBUG_ENVIRONMENT_CAPTURE)
-		{
-			mEnvironmentCaptureDebugPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mEnvironmentCaptureDebugPipeline.GetPipelineLayout(), 2, 1, &mDebugDescriptorSet, 0, 0);
-            vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-        }
-		else if (mDebugMode == DEBUG_SHADOW_MAP)
-		{
-			mShadowMapDebugPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mShadowMapDebugPipeline.GetPipelineLayout(), 2, 1, &mDebugDescriptorSet, 0, 0);
-			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-		}
-		else
-		{
-            mDirectionalLightPipeline.BindPipeline(mCommandBuffers[i]);
-            vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
-            vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mLightPipeline.GetPipelineLayout(), 1, 1, &mDeferredDescriptorSet, 0, 0);
-            vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-
-			mLightPipeline.BindPipeline(mCommandBuffers[i]);
-			mScene->RenderLightVolumes(mCommandBuffers[i]);
-		}
-
-		// ******************
-		//  Post Process
-		// ******************
-		vkCmdNextSubpass(mCommandBuffers[i], VK_SUBPASS_CONTENTS_INLINE);
-		if (mDebugMode == DEBUG_NONE)
-		{
-			mPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
-			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-		}
-		else
-		{
-			mNullPostProcessPipeline.BindPipeline(mCommandBuffers[i]);
-			vkCmdBindDescriptorSets(mCommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
-			vkCmdDraw(mCommandBuffers[i], 4, 1, 0, 0);
-		}
-
-
-		vkCmdEndRenderPass(mCommandBuffers[i]);
-
-		if (vkEndCommandBuffer(mCommandBuffers[i]) != VK_SUCCESS)
-		{
-			throw exception("Failed to record command buffer");
 		}
 	}
 }
@@ -1621,7 +1612,6 @@ void Renderer::RecreateSwapchain()
 	CreateGlobalDescriptorSet();
 	CreatePostProcessDescriptorSet();
 	CreateDebugDescriptorSet();
-	CreateCommandBuffers();
 }
 
 VkDescriptorPool Renderer::GetDescriptorPool()
@@ -1962,14 +1952,12 @@ void Renderer::SetDebugMode(DebugMode mode)
 	mDebugMode = mode;
 	UpdateGlobalDescriptorSet();
     UpdateDebugDescriptorSet();
-	CreateCommandBuffers();
 }
 
 void Renderer::SetEnvironmentDebugFace(uint32_t index)
 {
     mEnvironmentDebugFace = index;
     UpdateDebugDescriptorSet();
-    CreateCommandBuffers();
 }
 
 void Renderer::UpdateEnvironmentCaptures()
