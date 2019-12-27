@@ -153,8 +153,8 @@ void EnvironmentCapture::Capture()
 		// ******************
 		//  Early Depth Pass
 		// ******************
-		//earlyDepthPipeline.BindPipeline(commandBuffer);
-		//mScene->RenderGeometry(commandBuffer);
+		earlyDepthPipeline.BindPipeline(commandBuffer);
+		mScene->RenderGeometry(commandBuffer);
 		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
 		// ******************

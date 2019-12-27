@@ -13,6 +13,9 @@ layout(set = 1, binding = 0) uniform GeometryUniformBuffer
 } uboGeometry;
 
 layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec2 inTexcoord;
+
+layout(location = 0) out vec2 outTexcoord;
 
 out gl_PerVertex 
 {
@@ -21,5 +24,6 @@ out gl_PerVertex
 
 void main()
 {
+	outTexcoord = inTexcoord;
     gl_Position = uboGeometry.mWVP * vec4(inPosition, 1.0);
 }

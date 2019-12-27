@@ -12,7 +12,7 @@ public:
 	EarlyDepthPipeline()
 	{
 		mRasterizerDiscard = VK_FALSE;
-		mFragmentShaderPath = "";
+		mFragmentShaderPath = "Shaders/bin/depthShader.frag";
 		mVertexShaderPath = "Shaders/bin/depthShader.vert";
 		mSubpass = PASS_DEPTH;
 
@@ -53,7 +53,7 @@ public:
 	GeometryPipeline()
 	{
 		mSubpass = PASS_GEOMETRY;
-		mDepthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL; //VK_COMPARE_OP_EQUAL;
+		mDepthCompareOp = VK_COMPARE_OP_EQUAL;
 		mVertexShaderPath = "Shaders/bin/reflectiveGeometryShader.vert";
 		mFragmentShaderPath = "Shaders/bin/reflectiveGeometryShader.frag";
 		//mCullMode = VK_CULL_MODE_NONE;
