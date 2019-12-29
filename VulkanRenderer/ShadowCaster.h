@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 
 #include "Scene.h"
+#include "PipelineConfigs.h"
 
 class ShadowCaster
 {
@@ -12,7 +13,7 @@ public:
 
     void Destroy();
 
-	void RenderShadowMap(Scene* scene);
+	void RenderShadows(Scene* scene, VkCommandBuffer commandBuffer);
 
 	VkImageView GetShadowMapImageView();
 
@@ -22,19 +23,19 @@ private:
 
 	void Initialize();
 
-	void CreateRenderPass();
+	void CreateShadowRenderPass();
 
-	void CreateFramebuffer();
+	void CreateShadowFramebuffer();
 
-	void CreateImage();
+	void CreateShadowMapImage();
 
-	VkRenderPass mRenderPass;
-	VkFramebuffer mFramebuffer;
+	void CreateShadowPipeline();
 
+	VkRenderPass mShadowRenderPass;
+	VkFramebuffer mShadowFramebuffer;
+	ShadowCastPipeline mShadowPipeline;
 	VkImage mShadowMapImage;
 	VkDeviceMemory mShadowMapImageMemory;
 	VkImageView mShadowMapImageView;
 	VkSampler mShadowMapSampler;
-
-
 };

@@ -128,20 +128,20 @@ void Scene::UpdateDebug(float deltaTime)
 		cDown = false;
 	}
 
-	static bool sDown = false;
-	if (GetAsyncKeyState('S') &&
+	if ((GetAsyncKeyState('S') || GetAsyncKeyState('D')) &&
 		GetAsyncKeyState(VK_CONTROL))
 	{
-		if (!sDown)
+		glm::vec3 dir = mDirectionalLight.GetDirection();
+		float deltaDir = 0.3f * deltaTime;
+		
+		if (GetAsyncKeyState('D'))
 		{
-			Renderer::Get()->RenderShadowMaps();
+			deltaDir *= -1.0f;
 		}
 
-		sDown = true;
-	}
-	else
-	{
-		sDown = false;
+		dir.z += deltaDir;
+		dir = glm::normalize(dir);
+		mDirectionalLight.SetDirection(dir);
 	}
 
 	static bool oDown = false;

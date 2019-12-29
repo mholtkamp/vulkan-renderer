@@ -1,5 +1,6 @@
 #include "DirectionalLight.h"
 #include "Constants.h"
+#include "Renderer.h"
 
 DirectionalLight::DirectionalLight() :
 	mPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
@@ -54,8 +55,12 @@ void DirectionalLight::GenerateViewProjectionMatrix()
 	glm::mat4 view;
 	glm::mat4 proj;
 
-	view = glm::lookAtRH(mPosition, mPosition + mDirection, glm::vec3(0.0f, 1.0f, 0.0f));
-	proj = glm::orthoRH(-SHADOW_RANGE, SHADOW_RANGE, -SHADOW_RANGE, SHADOW_RANGE, -SHADOW_RANGE, SHADOW_RANGE);
+	// TODO: This is just a hack, but this will be better when component system is in place.
+	// Need to grab the camera's location
+	glm::vec3 cameraPosition = Renderer::Get()->GetScene()->GetActiveCamera()->GetPosition();
+
+	view = glm::lookAtRH(cameraPosition, cameraPosition + mDirection, glm::vec3(0.0f, 1.0f, 0.0f));
+	proj = glm::orthoRH(-SHADOW_RANGE, SHADOW_RANGE, -SHADOW_RANGE, SHADOW_RANGE, -SHADOW_RANGE_Z, SHADOW_RANGE_Z);
 
     // Needed for adjusting to NDC
     const glm::mat4 clip(1.0f, 0.0f, 0.0f, 0.0f,

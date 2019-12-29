@@ -317,6 +317,12 @@ void Renderer::Render()
 
 	vkBeginCommandBuffer(mCommandBuffers[imageIndex], &beginInfo);
 
+	// ***************
+	//  Shadow Depths
+	// ***************
+	mShadowCaster.RenderShadows(mScene, mCommandBuffers[imageIndex]);
+	UpdateDeferredDescriptorSet();
+
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = mRenderPass;
@@ -459,6 +465,11 @@ void Renderer::SetScene(Scene* scene)
 	{
 		mScene = scene;
 	}
+}
+
+Scene* Renderer::GetScene()
+{
+	return mScene;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(VkDebugReportFlagsEXT flags,
@@ -1471,12 +1482,6 @@ VkSampler Renderer::GetShadowMapSampler()
     return mShadowCaster.GetShadowMapSampler();
 }
 
-void Renderer::RenderShadowMaps()
-{
-	mShadowCaster.RenderShadowMap(mScene);
-    UpdateDeferredDescriptorSet();
-}
-
 void Renderer::CreateSemaphores()
 {
 	VkSemaphoreCreateInfo ciSemaphore = {};
@@ -1530,7 +1535,7 @@ VkCommandBuffer Renderer::BeginSingleSubmissionCommands()
 	return commandBuffer;
 }
 
-void Renderer::EndSingleSubmissionCommands(VkCommandBuffer commandBuffer)
+void Renderer::EndSingleSubmissionCommands(VkCommandBuffer commandBuffer, bool waitForIdle)
 {
 	vkEndCommandBuffer(commandBuffer);
 
@@ -1540,7 +1545,11 @@ void Renderer::EndSingleSubmissionCommands(VkCommandBuffer commandBuffer)
 	submitInfo.pCommandBuffers = &commandBuffer;
 
 	vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(mGraphicsQueue);
+	
+	if (waitForIdle)
+	{
+		vkQueueWaitIdle(mGraphicsQueue);
+	}
 
 	vkFreeCommandBuffers(mDevice, mCommandPool, 1, &commandBuffer);
 }

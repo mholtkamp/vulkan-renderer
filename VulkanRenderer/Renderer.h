@@ -71,6 +71,8 @@ public:
 
 	void SetScene(Scene* scene);
 
+	Scene* GetScene();
+
 	void SetAppState(AppState* appState);
 
 	void WaitOnExecutionFinished();
@@ -98,7 +100,7 @@ public:
 
 	VkCommandBuffer BeginSingleSubmissionCommands();
 
-	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer);
+	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer, bool waitForIdle = true);
 
 	VkExtent2D& GetSwapchainExtent();
 
@@ -135,8 +137,6 @@ public:
     void UpdateEnvironmentCaptures();
 
     void UpdateDeferredDescriptorSet();
-
-	void RenderShadowMaps();
 
     VkImageView GetShadowMapImageView();
 

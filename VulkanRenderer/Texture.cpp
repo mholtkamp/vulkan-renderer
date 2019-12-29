@@ -287,13 +287,20 @@ void Texture::TransitionLayout(VkImageLayout newLayout)
 	}
 }
 
-void Texture::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, int32_t mipLevels, int32_t layerCount)
+void Texture::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, int32_t mipLevels, int32_t layerCount, VkCommandBuffer commandBuffer)
 {
 	if (newLayout == oldLayout)
 		return;
 
 	Renderer* renderer = Renderer::Get();
-	VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
+
+	VkCommandBuffer singleCb = VK_NULL_HANDLE;
+
+	if (commandBuffer == VK_NULL_HANDLE)
+	{
+		singleCb = renderer->BeginSingleSubmissionCommands();
+		commandBuffer = singleCb;
+	}
 
 	VkPipelineStageFlags srcMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
 	VkPipelineStageFlags dstMask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
@@ -411,7 +418,10 @@ void Texture::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayou
 		1,
 		&barrier);
 
-	renderer->EndSingleSubmissionCommands(commandBuffer);
+	if (singleCb != VK_NULL_HANDLE)
+	{
+		renderer->EndSingleSubmissionCommands(commandBuffer);
+	}
 }
 
 void Texture::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)

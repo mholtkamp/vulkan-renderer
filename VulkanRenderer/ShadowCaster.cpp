@@ -2,8 +2,8 @@
 #include "Renderer.h"
 
 ShadowCaster::ShadowCaster() :
-	mRenderPass(VK_NULL_HANDLE),
-	mFramebuffer(VK_NULL_HANDLE),
+	mShadowRenderPass(VK_NULL_HANDLE),
+	mShadowFramebuffer(VK_NULL_HANDLE),
 	mShadowMapImage(VK_NULL_HANDLE),
 	mShadowMapImageMemory(VK_NULL_HANDLE),
 	mShadowMapImageView(VK_NULL_HANDLE),
@@ -17,13 +17,15 @@ void ShadowCaster::Destroy()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	if (mRenderPass != VK_NULL_HANDLE)
+	if (mShadowRenderPass != VK_NULL_HANDLE)
 	{
-		vkDestroyRenderPass(device, mRenderPass, nullptr);
-		mRenderPass = VK_NULL_HANDLE;
+		mShadowPipeline.Destroy();
 
-		vkDestroyFramebuffer(device, mFramebuffer, nullptr);
-		mFramebuffer = VK_NULL_HANDLE;
+		vkDestroyRenderPass(device, mShadowRenderPass, nullptr);
+		mShadowRenderPass = VK_NULL_HANDLE;
+
+		vkDestroyFramebuffer(device, mShadowFramebuffer, nullptr);
+		mShadowFramebuffer = VK_NULL_HANDLE;
 
 		vkDestroyImage(device, mShadowMapImage, nullptr);
 		mShadowMapImage = VK_NULL_HANDLE;
@@ -39,7 +41,7 @@ void ShadowCaster::Destroy()
 	}
 }
 
-void ShadowCaster::RenderShadowMap(Scene* scene)
+void ShadowCaster::RenderShadows(Scene* scene, VkCommandBuffer commandBuffer)
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
@@ -49,28 +51,19 @@ void ShadowCaster::RenderShadowMap(Scene* scene)
 		throw std::exception("Attempting to render shadow map for null scene");
 	}
 
-	if (mRenderPass == VK_NULL_HANDLE)
+	if (mShadowRenderPass == VK_NULL_HANDLE)
 	{
 		Initialize();
 	}
-
-	// Create temp pipeline
-	ShadowCastPipeline pipeline;
-	pipeline.mViewportWidth = SHADOW_MAP_RESOLUTION;
-	pipeline.mViewportHeight = SHADOW_MAP_RESOLUTION;
-	pipeline.mRenderpass = mRenderPass;
-	pipeline.Create();
 
 	VkExtent2D renderAreaExtent = {};
 	renderAreaExtent.width = SHADOW_MAP_RESOLUTION;
 	renderAreaExtent.height = SHADOW_MAP_RESOLUTION;
 
-	VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
-
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = mRenderPass;
-	renderPassInfo.framebuffer = mFramebuffer;
+	renderPassInfo.renderPass = mShadowRenderPass;
+	renderPassInfo.framebuffer = mShadowFramebuffer;
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = renderAreaExtent;
 
@@ -84,13 +77,10 @@ void ShadowCaster::RenderShadowMap(Scene* scene)
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	pipeline.BindPipeline(commandBuffer);
+	mShadowPipeline.BindPipeline(commandBuffer);
 	scene->RenderGeometry(commandBuffer);
 	
 	vkCmdEndRenderPass(commandBuffer);
-	renderer->EndSingleSubmissionCommands(commandBuffer);
-
-	pipeline.Destroy();
 
 	Texture::TransitionImageLayout(mShadowMapImage, VK_FORMAT_D16_UNORM, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 }
@@ -107,12 +97,13 @@ VkSampler ShadowCaster::GetShadowMapSampler()
 
 void ShadowCaster::Initialize()
 {
-	CreateImage();
-	CreateRenderPass();
-	CreateFramebuffer();
+	CreateShadowMapImage();
+	CreateShadowRenderPass();
+	CreateShadowFramebuffer();
+	CreateShadowPipeline();
 }
 
-void ShadowCaster::CreateRenderPass()
+void ShadowCaster::CreateShadowRenderPass()
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
@@ -143,15 +134,15 @@ void ShadowCaster::CreateRenderPass()
 	ciRenderPass.subpassCount = 1;
 	ciRenderPass.pSubpasses = &subpass;
 
-	if (vkCreateRenderPass(device, &ciRenderPass, nullptr, &mRenderPass) != VK_SUCCESS)
+	if (vkCreateRenderPass(device, &ciRenderPass, nullptr, &mShadowRenderPass) != VK_SUCCESS)
 	{
 		throw std::exception("Failed to create renderpass");
 	}
 }
 
-void ShadowCaster::CreateFramebuffer()
+void ShadowCaster::CreateShadowFramebuffer()
 {
-	assert(mRenderPass != VK_NULL_HANDLE);
+	assert(mShadowRenderPass != VK_NULL_HANDLE);
 	assert(mShadowMapImageView != VK_NULL_HANDLE);
 
 	Renderer* renderer = Renderer::Get();
@@ -159,20 +150,20 @@ void ShadowCaster::CreateFramebuffer()
 
 	VkFramebufferCreateInfo ciFramebuffer = {};
 	ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	ciFramebuffer.renderPass = mRenderPass;
+	ciFramebuffer.renderPass = mShadowRenderPass;
 	ciFramebuffer.attachmentCount = 1;
 	ciFramebuffer.pAttachments = &mShadowMapImageView;
 	ciFramebuffer.width = SHADOW_MAP_RESOLUTION;
 	ciFramebuffer.height = SHADOW_MAP_RESOLUTION;
 	ciFramebuffer.layers = 1;
 
-	if (vkCreateFramebuffer(device, &ciFramebuffer, nullptr, &mFramebuffer) != VK_SUCCESS)
+	if (vkCreateFramebuffer(device, &ciFramebuffer, nullptr, &mShadowFramebuffer) != VK_SUCCESS)
 	{
 		throw std::exception("Failed to create framebuffer.");
 	}
 }
 
-void ShadowCaster::CreateImage()
+void ShadowCaster::CreateShadowMapImage()
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
@@ -213,4 +204,12 @@ void ShadowCaster::CreateImage()
 	}
 
 	vkDeviceWaitIdle(device);
+}
+
+void ShadowCaster::CreateShadowPipeline()
+{
+	mShadowPipeline.mViewportWidth = SHADOW_MAP_RESOLUTION;
+	mShadowPipeline.mViewportHeight = SHADOW_MAP_RESOLUTION;
+	mShadowPipeline.mRenderpass = mShadowRenderPass;
+	mShadowPipeline.Create();
 }
