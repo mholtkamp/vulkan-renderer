@@ -25,16 +25,22 @@ public:
 
 	glm::mat4 GetViewProjectionMatrix();
 
+	bool ShouldCastShadows() const;
+
+	void SetCastShadows(bool castShadows);
+
 private:
 
 	void GenerateViewProjectionMatrix();
 
 private:
 
-	bool mEnabled;
 	glm::vec3 mPosition;
 	glm::vec3 mDirection;
 	glm::vec4 mColor;
 
 	glm::mat4 mViewProjectionMatrix;
+
+	bool mEnabled;
+	bool mCastShadows;
 };

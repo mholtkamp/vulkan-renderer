@@ -128,7 +128,7 @@ void Scene::UpdateDebug(float deltaTime)
 		cDown = false;
 	}
 
-	if ((GetAsyncKeyState('S') || GetAsyncKeyState('D')) &&
+	if ((GetAsyncKeyState('A') || GetAsyncKeyState('D')) &&
 		GetAsyncKeyState(VK_CONTROL))
 	{
 		glm::vec3 dir = mDirectionalLight.GetDirection();
@@ -142,6 +142,23 @@ void Scene::UpdateDebug(float deltaTime)
 		dir.z += deltaDir;
 		dir = glm::normalize(dir);
 		mDirectionalLight.SetDirection(dir);
+	}
+
+	static bool sDown = false;
+	if (GetAsyncKeyState('S') &&
+		GetAsyncKeyState(VK_CONTROL))
+	{
+		if (!sDown)
+		{
+			bool castShadows = !mDirectionalLight.ShouldCastShadows();
+			mDirectionalLight.SetCastShadows(castShadows);
+		}
+
+		sDown = true;
+	}
+	else
+	{
+		sDown = false;
 	}
 
 	static bool oDown = false;

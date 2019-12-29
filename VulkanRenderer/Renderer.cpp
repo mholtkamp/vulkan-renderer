@@ -320,8 +320,11 @@ void Renderer::Render()
 	// ***************
 	//  Shadow Depths
 	// ***************
-	mShadowCaster.RenderShadows(mScene, mCommandBuffers[imageIndex]);
-	UpdateDeferredDescriptorSet();
+	if (mScene->GetDirectionalLight().ShouldCastShadows())
+	{
+		mShadowCaster.RenderShadows(mScene, mCommandBuffers[imageIndex]);
+		UpdateDeferredDescriptorSet();
+	}
 
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1140,7 +1143,7 @@ void Renderer::UpdateGlobalUniformData()
         mGlobalUniformData.mSunDirection = glm::vec4(mScene->GetDirectionalLight().GetDirection(), 0.0f);
         mGlobalUniformData.mSunColor = mScene->GetDirectionalLight().GetColor();
         mGlobalUniformData.mSunVP = mScene->GetDirectionalLight().GetViewProjectionMatrix();
-		mGlobalUniformData.mShadowIntensity = (GetShadowMapImageView() == VK_NULL_HANDLE) ? 0.0f : 1.0f;
+		mGlobalUniformData.mShadowIntensity = (GetShadowMapImageView() != VK_NULL_HANDLE && mScene->GetDirectionalLight().ShouldCastShadows()) ? 1.0f : 0.0f;
     }
 }
 

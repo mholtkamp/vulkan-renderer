@@ -5,7 +5,9 @@
 DirectionalLight::DirectionalLight() :
 	mPosition(glm::vec3(0.0f, 0.0f, 0.0f)),
 	mDirection(glm::vec3(0.0f, -1.0f, 0.0f)),
-	mColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f))
+	mColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),
+	mEnabled(true),
+	mCastShadows(true)
 {
 
 }
@@ -69,4 +71,14 @@ void DirectionalLight::GenerateViewProjectionMatrix()
         0.0f, 0.0f, 0.5f, 1.0f);
 
 	mViewProjectionMatrix = clip * proj * view;
+}
+
+bool DirectionalLight::ShouldCastShadows() const
+{
+	return mCastShadows;
+}
+
+void DirectionalLight::SetCastShadows(bool castShadows)
+{
+	mCastShadows = castShadows;
 }
