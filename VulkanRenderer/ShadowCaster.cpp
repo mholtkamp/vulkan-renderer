@@ -73,7 +73,7 @@ void ShadowCaster::RenderShadows(Scene* scene, VkCommandBuffer commandBuffer)
 	renderPassInfo.clearValueCount = 1;
 	renderPassInfo.pClearValues = &clearValue;
 
-	Texture::TransitionImageLayout(mShadowMapImage, VK_FORMAT_D16_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+	Texture::TransitionImageLayout(mShadowMapImage, VK_FORMAT_D16_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1, 1, commandBuffer);
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -82,7 +82,7 @@ void ShadowCaster::RenderShadows(Scene* scene, VkCommandBuffer commandBuffer)
 	
 	vkCmdEndRenderPass(commandBuffer);
 
-	Texture::TransitionImageLayout(mShadowMapImage, VK_FORMAT_D16_UNORM, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	Texture::TransitionImageLayout(mShadowMapImage, VK_FORMAT_D16_UNORM, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1, 1, commandBuffer);
 }
 
 VkImageView ShadowCaster::GetShadowMapImageView()
