@@ -104,7 +104,7 @@ void DebugActionHandler::Update()
         Renderer::Get()->SetEnvironmentDebugFace(5);
     }
 
-	bool kDown = false;
+	static bool kDown = false;
 	if (GetAsyncKeyState('K') &&
 		GetAsyncKeyState(VK_CONTROL))
 	{
@@ -120,7 +120,7 @@ void DebugActionHandler::Update()
 		kDown = false;
 	}
 
-	bool lDown = false;
+	static bool lDown = false;
 	if (GetAsyncKeyState('L') &&
 		GetAsyncKeyState(VK_CONTROL))
 	{
