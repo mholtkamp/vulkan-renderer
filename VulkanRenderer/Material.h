@@ -10,6 +10,7 @@
 #include <vulkan/vulkan.h>
 
 class Texture;
+class Texture2D;
 
 class Material
 {
@@ -21,7 +22,7 @@ public:
 
 	void Create(const class Scene& scene,
 				const aiMaterial& material,
-				std::map<std::string, Texture>& textures);
+				std::map<std::string, Texture2D>& textures);
 
 	void UpdateDescriptorSets(VkDescriptorSet descriptorSet);
 
@@ -36,13 +37,13 @@ public:
 private:
 
 	void SetTexture(const class Scene& scene,
-		std::map<std::string, Texture>& textures,
-		Texture*& texture,
+		std::map<std::string, Texture2D>& textures,
+		Texture2D*& texture,
 		std::string name);
 
 	void SetDefaultTexture(const class Scene& scene,
-		std::map<std::string, Texture>& textures,
-		Texture*& texture,
+		std::map<std::string, Texture2D>& textures,
+		Texture2D*& texture,
 		std::string name);
 
 	std::string mName;
@@ -54,5 +55,5 @@ private:
     float mMetallic;
     float mRoughness;
 
-	Texture* mTextures[SLOT_COUNT];
+	Texture2D* mTextures[SLOT_COUNT];
 };

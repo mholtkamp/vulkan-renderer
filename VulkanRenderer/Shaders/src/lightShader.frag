@@ -1,15 +1,12 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout (set = 0, binding = 0) uniform GlobalUniformBuffer
+#include "common.glsl"
+
+layout (set = 0, binding = 0) uniform GlobalUniformBuffer 
 {
-	mat4 mSunVP;
-    vec4 mSunDirection;
-    vec4 mSunColor;
-    vec4 mViewPosition;
-    vec2 mScreenDimensions;
-    int mVisualizationMode;
-} ubo;
+	GlobalUniforms globals;
+};
 
 layout (set = 1, binding = 0) uniform sampler2D samplerPosition;
 layout (set = 1, binding = 1) uniform sampler2D samplerNormal;
@@ -77,7 +74,7 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 
 void main()
 {
-    vec2 texcoord = gl_FragCoord.xy/ubo.mScreenDimensions;
+    vec2 texcoord = gl_FragCoord.xy/globals.mScreenDimensions;
     vec3 position = texture(samplerPosition, texcoord).rgb;
     vec3 normal = texture(samplerNormal, texcoord).rgb;
     vec3 albedo = texture(samplerColor, texcoord).rgb;
@@ -86,7 +83,7 @@ void main()
 	float roughness = texture(samplerRoughness, texcoord).r;
     
 	vec3 N = normalize(normal);
-	vec3 V = normalize(ubo.mViewPosition.xyz - position);
+	vec3 V = normalize(globals.mViewPosition.xyz - position);
 	vec3 L = normalize(light.mPosition.xyz - position);
 	vec3 H = normalize(V + L);
 

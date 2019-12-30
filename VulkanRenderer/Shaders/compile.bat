@@ -2,8 +2,9 @@ if not exist ".\bin" mkdir .\bin
 
 for %%f in (.\src\*) do (
 
-  (%VULKAN_SDK%/Bin32/glslangValidator.exe -V %%f -o .\bin\%%~nxf) && (
-     echo Compile Successful
-  ) || (
-  pause )
+  echo %%~xf
+  
+  if NOT "%%~xf" == ".glsl" (
+    (( %VULKAN_SDK%/Bin/glslc.exe %%f -o .\bin\%%~nxf ) && ( echo Compile Successful )) || pause 
+  )
 )

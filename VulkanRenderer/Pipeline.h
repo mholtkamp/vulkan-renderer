@@ -57,6 +57,9 @@ public:
     uint32_t mViewportWidth;
     uint32_t mViewportHeight;
 
+	// Vertex Input
+	bool mUseVertexBinding; // (Generally only false for post process / full screen quad pipelines.)
+
 	// Rasterizer stage
 	VkBool32 mRasterizerDiscard;
 	VkPrimitiveTopology mPrimitiveTopology;

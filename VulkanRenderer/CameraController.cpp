@@ -19,6 +19,9 @@ CameraController::~CameraController()
 
 void CameraController::Update(float deltaTime)
 {
+	if (GetAsyncKeyState(VK_CONTROL))
+		return;
+
 	glm::vec3 cameraPosition = mCamera->GetPosition();
 	glm::vec3 cameraRotation = mCamera->GetRotation();
 

@@ -55,7 +55,7 @@ public:
 
 	DirectionalLight& GetDirectionalLight();
 
-	Cubemap* GetIrradianceMap();
+	TextureCube* GetIrradianceMap();
 
 private:
 
@@ -86,7 +86,7 @@ private:
 
 	std::vector<Material> mMaterials;
 
-	std::map<std::string, Texture> mTextures;
+	std::map<std::string, Texture2D> mTextures;
 
 	std::vector<Actor> mActors;
 

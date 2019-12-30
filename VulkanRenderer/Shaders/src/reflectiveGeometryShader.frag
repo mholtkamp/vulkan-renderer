@@ -1,6 +1,8 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+#include "common.glsl"
+
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec2 inTexcoord;
 layout(location = 2) in vec3 inNormal;
@@ -27,15 +29,10 @@ layout(set = 1, binding = 3) uniform sampler2D normalSampler;
 layout(set = 1, binding = 4) uniform sampler2D ormSampler;
 layout(set = 1, binding = 5) uniform samplerCube environmentSampler;
 
-layout (set = 0, binding = 0) uniform GlobalUniformBuffer
+layout (set = 0, binding = 0) uniform GlobalUniformBuffer 
 {
-	mat4 mSunVP;
-    vec4 mSunDirection;
-    vec4 mSunColor;
-    vec4 mViewPosition;
-    vec2 mScreenDimensions;
-    int mVisualizationMode;
-} ubo;
+	GlobalUniforms globals;
+};
 
 layout(location = 0) out vec4 outPosition;
 layout(location = 1) out vec4 outNormal;
@@ -59,7 +56,7 @@ void main()
         discard;
     }
     
-    vec3 incident = normalize(inPosition - ubo.mViewPosition.xyz);
+    vec3 incident = normalize(inPosition - globals.mViewPosition.xyz);
     vec3 reflection = reflect(incident, outNormal.xyz);
     vec4 environmentColor = vec4(texture(environmentSampler, reflection).rgb, 1.0);
     outColor = mix(outColor, environmentColor, uboGeometry.mReflectivity);

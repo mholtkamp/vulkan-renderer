@@ -1,5 +1,5 @@
 #include "Material.h"
-#include "Texture.h"
+#include "Texture2D.h"
 #include "Renderer.h"
 #include "Constants.h"
 
@@ -28,7 +28,7 @@ void Material::Destroy()
 
 void Material::Create(const Scene& scene,
 					  const aiMaterial& material,
-					  std::map<std::string, Texture>& textures)
+					  std::map<std::string, Texture2D>& textures)
 {
 	aiString name;
 	if (material.Get(AI_MATKEY_NAME, name) == aiReturn_SUCCESS)
@@ -161,14 +161,14 @@ void Material::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 }
 
 void Material::SetTexture(const Scene& scene,
-	map<string, Texture>& textures,
-	Texture*& texture,
+	map<string, Texture2D>& textures,
+	Texture2D*& texture,
 	string name)
 {
 	if (textures.find(name) == textures.end())
 	{
-		textures.insert(pair<string, Texture>(name, Texture()));
-		Texture& texEntry = textures[name];
+		textures.insert(pair<string, Texture2D>(name, Texture2D()));
+		Texture2D& texEntry = textures[name];
 		texEntry.Load(scene.GetDirectory() + name);
 		texture = &texEntry;
 	}
@@ -189,14 +189,14 @@ float Material::GetRoughness()
 }
 
 void Material::SetDefaultTexture(const Scene& scene,
-	std::map<std::string, Texture>& textures,
-	Texture*& texture,
+	std::map<std::string, Texture2D>& textures,
+	Texture2D*& texture,
 	std::string name)
 {
 	if (textures.find(name) == textures.end())
 	{
-		textures.insert(pair<string, Texture>(name, Texture()));
-		Texture& texEntry = textures[name];
+		textures.insert(pair<string, Texture2D>(name, Texture2D()));
+		Texture2D& texEntry = textures[name];
 		texEntry.Load(DEFAULT_TEXTURE_DIRECTORY_NAME + name);
 		texture = &texEntry;
 	}

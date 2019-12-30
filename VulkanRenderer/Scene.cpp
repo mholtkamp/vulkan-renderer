@@ -79,7 +79,7 @@ void Scene::SetTestDirectionalLight()
 	mDirectionalLight.SetDirection(glm::normalize(glm::vec3(1.0f, -1.0f, 0.2f)));
 }
 
-Cubemap* Scene::GetIrradianceMap()
+TextureCube* Scene::GetIrradianceMap()
 {
 	if (mEnvironmentCaptures.size() > 0)
 	{
@@ -119,7 +119,6 @@ void Scene::UpdateDebug(float deltaTime)
 		if (!cDown)
 		{
 			CaptureEnvironment();
-			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		cDown = true;
@@ -129,14 +128,30 @@ void Scene::UpdateDebug(float deltaTime)
 		cDown = false;
 	}
 
+	if ((GetAsyncKeyState('A') || GetAsyncKeyState('D')) &&
+		GetAsyncKeyState(VK_CONTROL))
+	{
+		glm::vec3 dir = mDirectionalLight.GetDirection();
+		float deltaDir = 0.3f * deltaTime;
+		
+		if (GetAsyncKeyState('D'))
+		{
+			deltaDir *= -1.0f;
+		}
+
+		dir.z += deltaDir;
+		dir = glm::normalize(dir);
+		mDirectionalLight.SetDirection(dir);
+	}
+
 	static bool sDown = false;
 	if (GetAsyncKeyState('S') &&
 		GetAsyncKeyState(VK_CONTROL))
 	{
 		if (!sDown)
 		{
-			Renderer::Get()->RenderShadowMaps();
-			Renderer::Get()->CreateCommandBuffers();
+			bool castShadows = !mDirectionalLight.ShouldCastShadows();
+			mDirectionalLight.SetCastShadows(castShadows);
 		}
 
 		sDown = true;
@@ -156,7 +171,6 @@ void Scene::UpdateDebug(float deltaTime)
 			spawnedTestLights = true;
 			mPointLights.clear();
 			SpawnTestLights();
-			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		oDown = true;
@@ -173,8 +187,6 @@ void Scene::UpdateDebug(float deltaTime)
 		if (!pDown)
 		{
 			mDebugMoveLights = !mDebugMoveLights;
-
-			Renderer::Get()->CreateCommandBuffers();
 		}
 
 		pDown = true;
@@ -326,11 +338,14 @@ void Scene::RenderShadowCasters(VkCommandBuffer commandBuffer)
 
 void Scene::RenderLightVolumes(VkCommandBuffer commandBuffer)
 {
-	PointLight::BindSphereMeshBuffers(commandBuffer);
-
-	for (PointLight& pointLight : mPointLights)
+	if (mPointLights.size() > 0)
 	{
-		pointLight.Draw(commandBuffer);
+		PointLight::BindSphereMeshBuffers(commandBuffer);
+
+		for (PointLight& pointLight : mPointLights)
+		{
+			pointLight.Draw(commandBuffer);
+		}
 	}
 }
 

@@ -185,6 +185,29 @@ void Actor::UpdateEnvironmentSampler()
 	{
 		mEnvironmentCapture->UpdateDesriptorSet(mDescriptorSet);
 	}
+	else
+	{
+		Renderer* renderer = Renderer::Get();
+
+		// Use default black if no environment cubemap
+		VkDescriptorImageInfo imageInfo = {};
+		VkWriteDescriptorSet descriptorWrite = {};
+
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = renderer->GetBlackCubemap()->GetImageView();
+		imageInfo.sampler = renderer->GetBlackCubemap()->GetSampler();
+
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = mDescriptorSet;
+		descriptorWrite.dstBinding = AD_TEXTURE_ENVIRONMENT;
+		descriptorWrite.dstArrayElement = 0;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pImageInfo = &imageInfo;
+
+		vkUpdateDescriptorSets(renderer->GetDevice(), 1, &descriptorWrite, 0, nullptr);
+		
+	}
 }
 
 void Actor::SetEnvironmentCapture(EnvironmentCapture* environmentCapture)

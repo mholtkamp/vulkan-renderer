@@ -7,7 +7,8 @@
 #include <array>
 
 #include "ApplicationState.h"
-#include "Texture.h"
+#include "Texture2D.h"
+#include "TextureCube.h"
 #include "Mesh.h"
 #include "Vertex.h"
 #include "Scene.h"
@@ -25,6 +26,7 @@ struct GlobalUniformData
 	glm::vec4 mSunColor;
 	glm::vec4 mViewPosition;
 	glm::vec2 mScreenDimensions;
+	float mShadowIntensity;
 	int32_t mVisualizationMode;
 };
 
@@ -69,6 +71,8 @@ public:
 
 	void SetScene(Scene* scene);
 
+	Scene* GetScene();
+
 	void SetAppState(AppState* appState);
 
 	void WaitOnExecutionFinished();
@@ -96,7 +100,7 @@ public:
 
 	VkCommandBuffer BeginSingleSubmissionCommands();
 
-	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer);
+	void EndSingleSubmissionCommands(VkCommandBuffer commandBuffer, bool waitForIdle = true);
 
 	VkExtent2D& GetSwapchainExtent();
 
@@ -134,8 +138,6 @@ public:
 
     void UpdateDeferredDescriptorSet();
 
-	void RenderShadowMaps();
-
     VkImageView GetShadowMapImageView();
 
     VkSampler GetShadowMapSampler();
@@ -143,6 +145,9 @@ public:
 	void ToggleIrradianceDebug();
 
 	void ToggleEnvironmentCaptureDebug();
+
+	Texture2D* GetBlackTexture();
+	TextureCube* GetBlackCubemap();
 
 private:
 
@@ -178,6 +183,8 @@ private:
 	void UpdateDebugDescriptorSet();
 
 	void CreateRenderPass();
+
+	void CreateDefaultTextures();
 
 	void CreatePipelines();
 
@@ -219,6 +226,8 @@ private:
 									 uint32_t count);
 
 	void DestroyDebugCallback();
+
+	void DestroyDefaultTextures();
 
 	static Renderer* sInstance;
 
@@ -295,4 +304,12 @@ private:
     uint32_t mEnvironmentDebugFace;
 
 	ShadowCaster mShadowCaster;
+
+	public:
+
+	// Default Resources
+	Texture2D mWhiteTexture;
+	Texture2D mBlackTexture;
+	TextureCube mBlackCubemap;
+	TextureCube mGreenCubemap;
 };

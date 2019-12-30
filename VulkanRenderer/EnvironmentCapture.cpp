@@ -153,8 +153,8 @@ void EnvironmentCapture::Capture()
 		// ******************
 		//  Early Depth Pass
 		// ******************
-		//earlyDepthPipeline.BindPipeline(commandBuffer);
-		//mScene->RenderGeometry(commandBuffer);
+		earlyDepthPipeline.BindPipeline(commandBuffer);
+		mScene->RenderGeometry(commandBuffer);
 		vkCmdNextSubpass(commandBuffer, VK_SUBPASS_CONTENTS_INLINE);
 
 		// ******************
@@ -192,6 +192,10 @@ void EnvironmentCapture::Capture()
 		++i;
 	}
 
+	mCubemap.SetLayout(VK_IMAGE_LAYOUT_PRESENT_SRC_KHR); // Override cached layout because it was modified by renderpass.
+	mCubemap.TransitionToSRV(); // The cubemap needs to be blurred to create the irradiance cubemap, so we need this as an SRV now.
+	mIrradianceCubemap.TransitionToRT(); // Rendering to irradiance map now.
+
 	RenderIrradiance();
 
     // Revert the fake changes we made to global data
@@ -209,10 +213,6 @@ void EnvironmentCapture::Capture()
     earlyDepthPipeline.Destroy();
     geometryPipeline.Destroy();
     lightPipeline.Destroy();
-
-	// Transition cubemaps to SRVs
-	mCubemap.TransitionToSRV();
-	mIrradianceCubemap.TransitionToSRV();
 }
 
 void EnvironmentCapture::RenderIrradiance()
@@ -229,7 +229,7 @@ void EnvironmentCapture::RenderIrradiance()
 
 	mIrradianceDescriptorSet.Destroy();
 	mIrradianceDescriptorSet.Create(irradiancePipeline.GetDescriptorSetLayout(1), 0);
-	mIrradianceDescriptorSet.UpdateImageDescriptor(0, mCubemap.GetCubemapImageView(), mCubemap.GetSampler());
+	mIrradianceDescriptorSet.UpdateImageDescriptor(0, mCubemap.GetImageView(), mCubemap.GetSampler());
 
 	const float piDiv2 = glm::radians(90.0f);
 	const float pi = 3.14159265f;
@@ -274,8 +274,6 @@ void EnvironmentCapture::RenderIrradiance()
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
 		irradiancePipeline.BindPipeline(commandBuffer);
-
-		vkCmdBindVertexBuffers(commandBuffer, 0, 0, nullptr, nullptr);
 
 		VkDescriptorSet irradianceDescriptor = mIrradianceDescriptorSet.GetDescriptorSet();
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, irradiancePipeline.GetPipelineLayout(), 1, 1, &irradianceDescriptor, 0, nullptr);
@@ -386,8 +384,8 @@ void EnvironmentCapture::CreateCubemap()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	mCubemap.Create(mResolution, renderer->GetSwapchainFormat());
-	mIrradianceCubemap.Create(IRRADIANCE_RESOLUTION);
+	mCubemap.Create(mResolution, mResolution, renderer->GetSwapchainFormat());
+	mIrradianceCubemap.Create(IRRADIANCE_RESOLUTION, IRRADIANCE_RESOLUTION);
 
 	CreateDepthImage();
 
@@ -489,7 +487,7 @@ void EnvironmentCapture::DestroyFramebuffers()
 	}
 }
 
-Cubemap* EnvironmentCapture::GetIrradianceMap()
+TextureCube* EnvironmentCapture::GetIrradianceMap()
 {
 	return &mIrradianceCubemap;
 }
@@ -544,7 +542,7 @@ void EnvironmentCapture::CreateIrradianceRenderPass()
 		attachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachmentDesc.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachmentDesc.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 		VkAttachmentReference attachmentRef = {};
 		attachmentRef.attachment = 0;
@@ -619,8 +617,8 @@ void EnvironmentCapture::UpdateDesriptorSet(VkDescriptorSet descriptorSet)
 	VkDescriptorImageInfo imageInfo = {};
 	VkWriteDescriptorSet descriptorWrite = {};
 
-	imageInfo.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageInfo.imageView = mCubemap.GetCubemapImageView();
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = mCubemap.GetImageView();
 	imageInfo.sampler = mCubemap.GetSampler();
 
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
