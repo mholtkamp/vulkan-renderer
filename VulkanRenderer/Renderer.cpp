@@ -122,16 +122,6 @@ void Renderer::DestroySwapchain()
 	vkFreeCommandBuffers(mDevice, mCommandPool, static_cast<uint32_t>(mCommandBuffers.size()), mCommandBuffers.data());
 	mCommandBuffers.clear();
 
-	mEarlyDepthPipeline.Destroy();
-	mGeometryPipeline.Destroy();
-	mLightPipeline.Destroy();
-    mDirectionalLightPipeline.Destroy();
-	mDebugDeferredPipeline.Destroy();
-	mEnvironmentCaptureDebugPipeline.Destroy();
-	mShadowMapDebugPipeline.Destroy();
-	mPostProcessPipeline.Destroy();
-	mNullPostProcessPipeline.Destroy();
-
 	mGBuffer.Destroy();
 
 	vkDestroyRenderPass(mDevice, mRenderPass, nullptr);
@@ -161,6 +151,8 @@ Renderer::~Renderer()
     mShadowCaster.Destroy();
 
 	DestroySwapchain();
+
+	DestroyPipelines();
 
 	vkDestroyDescriptorPool(mDevice, mDescriptorPool, nullptr);
 
@@ -325,6 +317,8 @@ void Renderer::Render()
 		mShadowCaster.RenderShadows(mScene, mCommandBuffers[imageIndex]);
 		UpdateDeferredDescriptorSet();
 	}
+
+	SetViewportAndScissor(mCommandBuffers[imageIndex], 0, 0, mSwapchainExtent.width, mSwapchainExtent.height);
 
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
@@ -1619,7 +1613,6 @@ void Renderer::RecreateSwapchain()
 	CreateLitColorImage();
 	mGBuffer.Create(mSwapchainExtent.width, mSwapchainExtent.height);
 	CreateRenderPass();
-	CreatePipelines();
 	CreateFramebuffers();
 	CreateGlobalDescriptorSet();
 	CreatePostProcessDescriptorSet();
@@ -1959,11 +1952,41 @@ void Renderer::CreatePipelines()
 	mNullPostProcessPipeline.Create();
 }
 
+void Renderer::DestroyPipelines()
+{
+	mEarlyDepthPipeline.Destroy();
+	mGeometryPipeline.Destroy();
+	mLightPipeline.Destroy();
+	mDirectionalLightPipeline.Destroy();
+	mDebugDeferredPipeline.Destroy();
+	mEnvironmentCaptureDebugPipeline.Destroy();
+	mShadowMapDebugPipeline.Destroy();
+	mPostProcessPipeline.Destroy();
+	mNullPostProcessPipeline.Destroy();
+}
+
 void Renderer::SetDebugMode(DebugMode mode)
 {
 	mDebugMode = mode;
 	UpdateGlobalDescriptorSet();
     UpdateDebugDescriptorSet();
+}
+
+void Renderer::SetViewportAndScissor(VkCommandBuffer cb, int32_t x, int32_t y, int32_t width, int32_t height)
+{
+	VkViewport viewport = {};
+	viewport.x = x;
+	viewport.y = y;
+	viewport.width = width;
+	viewport.height = height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	vkCmdSetViewport(cb, 0, 1, &viewport);
+
+	VkRect2D scissorRect = {};
+	scissorRect.offset = { x, y };
+	scissorRect.extent = { static_cast<uint32_t>(width), static_cast<uint32_t>(height) };
+	vkCmdSetScissor(cb, 0, 1, &scissorRect);
 }
 
 void Renderer::SetEnvironmentDebugFace(uint32_t index)

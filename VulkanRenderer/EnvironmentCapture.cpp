@@ -135,6 +135,8 @@ void EnvironmentCapture::Capture()
 
 		VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
 
+		renderer->SetViewportAndScissor(commandBuffer, 0, 0, mResolution, mResolution);
+
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = renderer->GetRenderPass();
@@ -257,6 +259,8 @@ void EnvironmentCapture::RenderIrradiance()
 		vkUnmapMemory(device, mIrradianceBufferMemory);
 
 		VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
+
+		renderer->SetViewportAndScissor(commandBuffer, 0, 0, IRRADIANCE_RESOLUTION, IRRADIANCE_RESOLUTION);
 
 		VkRenderPassBeginInfo renderPassInfo = {};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;

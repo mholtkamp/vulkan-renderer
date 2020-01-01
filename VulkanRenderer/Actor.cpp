@@ -17,7 +17,6 @@ Actor::Actor() :
 	mDescriptorSet(VK_NULL_HANDLE),
 	mUniformBuffer(VK_NULL_HANDLE),
 	mUniformBufferMemory(VK_NULL_HANDLE)
-	
 {
 
 }
@@ -206,7 +205,6 @@ void Actor::UpdateEnvironmentSampler()
 		descriptorWrite.pImageInfo = &imageInfo;
 
 		vkUpdateDescriptorSets(renderer->GetDevice(), 1, &descriptorWrite, 0, nullptr);
-		
 	}
 }
 

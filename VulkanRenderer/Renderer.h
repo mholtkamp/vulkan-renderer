@@ -116,6 +116,8 @@ public:
 
 	void SetDebugMode(DebugMode mode);
 
+	void SetViewportAndScissor(VkCommandBuffer cb, int32_t x, int32_t y, int32_t width, int32_t height);
+
 	GBuffer& GetGBuffer();
 
 	VkDescriptorSet& GetGlobalDescriptorSet();
@@ -187,6 +189,8 @@ private:
 	void CreateDefaultTextures();
 
 	void CreatePipelines();
+
+	void DestroyPipelines();
 
 	void CreateFramebuffers();
 

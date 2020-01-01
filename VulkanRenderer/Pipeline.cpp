@@ -179,6 +179,12 @@ void Pipeline::Create()
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
+	VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+	VkPipelineDynamicStateCreateInfo dynamicState = {};
+	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+	dynamicState.dynamicStateCount = 2;
+	dynamicState.pDynamicStates = dynamicStates;
+
 	CreatePipelineLayout();
 
 	VkGraphicsPipelineCreateInfo ciPipeline = {};
@@ -192,7 +198,7 @@ void Pipeline::Create()
 	ciPipeline.pMultisampleState = &multisampling;
 	ciPipeline.pDepthStencilState = &depthStencil;
 	ciPipeline.pColorBlendState = &colorBlending;
-	ciPipeline.pDynamicState = nullptr;
+	ciPipeline.pDynamicState = &dynamicState;
 	ciPipeline.layout = mPipelineLayout;
 	ciPipeline.renderPass = (mRenderpass == VK_NULL_HANDLE) ? renderer->GetRenderPass() : mRenderpass;
 	ciPipeline.subpass = mSubpass;

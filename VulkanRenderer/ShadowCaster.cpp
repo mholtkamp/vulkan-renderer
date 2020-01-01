@@ -77,6 +77,8 @@ void ShadowCaster::RenderShadows(Scene* scene, VkCommandBuffer commandBuffer)
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
+	renderer->SetViewportAndScissor(commandBuffer, 0, 0, SHADOW_MAP_RESOLUTION, SHADOW_MAP_RESOLUTION);
+
 	mShadowPipeline.BindPipeline(commandBuffer);
 	scene->RenderGeometry(commandBuffer);
 	
