@@ -172,7 +172,7 @@ void Pipeline::Create()
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
 	colorBlending.logicOpEnable = VK_FALSE;
 	colorBlending.logicOp = VK_LOGIC_OP_COPY;
-	colorBlending.attachmentCount = mBlendAttachments.size();
+	colorBlending.attachmentCount = static_cast<uint32_t>(mBlendAttachments.size());
 	colorBlending.pAttachments = mBlendAttachments.data();
 	colorBlending.blendConstants[0] = 0.0f;
 	colorBlending.blendConstants[1] = 0.0f;
@@ -293,7 +293,7 @@ void Pipeline::AddLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageF
 	layoutBinding.descriptorType = type;
 	layoutBinding.pImmutableSamplers = nullptr;
 	layoutBinding.stageFlags = stageFlags;
-	layoutBinding.binding = mLayoutBindings.back().size();
+	layoutBinding.binding = static_cast<uint32_t>(mLayoutBindings.back().size());
 
 	mLayoutBindings.back().push_back(layoutBinding);
 }
@@ -309,7 +309,7 @@ void Pipeline::CreatePipelineLayout()
 
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo = {};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = mDescriptorSetLayouts.size();
+	pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(mDescriptorSetLayouts.size());
 	pipelineLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 	pipelineLayoutInfo.pPushConstantRanges = 0;
@@ -328,7 +328,7 @@ void Pipeline::CreateDescriptorSetLayouts()
 	{
 		VkDescriptorSetLayoutCreateInfo ciDescriptorSetLayout = {};
 		ciDescriptorSetLayout.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		ciDescriptorSetLayout.bindingCount = mLayoutBindings[i].size();
+		ciDescriptorSetLayout.bindingCount = static_cast<uint32_t>(mLayoutBindings[i].size());
 		ciDescriptorSetLayout.pBindings = mLayoutBindings[i].data();
 
 		mDescriptorSetLayouts.push_back(VK_NULL_HANDLE);

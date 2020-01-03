@@ -947,7 +947,7 @@ void Renderer::CreateRenderPass()
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
 			0, // input attachments
 			nullptr,
-			geometryAttachmentReference.size(),
+			static_cast<uint32_t>(geometryAttachmentReference.size()),
 			geometryAttachmentReference.data(),
 			nullptr,
 			&depthAttachmentReference,
@@ -959,7 +959,7 @@ void Renderer::CreateRenderPass()
 		{
 			0,
 			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			geometryInputAttachmentReference.size(), // input attachments
+			static_cast<uint32_t>(geometryInputAttachmentReference.size()), // input attachments
 			geometryInputAttachmentReference.data(),
 			litColorReferenceCount,
 			litColorAttachmentReference,
@@ -1025,11 +1025,11 @@ void Renderer::CreateRenderPass()
 		VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
 		nullptr,
 		0,
-		attachments.size(),
+		static_cast<uint32_t>(attachments.size()),
 		attachments.data(),
-		ARRAYSIZE(subpasses),
+		static_cast<uint32_t>(ARRAYSIZE(subpasses)),
 		subpasses,
-		ARRAYSIZE(dependencies),
+		static_cast<uint32_t>(ARRAYSIZE(dependencies)),
 		dependencies
 	};
 
@@ -1074,7 +1074,7 @@ void Renderer::CreateFramebuffers()
 		VkFramebufferCreateInfo ciFramebuffer = {};
 		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		ciFramebuffer.renderPass = mRenderPass;
-		ciFramebuffer.attachmentCount = attachments.size();
+		ciFramebuffer.attachmentCount = static_cast<uint32_t>(attachments.size());
 		ciFramebuffer.pAttachments = attachments.data();
 		ciFramebuffer.width = mSwapchainExtent.width;
 		ciFramebuffer.height = mSwapchainExtent.height;
@@ -1975,10 +1975,10 @@ void Renderer::SetDebugMode(DebugMode mode)
 void Renderer::SetViewportAndScissor(VkCommandBuffer cb, int32_t x, int32_t y, int32_t width, int32_t height)
 {
 	VkViewport viewport = {};
-	viewport.x = x;
-	viewport.y = y;
-	viewport.width = width;
-	viewport.height = height;
+	viewport.x = static_cast<float>(x);
+	viewport.y = static_cast<float>(y);
+	viewport.width = static_cast<float>(width);
+	viewport.height = static_cast<float>(height);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	vkCmdSetViewport(cb, 0, 1, &viewport);

@@ -428,7 +428,7 @@ void EnvironmentCapture::CreateIrradianceFramebuffers()
 		VkFramebufferCreateInfo ciFramebuffer = {};
 		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		ciFramebuffer.renderPass = mIrradianceRenderPass;
-		ciFramebuffer.attachmentCount = attachments.size();
+		ciFramebuffer.attachmentCount = static_cast<uint32_t>(attachments.size());
 		ciFramebuffer.pAttachments = attachments.data();
 		ciFramebuffer.width = IRRADIANCE_RESOLUTION;
 		ciFramebuffer.height = IRRADIANCE_RESOLUTION;
@@ -518,7 +518,7 @@ void EnvironmentCapture::CreateFramebuffers()
 		VkFramebufferCreateInfo ciFramebuffer = {};
 		ciFramebuffer.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		ciFramebuffer.renderPass = renderer->GetRenderPass();
-		ciFramebuffer.attachmentCount = attachments.size();
+		ciFramebuffer.attachmentCount = static_cast<uint32_t>(attachments.size());
 		ciFramebuffer.pAttachments = attachments.data();
 		ciFramebuffer.width = mResolution;
 		ciFramebuffer.height = mResolution;
