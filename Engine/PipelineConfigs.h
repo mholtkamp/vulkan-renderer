@@ -5,6 +5,8 @@
 #include "Pipeline.h"
 #include <assert.h>
 
+#define ENGINE_SHADER_DIR "Engine/Shaders/bin/"
+
 class EarlyDepthPipeline : public Pipeline
 {
 public:
@@ -12,8 +14,8 @@ public:
 	EarlyDepthPipeline()
 	{
 		mRasterizerDiscard = VK_FALSE;
-		mFragmentShaderPath = "Shaders/bin/depthShader.frag";
-		mVertexShaderPath = "Shaders/bin/depthShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "depthShader.frag";
+		mVertexShaderPath = ENGINE_SHADER_DIR "depthShader.vert";
 		mSubpass = PASS_DEPTH;
 
 		mBlendAttachments.clear();
@@ -40,7 +42,7 @@ public:
 
 	ShadowCastPipeline()
 	{
-		mVertexShaderPath = "Shaders/bin/shadowCastShader.vert";
+		mVertexShaderPath = ENGINE_SHADER_DIR "shadowCastShader.vert";
 		mFragmentShaderPath = "";
 	}
 
@@ -54,8 +56,8 @@ public:
 	{
 		mSubpass = PASS_GEOMETRY;
 		mDepthCompareOp = VK_COMPARE_OP_EQUAL;
-		mVertexShaderPath = "Shaders/bin/reflectiveGeometryShader.vert";
-		mFragmentShaderPath = "Shaders/bin/reflectiveGeometryShader.frag";
+		mVertexShaderPath = ENGINE_SHADER_DIR "reflectiveGeometryShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "reflectiveGeometryShader.frag";
 		//mCullMode = VK_CULL_MODE_NONE;
 
 		// Add blend states for each attachment (1 already created).
@@ -86,7 +88,7 @@ public:
 
 	ReflectionlessGeometryPipeline()
 	{
-		mFragmentShaderPath = "Shaders/bin/nonreflectiveGeometryShader.frag";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "nonreflectiveGeometryShader.frag";
 	}
 };
 
@@ -96,8 +98,8 @@ public:
 
 	DeferredPipeline()
 	{
-		mVertexShaderPath = "Shaders/bin/deferredShader.vert";
-		mFragmentShaderPath = "Shaders/bin/deferredShader.frag";
+		mVertexShaderPath = ENGINE_SHADER_DIR "deferredShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "deferredShader.frag";
 		mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		mCullMode = VK_CULL_MODE_NONE;
 		mSubpass = PASS_DEFERRED;
@@ -126,8 +128,8 @@ public:
 
 	LightPipeline()
 	{
-		mVertexShaderPath = "Shaders/bin/lightShader.vert";
-		mFragmentShaderPath = "Shaders/bin/lightShader.frag";
+		mVertexShaderPath = ENGINE_SHADER_DIR "lightShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "lightShader.frag";
 		mBlendEnabled = true;
 		mCullMode = VK_CULL_MODE_FRONT_BIT;
 
@@ -155,8 +157,8 @@ public:
 
     DirectionalLightPipeline()
     {
-        mVertexShaderPath = "Shaders/bin/directionalLightShader.vert";
-        mFragmentShaderPath = "Shaders/bin/directionalLightShader.frag";
+        mVertexShaderPath = ENGINE_SHADER_DIR "directionalLightShader.vert";
+        mFragmentShaderPath = ENGINE_SHADER_DIR "directionalLightShader.frag";
         mBlendEnabled = true;
         mCullMode = VK_CULL_MODE_NONE;
 
@@ -184,8 +186,8 @@ public:
 
 	DebugDeferredPipeline()
 	{
-		mVertexShaderPath = "Shaders/bin/debugDeferredShader.vert";
-		mFragmentShaderPath = "Shaders/bin/debugDeferredShader.frag";
+		mVertexShaderPath = ENGINE_SHADER_DIR "debugDeferredShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "debugDeferredShader.frag";
 	}
 
 	virtual void PopulateLayoutBindings() override
@@ -200,7 +202,7 @@ public:
 
 	BaseDebugPipeline()
 	{
-		mFragmentShaderPath = "Shaders/bin/environmentCaptureDebug.frag";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "environmentCaptureDebug.frag";
 	}
 
 	virtual void PopulateLayoutBindings() override
@@ -219,7 +221,7 @@ public:
 
 	EnvironmentCaptureDebugPipeline()
 	{
-		mFragmentShaderPath = "Shaders/bin/environmentCaptureDebug.frag";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "environmentCaptureDebug.frag";
 	}
 
 	virtual void PopulateLayoutBindings() override
@@ -234,7 +236,7 @@ public:
 
 	ShadowMapDebugPipeline()
 	{
-        mFragmentShaderPath = "Shaders/bin/shadowMapDebug.frag";
+        mFragmentShaderPath = ENGINE_SHADER_DIR "shadowMapDebug.frag";
 	}
 
 	virtual void PopulateLayoutBindings() override
@@ -252,8 +254,8 @@ public:
 
 	PostProcessPipeline()
 	{
-		mVertexShaderPath = "Shaders/bin/deferredShader.vert";
-		mFragmentShaderPath = "Shaders/bin/tonemapShader.frag";
+		mVertexShaderPath = ENGINE_SHADER_DIR "deferredShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "tonemapShader.frag";
 		mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		mCullMode = VK_CULL_MODE_NONE;
 		mSubpass = PASS_POST_PROCESS;
@@ -276,7 +278,7 @@ public:
 
 	NullPostProcessPipeline()
 	{
-		mFragmentShaderPath = "Shaders/bin/nullPostProcessShader.frag";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "nullPostProcessShader.frag";
 	}
 
 };
@@ -287,8 +289,8 @@ public:
 
 	IrradianceConvolutionPipeline()
 	{
-		mVertexShaderPath = "Shaders/bin/irradianceConvolutionShader.vert";
-		mFragmentShaderPath = "Shaders/bin/irradianceConvolutionShader.frag";
+		mVertexShaderPath = ENGINE_SHADER_DIR "irradianceConvolutionShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "irradianceConvolutionShader.frag";
 
         mDepthTestEnabled = false;
         mCullMode = VK_CULL_MODE_NONE;

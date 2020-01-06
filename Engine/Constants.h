@@ -8,7 +8,7 @@
 
 #define TEST_LIGHT_RANGE 25.0f
 
-#define DEFAULT_TEXTURE_DIRECTORY_NAME "Textures/"
+#define DEFAULT_TEXTURE_DIRECTORY_NAME "Engine/Textures/"
 #define DEFAULT_DIFFUSE_TEXTURE_NAME "DefaultDiffuseTexture.png"
 #define DEFAULT_SPECULAR_TEXTURE_NAME "DefaultSpecularTexture.png"
 #define DEFAULT_NORMAL_TEXTURE_NAME "DefaultNormalTexture.png"

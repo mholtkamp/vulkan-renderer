@@ -60,7 +60,7 @@ void PointLight::LoadSphereMesh()
 	DestroySphereMesh();
 
 	sSphereMesh = new Mesh();
-	sSphereMesh->LoadMesh("Meshes/Sphere_112.dae");
+	sSphereMesh->LoadMesh("Engine/Meshes/Sphere_112.dae");
 }
 
 void PointLight::DestroySphereMesh()

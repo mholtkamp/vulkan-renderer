@@ -13,6 +13,7 @@ static AppState sAppState;
 static bool sQuit = false;
 static CameraController sCameraController;
 static DebugActionHandler sDebugHandler;
+static Scene* sScene = nullptr;
 static Clock sClock;
 
 // MS-Windows event handling function:
@@ -62,7 +63,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	return (DefWindowProc(hWnd, uMsg, wParam, lParam));
 }
 
-void CreateNativeWindow()
+void CreateNativeWindow(int32_t width, int32_t height)
 {
 	WNDCLASSEX win_class;
 
@@ -88,7 +89,7 @@ void CreateNativeWindow()
 		exit(1);
 	}
 	// Create window with the registered class:
-	RECT wr = { 0, 0, APP_WINDOW_WIDTH, APP_WINDOW_HEIGHT };
+	RECT wr = { 0, 0, width, height };
 	AdjustWindowRect(&wr, WS_OVERLAPPEDWINDOW, FALSE);
 	sAppState.mWindow = CreateWindowEx(0,
 		APP_NAME,           // class name
@@ -133,13 +134,12 @@ void ProcessMessages()
 	}
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int nCmdShow)
+bool Initialize(int32_t width, int32_t height)
 {
 	Renderer::Create();
 	Renderer* renderer = Renderer::Get();
-	Scene* scene = new Scene();
 
-	sAppState.mConnection = hInstance;
+	sAppState.mConnection = GetModuleHandle(NULL); //hInstance;
 
 #ifdef NDEBUG
 	sAppState.mValidate = false;
@@ -149,35 +149,42 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine,
 
 	renderer->SetAppState(&sAppState);
 
-	CreateNativeWindow();
+	CreateNativeWindow(width, height);
 
 	renderer->Initialize();
 
-	//scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene2.dae");
-	//scene->Load("C:/Sponza/", "Sponza.dae");
-	//scene->Load("C:/Sponza/", "Sponza_minimal.dae");
-	//scene->Load("D:/Courtyard/Collada/", "courtyard_minimal.dae");
-	//scene->Load("D:/Courtyard/Collada/", "courtyard_minimal_lights.dae");
-	scene->Load("Scenes/Sponza/", "Sponza.dae");
-
-	sCameraController.SetCamera(scene->GetActiveCamera());
 	sClock.Start();
 
-	renderer->SetScene(scene);
+	return true;
+}
 
-	while (sQuit == false)
-	{
-		ProcessMessages();
-		sClock.Update();
-		sDebugHandler.Update();
-		sCameraController.Update(sClock.DeltaTime());
-		scene->Update(sClock.DeltaTime());
-		renderer->Render();
-	}
+bool Update()
+{
+	ProcessMessages();
+	sClock.Update();
+	sDebugHandler.Update();
+	sCameraController.Update(sClock.DeltaTime());
+	sScene->Update(sClock.DeltaTime());
+	Renderer::Get()->Render();
 
-	renderer->WaitOnExecutionFinished();
+	return !sQuit;
+}
 
-	delete scene;
+void Shutdown()
+{
+	Renderer::Get()->WaitOnExecutionFinished();
 	Renderer::Destroy();
 	printf("Done.\n");
+}
+
+void AssignDebugCamera(Camera* camera)
+{
+	sCameraController.SetCamera(camera);
+}
+
+void SetScene(Scene* scene)
+{
+	Renderer* renderer = Renderer::Get();
+	renderer->SetScene(scene);
+	sScene = scene;
 }
