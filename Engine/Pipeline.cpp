@@ -92,10 +92,14 @@ void Pipeline::Create()
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo = {};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
+
+	VkVertexInputBindingDescription bindingDescription;
+	std::vector<VkVertexInputAttributeDescription> attributeDescription;
+
 	if (mUseVertexBinding)
 	{
-		auto bindingDescription = Vertex::GetBindingDescription();
-		auto attributeDescription = Vertex::GetAttributeDescriptions();
+		bindingDescription = Vertex::GetBindingDescription();
+		attributeDescription = Vertex::GetAttributeDescriptions();
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
 		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());
