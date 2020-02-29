@@ -7,9 +7,19 @@ struct Allocation
 {
 	VkDeviceMemory mDeviceMemory;
 	uint32_t mType;
-	uint32_t mID;
+	int32_t mID;
 	VkDeviceSize mSize;
 	VkDeviceSize mOffset;
+
+	Allocation() :
+		mDeviceMemory(VK_NULL_HANDLE),
+		mType(0),
+		mID(-1),
+		mSize(0),
+		mOffset(0)
+	{
+
+	}
 };
 
 struct MemoryChunk
