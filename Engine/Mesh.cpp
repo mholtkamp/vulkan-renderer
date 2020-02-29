@@ -168,13 +168,13 @@ void Mesh::CreateVertexBuffer(aiVector3D* positions,
 	VkDeviceSize bufferSize = sizeof(Vertex) * mNumVertices;
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	Allocation stagingBufferMemory;
 	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vkMapMemory(device, stagingBufferMemory.mDeviceMemory, stagingBufferMemory.mOffset, bufferSize, 0, &data);
 	memcpy(data, vertices, (size_t)bufferSize);
-	vkUnmapMemory(device, stagingBufferMemory);
+	vkUnmapMemory(device, stagingBufferMemory.mDeviceMemory);
 
 	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mVertexBuffer, mVertexBufferMemory);
 
@@ -205,20 +205,20 @@ void Mesh::CreateIndexBuffer(aiFace* faces)
 	VkDeviceSize bufferSize = mNumFaces * 3 * sizeof(uint32_t);
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	Allocation stagingBufferMemory;
 	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vkMapMemory(device, stagingBufferMemory.mDeviceMemory, stagingBufferMemory.mOffset, bufferSize, 0, &data);
 	memcpy(data, indices, static_cast<size_t>(bufferSize));
-	vkUnmapMemory(device, stagingBufferMemory);
+	vkUnmapMemory(device, stagingBufferMemory.mDeviceMemory);
 
 	renderer->CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mIndexBuffer, mIndexBufferMemory);
 
 	renderer->CopyBuffer(stagingBuffer, mIndexBuffer, bufferSize);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	Allocator::Free(stagingBufferMemory);
 
 	free(indices);
 }

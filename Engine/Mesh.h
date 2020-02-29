@@ -50,8 +50,8 @@ private:
 	uint32_t mNumFaces;
 
 	VkBuffer mVertexBuffer;
-	VkDeviceMemory mVertexBufferMemory;
+	Allocation mVertexBufferMemory;
 	VkBuffer mIndexBuffer;
-	VkDeviceMemory mIndexBufferMemory;
+	Allocation mIndexBufferMemory;
 
 };

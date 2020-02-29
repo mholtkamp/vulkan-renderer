@@ -2,6 +2,7 @@
 #include "ApplicationInfo.h"
 #include "Utilities.h"
 #include "Constants.h"
+#include "Allocator.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -131,7 +132,7 @@ void Renderer::DestroySwapchain()
 	vkFreeMemory(mDevice, mDepthImageMemory, nullptr);
 
 	vkDestroyBuffer(mDevice, mGlobalUniformBuffer, nullptr);
-	vkFreeMemory(mDevice, mGlobalUniformBufferMemory, nullptr);
+	Allocator::Free(mGlobalUniformBufferMemory);
 	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mGlobalDescriptorSet);
 
 	for (size_t i = 0; i < mSwapchainImageViews.size(); ++i)
@@ -1555,7 +1556,7 @@ void Renderer::CreateBuffer(VkDeviceSize size,
 	VkBufferUsageFlags usage,
 	VkMemoryPropertyFlags properties,
 	VkBuffer& buffer,
-	VkDeviceMemory& bufferMemory)
+	Allocation& bufferMemory)
 {
 	VkBufferCreateInfo ciBuffer = {};
 	ciBuffer.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -1571,18 +1572,11 @@ void Renderer::CreateBuffer(VkDeviceSize size,
 
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(mDevice, buffer, &memRequirements);
+	uint32_t memoryType = FindMemoryType(memRequirements.memoryTypeBits, properties);
+	
+	Allocator::Alloc(memRequirements.size, memRequirements.alignment, memoryType, bufferMemory);
 
-	VkMemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, properties);
-
-	if (vkAllocateMemory(mDevice, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
-	{
-		throw exception("Failed to allocate memory for vertex buffer");
-	}
-
-	vkBindBufferMemory(mDevice, buffer, bufferMemory, 0);
+	vkBindBufferMemory(mDevice, buffer, bufferMemory.mDeviceMemory, bufferMemory.mOffset);
 }
 
 void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)

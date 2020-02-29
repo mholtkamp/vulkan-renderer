@@ -3,6 +3,7 @@
 #include <vulkan/vulkan.h>
 #include <string>
 #include "glm/glm.hpp"
+#include "Allocator.h"
 
 enum class TextureType
 {
@@ -48,7 +49,7 @@ public:
 
 	VkSampler GetSampler();
 
-	static void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, VkDeviceMemory& imageMemory, uint32_t mipLevels = 1, uint32_t layers = 1, VkImageCreateFlags = 0);
+	static void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, VkImage& image, Allocation& imageMemory, uint32_t mipLevels = 1, uint32_t layers = 1, VkImageCreateFlags = 0);
 
 	static VkImageView CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels = 1, uint32_t layers = 1, TextureType type = TextureType::Texture2D);
 
@@ -61,7 +62,7 @@ protected:
 	std::string mName;
 
 	VkImage mImage;
-	VkDeviceMemory mImageMemory;
+	Allocation mImageMemory;
 	VkImageView mImageView;
 	VkSampler mSampler;
 	VkFormat mFormat;

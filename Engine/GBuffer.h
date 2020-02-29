@@ -38,7 +38,7 @@ private:
     uint32_t mHeight;
 
 	std::vector<VkImage> mImages;
-	std::vector<VkDeviceMemory> mImageMemory;
+	std::vector<Allocation> mImageMemory;
 	std::vector<VkImageView> mImageViews;
 	std::vector<VkFormat> mFormats;
 	VkSampler mSampler;

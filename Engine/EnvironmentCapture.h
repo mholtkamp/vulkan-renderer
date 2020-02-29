@@ -81,11 +81,11 @@ private:
 	std::array<VkFramebuffer, 6> mIrradianceFramebuffers;
 
 	VkImage mDepthImage;
-	VkDeviceMemory mDepthImageMemory;
+	Allocation mDepthImageMemory;
 	VkImageView mDepthImageView;
 
 	VkImage mLitColorImage;
-	VkDeviceMemory mLitColorImageMemory;
+	Allocation mLitColorImageMemory;
 	VkImageView mLitColorImageView;
 	VkSampler mLitColorSampler;
 
@@ -93,7 +93,7 @@ private:
 	DescriptorSet mIrradianceDescriptorSet;
 
 	VkBuffer mIrradianceBuffer;
-	VkDeviceMemory mIrradianceBufferMemory;
+	Allocation mIrradianceBufferMemory;
 
 	VkRenderPass mIrradianceRenderPass;
 

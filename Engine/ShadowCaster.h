@@ -35,7 +35,7 @@ private:
 	VkFramebuffer mShadowFramebuffer;
 	ShadowCastPipeline mShadowPipeline;
 	VkImage mShadowMapImage;
-	VkDeviceMemory mShadowMapImageMemory;
+	Allocation mShadowMapImageMemory;
 	VkImageView mShadowMapImageView;
 	VkSampler mShadowMapSampler;
 };

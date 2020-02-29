@@ -80,5 +80,5 @@ private:
 
 	VkDescriptorSet mDescriptorSet;
 	VkBuffer mUniformBuffer;
-	VkDeviceMemory mUniformBufferMemory;
+	Allocation mUniformBufferMemory;
 };

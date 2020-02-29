@@ -121,7 +121,7 @@ void GBuffer::CreateAttachment(GBufferIndex index, VkFormat format)
 	Renderer* renderer = Renderer::Get();
 
 	VkImage& image = mImages[index];
-	VkDeviceMemory& imageMemory = mImageMemory[index];
+	Allocation& imageMemory = mImageMemory[index];
 	VkImageView& imageView = mImageViews[index];
 
 	// Save the format in case it is needed later.

@@ -12,16 +12,34 @@ struct Allocation
 	VkDeviceSize mOffset;
 };
 
+struct MemoryChunk
+{
+	int32_t mID;
+	int32_t mOffset;
+	int32_t mSize;
+	bool mFree;
+
+	MemoryChunk() :
+		mID(-1),
+		mOffset(0),
+		mSize(0),
+		mFree(true)
+	{
+
+	}
+};
+
 struct MemoryBlock
 {
 	MemoryChunk* AllocateChunk(int32_t size);
-	void FreeChunk(int32_t id);
+	bool FreeChunk(int32_t id);
 
 	MemoryBlock() :
 		mDeviceMemory(0),
 		mSize(0),
 		mAvailableMemory(0),
-		mLargestChunk(0)
+		mLargestChunk(0),
+		mMemoryType(0)
 	{
 		
 	}
@@ -31,21 +49,15 @@ struct MemoryBlock
 	int32_t mSize;
 	int32_t mAvailableMemory;
 	int32_t mLargestChunk;
-};
-
-struct MemoryChunk
-{
-	int32_t mOffset;
-	int32_t mSize;
-	bool mFree;
+	uint32_t mMemoryType;
 };
 
 class Allocator
 {
 public:
 
-	static void Alloc(int32_t size, int32_t alignment, Allocation& outAllocation);
-	static void Free();
+	static void Alloc(int32_t size, int32_t alignment, uint32_t memoryType, Allocation& outAllocation);
+	static void Free(Allocation& allocation);
 
 	static int32_t GetNumBlocksAllocated();
 	static int32_t GetNumAllocations();
@@ -55,7 +67,9 @@ public:
 
 private:
 
-	static MemoryBlock* AllocateNewBlock(int32_t newBlockSize);
+	static MemoryBlock* AllocateBlock(int32_t newBlockSize, uint32_t memoryType);
+	static bool FreeBlock(MemoryBlock& block);
+
 
 	static std::vector<MemoryBlock> sBlocks;
 	static int32_t sNumAllocations;

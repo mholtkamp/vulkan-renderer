@@ -1,5 +1,6 @@
 #include "Texture.h"
 #include "Renderer.h"
+#include "Allocator.h"
 
 #include <stb_image.h>
 #include <exception>
@@ -8,7 +9,6 @@ using namespace std;
 
 Texture::Texture() :
 	mImage(VK_NULL_HANDLE),
-	mImageMemory(VK_NULL_HANDLE),
 	mImageView(VK_NULL_HANDLE),
 	mSampler(VK_NULL_HANDLE),
 	mTextureType(TextureType::Texture2D),
@@ -35,11 +35,10 @@ void Texture::Destroy()
 		vkDestroySampler(device, mSampler, nullptr);
 		vkDestroyImageView(device, mImageView, nullptr);
 		vkDestroyImage(device, mImage, nullptr);
-		vkFreeMemory(device, mImageMemory, nullptr);
+		Allocator::Free(mImageMemory);
 
 		mImage = VK_NULL_HANDLE;
 		mImageView = VK_NULL_HANDLE;
-		mImageMemory = VK_NULL_HANDLE;
 		mSampler = VK_NULL_HANDLE;
 
 		mName.clear();
@@ -176,7 +175,7 @@ void Texture::CreateImage(uint32_t width,
 	VkImageUsageFlags usage,
 	VkMemoryPropertyFlags properties,
 	VkImage& image,
-	VkDeviceMemory& imageMemory,
+	Allocation& imageMemory,
 	uint32_t mipLevels,
 	uint32_t layers,
 	VkImageCreateFlags flags)
@@ -207,16 +206,10 @@ void Texture::CreateImage(uint32_t width,
 
 	VkMemoryRequirements memRequirements;
 	vkGetImageMemoryRequirements(device, image, &memRequirements);
+	uint32_t memoryType = renderer->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	VkMemoryAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = renderer->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	if (vkAllocateMemory(device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS)
-	{
-		throw exception("Failed to allocate image memory");
-	}
+	Allocation allocation;
+	Allocator::Alloc(memRequirements.size, memRequirements.alignment, memoryType, allocation);
 
 	vkBindImageMemory(device, image, imageMemory, 0);
 }

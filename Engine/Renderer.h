@@ -94,7 +94,7 @@ public:
 					  VkBufferUsageFlags usage,
 					  VkMemoryPropertyFlags properties,
 					  VkBuffer& buffer,
-					  VkDeviceMemory& bufferMemory);
+					  Allocation& bufferMemory);
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -262,12 +262,12 @@ private:
 
 	// Depth image
 	VkImage mDepthImage;
-	VkDeviceMemory mDepthImageMemory;
+	Allocation mDepthImageMemory;
 	VkImageView mDepthImageView;
 
 	// Lit Color image
 	VkImage mLitColorImage;
-	VkDeviceMemory mLitColorImageMemory;
+	Allocation mLitColorImageMemory;
 	VkImageView mLitColorImageView;
 	VkSampler mLitColorSampler;
 	VkFormat mLitColorImageFormat;
@@ -287,7 +287,7 @@ private:
 
 	VkDescriptorSet mGlobalDescriptorSet;
 	VkBuffer mGlobalUniformBuffer;
-	VkDeviceMemory mGlobalUniformBufferMemory;
+	Allocation mGlobalUniformBufferMemory;
 
 	VkDescriptorSet mDeferredDescriptorSet;
 	VkDescriptorSet mDebugDescriptorSet;

@@ -66,14 +66,14 @@ void Texture2D::Load(const std::string& path)
 	mMipLevels = static_cast<int32_t>(floor(log2(std::max(mWidth, mHeight))) + 1);
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	Allocation stagingBufferMemory;
 
 	renderer->CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
 	void* data;
-	vkMapMemory(device, stagingBufferMemory, 0, imageSize, 0, &data);
+	vkMapMemory(device, stagingBufferMemory.mDeviceMemory, stagingBufferMemory.mOffset, imageSize, 0, &data);
 	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(device, stagingBufferMemory);
+	vkUnmapMemory(device, stagingBufferMemory.mDeviceMemory);
 
 	stbi_image_free(pixels);
 
@@ -84,7 +84,7 @@ void Texture2D::Load(const std::string& path)
 	CopyBufferToImage(stagingBuffer, mImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	Allocator::Free(stagingBufferMemory);
 
 	GenerateMips();
 	CreateTextureSampler();
