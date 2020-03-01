@@ -3,14 +3,15 @@
 #include <assert.h>
 #include <exception>
 
-const int32_t Allocator::sDefaultBlockSize = 16777216; // 16 MB Blocks
+std::vector<MemoryBlock> Allocator::sBlocks;
+const uint64_t Allocator::sDefaultBlockSize = 16777216; // 16 MB Blocks
 
-int32_t Allocator::sNumAllocations = 0;
-int32_t Allocator::sNumAllocatedBytes = 0;
+uint64_t Allocator::sNumAllocations = 0;
+uint64_t Allocator::sNumAllocatedBytes = 0;
 
-static int32_t sNumChunksAllocated = 0;
+static int64_t sNumChunksAllocated = 0;
 
-MemoryChunk* MemoryBlock::AllocateChunk(int32_t size)
+MemoryChunk* MemoryBlock::AllocateChunk(uint64_t size)
 {
 	MemoryChunk* chunk = nullptr;
 
@@ -20,7 +21,7 @@ MemoryChunk* MemoryBlock::AllocateChunk(int32_t size)
 			mChunks[j].mSize >= size)
 		{
 			// We found a chunk that is big enough, now let's split the chunk into two.
-			int32_t extraSize = mChunks[j].mSize - size;
+			uint64_t extraSize = mChunks[j].mSize - size;
 
 			if (extraSize > 0)
 			{
@@ -38,7 +39,7 @@ MemoryChunk* MemoryBlock::AllocateChunk(int32_t size)
 			mChunks[j].mFree = false;
 			mChunks[j].mID = sNumChunksAllocated++;
 
-			assert(mChunks[j].mID > 0); // Did we overflow int32_t?
+			assert(mChunks[j].mID >= 0); // Did we overflow int64_t?
 
 			// make sure we grab the pointer after inserting the new chunk (as it may reallocate the data).
 			chunk = &mChunks[j];
@@ -49,7 +50,7 @@ MemoryChunk* MemoryBlock::AllocateChunk(int32_t size)
 	return chunk;
 }
 
-bool MemoryBlock::FreeChunk(int32_t id)
+bool MemoryBlock::FreeChunk(int64_t id)
 {
 	bool bFreed = false;
 
@@ -57,6 +58,8 @@ bool MemoryBlock::FreeChunk(int32_t id)
 	{
 		if (mChunks[j].mID == id)
 		{
+			bFreed = true;
+
 			// Mark this chunk as freed
 			mChunks[j].mFree = true;
 			
@@ -78,14 +81,16 @@ bool MemoryBlock::FreeChunk(int32_t id)
 			}
 		}
 	}
+
+	return bFreed;
 }
 
-void Allocator::Alloc(int32_t size, int32_t alignment, uint32_t memoryType, Allocation& outAllocation)
+void Allocator::Alloc(uint64_t size, uint64_t alignment, uint32_t memoryType, Allocation& outAllocation)
 {
 	MemoryBlock* block = nullptr;
 	MemoryChunk* chunk = nullptr;
 
-	int32_t maxAlignSize = size + alignment;
+	uint64_t maxAlignSize = size + alignment;
 	for (int32_t i = 0; i < sBlocks.size(); ++i)
 	{
 		if (sBlocks[i].mMemoryType == memoryType)
@@ -102,7 +107,7 @@ void Allocator::Alloc(int32_t size, int32_t alignment, uint32_t memoryType, Allo
 
 	if (chunk == nullptr)
 	{
-		int32_t newBlockSize = maxAlignSize > sDefaultBlockSize ? maxAlignSize : sDefaultBlockSize;
+		uint64_t newBlockSize = maxAlignSize > sDefaultBlockSize ? maxAlignSize : sDefaultBlockSize;
 		block = AllocateBlock(newBlockSize, memoryType);
 		assert(block);
 
@@ -155,22 +160,22 @@ void Allocator::Free(Allocation& allocation)
 	allocation.mType = 0;
 }
 
-int32_t Allocator::GetNumBlocksAllocated()
+uint64_t Allocator::GetNumBlocksAllocated()
 {
-	return sBlocks.size();
+	return static_cast<uint64_t>(sBlocks.size());
 }
 
-int32_t Allocator::GetNumAllocations()
+uint64_t Allocator::GetNumAllocations()
 {
 	return sNumAllocations;
 }
 
-int32_t Allocator::GetNumAllocatedBytes()
+uint64_t Allocator::GetNumAllocatedBytes()
 {
 	return sNumAllocatedBytes;
 }
 
-MemoryBlock* Allocator::AllocateBlock(int32_t newBlockSize, uint32_t memoryType)
+MemoryBlock* Allocator::AllocateBlock(uint64_t newBlockSize, uint32_t memoryType)
 {
 	sBlocks.push_back(MemoryBlock());
 	MemoryBlock& newBlock = sBlocks.back();
@@ -184,7 +189,7 @@ MemoryBlock* Allocator::AllocateBlock(int32_t newBlockSize, uint32_t memoryType)
 	VkMemoryAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = newBlockSize;
-	allocInfo.memoryTypeIndex = Renderer::Get()->FindMemoryType(memoryType, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	allocInfo.memoryTypeIndex = memoryType;
 
 	if (vkAllocateMemory(Renderer::Get()->GetDevice(), &allocInfo, nullptr, &newBlock.mDeviceMemory) != VK_SUCCESS)
 	{
@@ -198,9 +203,11 @@ MemoryBlock* Allocator::AllocateBlock(int32_t newBlockSize, uint32_t memoryType)
 	firstChunk.mOffset = 0;
 	firstChunk.mSize = newBlockSize;
 	newBlock.mChunks.push_back(firstChunk);
+
+	return &newBlock;
 }
 
-bool Allocator::FreeBlock(MemoryBlock& block)
+void Allocator::FreeBlock(MemoryBlock& block)
 {
 	int32_t index = 0;
 

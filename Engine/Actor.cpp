@@ -15,8 +15,7 @@ Actor::Actor() :
 	mMesh(nullptr),
 	mEnvironmentCapture(nullptr),
 	mDescriptorSet(VK_NULL_HANDLE),
-	mUniformBuffer(VK_NULL_HANDLE),
-	mUniformBufferMemory(VK_NULL_HANDLE)
+	mUniformBuffer(VK_NULL_HANDLE)
 {
 
 }
@@ -57,10 +56,9 @@ void Actor::Destroy()
 		mUniformBuffer = VK_NULL_HANDLE;
 	}
 	
-	if (mUniformBufferMemory != VK_NULL_HANDLE)
+	if (mUniformBufferMemory.IsValid())
 	{
-		vkFreeMemory(device, mUniformBufferMemory, nullptr);
-		mUniformBufferMemory = VK_NULL_HANDLE;
+		Allocator::Free(mUniformBufferMemory);
 	}
 }
 
@@ -173,9 +171,9 @@ void Actor::UpdateUniformBuffer(Scene* scene, float deltaTime)
     ubo.mRoughness = mMesh->GetMaterial()->GetRoughness();
 
 	void* data;
-	vkMapMemory(device, mUniformBufferMemory, 0, sizeof(ubo), 0, &data);
+	vkMapMemory(device, mUniformBufferMemory.mDeviceMemory, mUniformBufferMemory.mOffset, sizeof(ubo), 0, &data);
 	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(device, mUniformBufferMemory);
+	vkUnmapMemory(device, mUniformBufferMemory.mDeviceMemory);
 }
 
 void Actor::UpdateEnvironmentSampler()

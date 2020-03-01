@@ -7,7 +7,7 @@ struct Allocation
 {
 	VkDeviceMemory mDeviceMemory;
 	uint32_t mType;
-	int32_t mID;
+	int64_t mID;
 	VkDeviceSize mSize;
 	VkDeviceSize mOffset;
 
@@ -20,13 +20,18 @@ struct Allocation
 	{
 
 	}
+
+	bool IsValid() const
+	{
+		return mDeviceMemory != VK_NULL_HANDLE;
+	}
 };
 
 struct MemoryChunk
 {
-	int32_t mID;
-	int32_t mOffset;
-	int32_t mSize;
+	int64_t mID;
+	uint64_t mOffset;
+	uint64_t mSize;
 	bool mFree;
 
 	MemoryChunk() :
@@ -41,8 +46,8 @@ struct MemoryChunk
 
 struct MemoryBlock
 {
-	MemoryChunk* AllocateChunk(int32_t size);
-	bool FreeChunk(int32_t id);
+	MemoryChunk* AllocateChunk(uint64_t size);
+	bool FreeChunk(int64_t id);
 
 	MemoryBlock() :
 		mDeviceMemory(0),
@@ -56,9 +61,9 @@ struct MemoryBlock
 
 	std::vector<MemoryChunk> mChunks;
 	VkDeviceMemory mDeviceMemory;
-	int32_t mSize;
-	int32_t mAvailableMemory;
-	int32_t mLargestChunk;
+	uint64_t mSize;
+	uint64_t mAvailableMemory;
+	uint64_t mLargestChunk;
 	uint32_t mMemoryType;
 };
 
@@ -66,22 +71,22 @@ class Allocator
 {
 public:
 
-	static void Alloc(int32_t size, int32_t alignment, uint32_t memoryType, Allocation& outAllocation);
+	static void Alloc(uint64_t size, uint64_t alignment, uint32_t memoryType, Allocation& outAllocation);
 	static void Free(Allocation& allocation);
 
-	static int32_t GetNumBlocksAllocated();
-	static int32_t GetNumAllocations();
-	static int32_t GetNumAllocatedBytes();
+	static uint64_t GetNumBlocksAllocated();
+	static uint64_t GetNumAllocations();
+	static uint64_t GetNumAllocatedBytes();
 
-	static const int32_t sDefaultBlockSize;
+	static const uint64_t sDefaultBlockSize;
 
 private:
 
-	static MemoryBlock* AllocateBlock(int32_t newBlockSize, uint32_t memoryType);
-	static bool FreeBlock(MemoryBlock& block);
+	static MemoryBlock* AllocateBlock(uint64_t newBlockSize, uint32_t memoryType);
+	static void FreeBlock(MemoryBlock& block);
 
 
 	static std::vector<MemoryBlock> sBlocks;
-	static int32_t sNumAllocations;
-	static int32_t sNumAllocatedBytes;
+	static uint64_t sNumAllocations;
+	static uint64_t sNumAllocatedBytes;
 };

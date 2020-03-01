@@ -5,6 +5,7 @@
 #include <assimp/scene.h>
 
 #include "Material.h"
+#include "Allocator.h"
 
 class Mesh
 {

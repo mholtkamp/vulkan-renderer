@@ -183,6 +183,8 @@ void Texture::CreateImage(uint32_t width,
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
+	assert(tiling == VK_IMAGE_TILING_OPTIMAL); // Linear textures not supported.
+
 	VkImageCreateInfo ciImage = {};
 	ciImage.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	ciImage.imageType = VK_IMAGE_TYPE_2D;
@@ -208,10 +210,9 @@ void Texture::CreateImage(uint32_t width,
 	vkGetImageMemoryRequirements(device, image, &memRequirements);
 	uint32_t memoryType = renderer->FindMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	Allocation allocation;
-	Allocator::Alloc(memRequirements.size, memRequirements.alignment, memoryType, allocation);
+	Allocator::Alloc(memRequirements.size, memRequirements.alignment, memoryType, imageMemory);
 
-	vkBindImageMemory(device, image, imageMemory, 0);
+	vkBindImageMemory(device, image, imageMemory.mDeviceMemory, imageMemory.mOffset);
 }
 
 VkImageView Texture::CreateImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels, uint32_t layers, TextureType type)

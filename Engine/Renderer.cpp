@@ -129,7 +129,7 @@ void Renderer::DestroySwapchain()
 
 	vkDestroyImage(mDevice, mDepthImage, nullptr);
 	vkDestroyImageView(mDevice, mDepthImageView, nullptr);
-	vkFreeMemory(mDevice, mDepthImageMemory, nullptr);
+	Allocator::Free(mDepthImageMemory);
 
 	vkDestroyBuffer(mDevice, mGlobalUniformBuffer, nullptr);
 	Allocator::Free(mGlobalUniformBufferMemory);
@@ -1155,9 +1155,9 @@ GlobalUniformData& Renderer::GetGlobalUniformData()
 void Renderer::UpdateGlobalDescriptorSet()
 {
 	void* data;
-	vkMapMemory(mDevice, mGlobalUniformBufferMemory, 0, sizeof(GlobalUniformData), 0, &data);
+	vkMapMemory(mDevice, mGlobalUniformBufferMemory.mDeviceMemory, mGlobalUniformBufferMemory.mOffset, sizeof(GlobalUniformData), 0, &data);
 	memcpy(data, &mGlobalUniformData, sizeof(GlobalUniformData));
-	vkUnmapMemory(mDevice, mGlobalUniformBufferMemory);
+	vkUnmapMemory(mDevice, mGlobalUniformBufferMemory.mDeviceMemory);
 }
 
 void Renderer::CreateGlobalDescriptorSet()

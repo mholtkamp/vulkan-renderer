@@ -14,8 +14,7 @@ Mesh* PointLight::sSphereMesh = nullptr;
 
 PointLight::PointLight() : 
 	mDescriptorSet(VK_NULL_HANDLE),
-	mUniformBuffer(VK_NULL_HANDLE),
-	mUniformBufferMemory(VK_NULL_HANDLE)
+	mUniformBuffer(VK_NULL_HANDLE)
 {
 
 }
@@ -239,7 +238,7 @@ void PointLight::UpdateUniformBuffer(Camera* camera, float deltaTime)
 	mLightData.mWVP = camera->GetViewProjectionMatrix() * mLightData.mWVP;
 
 	void* data;
-	vkMapMemory(device, mUniformBufferMemory, 0, sizeof(LightData), 0, &data);
+	vkMapMemory(device, mUniformBufferMemory.mDeviceMemory, mUniformBufferMemory.mOffset, sizeof(LightData), 0, &data);
 	memcpy(data, &mLightData, sizeof(LightData));
-	vkUnmapMemory(device, mUniformBufferMemory);
+	vkUnmapMemory(device, mUniformBufferMemory.mDeviceMemory);
 }

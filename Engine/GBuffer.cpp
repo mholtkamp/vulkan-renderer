@@ -1,5 +1,6 @@
 #include "GBuffer.h"
 #include "Renderer.h"
+#include "Allocator.h"
 
 #include <vulkan/vulkan.h>
 #include <exception>
@@ -41,7 +42,7 @@ void GBuffer::Destroy()
 	{
 		vkDestroyImage(device, mImages[i], nullptr);
 		vkDestroyImageView(device, mImageViews[i], nullptr);
-		vkFreeMemory(device, mImageMemory[i], nullptr);
+		Allocator::Free(mImageMemory[i]);
 	}
 
     mImages.clear();

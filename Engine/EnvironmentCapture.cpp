@@ -10,18 +10,15 @@ VkRenderPass EnvironmentCapture::sRenderPass = VK_NULL_HANDLE;
 //
 EnvironmentCapture::EnvironmentCapture() :
 	mDepthImage(VK_NULL_HANDLE),
-	mDepthImageMemory(VK_NULL_HANDLE),
 	mDepthImageView(VK_NULL_HANDLE),
 	mResolution(DEFAULT_ENVIRONMENT_CAPTURE_RESOLUTION),
 	mCapturedResolution(0),
 	mScene(nullptr),
 	mLitColorImage(VK_NULL_HANDLE),
-	mLitColorImageMemory(VK_NULL_HANDLE),
 	mLitColorImageView(VK_NULL_HANDLE),
 	mLitColorSampler(VK_NULL_HANDLE),
 	mIrradianceRenderPass(VK_NULL_HANDLE),
-	mIrradianceBuffer(VK_NULL_HANDLE),
-	mIrradianceBufferMemory(VK_NULL_HANDLE)
+	mIrradianceBuffer(VK_NULL_HANDLE)
 {
 	for (int32_t i = 0; i < 6; ++i)
 	{
@@ -254,9 +251,9 @@ void EnvironmentCapture::RenderIrradiance()
 		mIrradianceDescriptorSet.UpdateUniformDescriptor(1, mIrradianceBuffer, sizeof(glm::mat4));
 
 		void* data = nullptr;
-		vkMapMemory(device, mIrradianceBufferMemory, 0, sizeof(glm::mat4), 0, &data);
+		vkMapMemory(device, mIrradianceBufferMemory.mDeviceMemory, mIrradianceBufferMemory.mOffset, sizeof(glm::mat4), 0, &data);
 		memcpy(data, &rotationMatrices[i], sizeof(glm::mat4));
-		vkUnmapMemory(device, mIrradianceBufferMemory);
+		vkUnmapMemory(device, mIrradianceBufferMemory.mDeviceMemory);
 
 		VkCommandBuffer commandBuffer = renderer->BeginSingleSubmissionCommands();
 
@@ -367,14 +364,13 @@ void EnvironmentCapture::DestroyCubemap()
 		mCubemap.Destroy();
 
 		assert(mDepthImage != VK_NULL_HANDLE);
-		assert(mDepthImageMemory != VK_NULL_HANDLE);
+		assert(mDepthImageMemory.IsValid());
 		assert(mDepthImageView != VK_NULL_HANDLE);
 
 		vkDestroyImage(device, mDepthImage, nullptr);
 		mDepthImage = VK_NULL_HANDLE;
 
-		vkFreeMemory(device, mDepthImageMemory, nullptr);
-		mDepthImageMemory = VK_NULL_HANDLE;
+		Allocator::Free(mDepthImageMemory);
 
 		vkDestroyImageView(device, mDepthImageView, nullptr);
 		mDepthImageView = VK_NULL_HANDLE;
@@ -444,7 +440,7 @@ void EnvironmentCapture::CreateIrradianceFramebuffers()
 void EnvironmentCapture::CreateDepthImage()
 {
 	assert(mDepthImage == VK_NULL_HANDLE);
-	assert(mDepthImageMemory == VK_NULL_HANDLE);
+	assert(mDepthImageMemory.mDeviceMemory == VK_NULL_HANDLE);
 	assert(mDepthImageView == VK_NULL_HANDLE);
 
 	Renderer* renderer = Renderer::Get();

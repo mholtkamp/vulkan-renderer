@@ -12,9 +12,7 @@ Mesh::Mesh() :
 	mNumFaces(0),
 	mOwnsMaterial(false),
 	mVertexBuffer(VK_NULL_HANDLE),
-	mVertexBufferMemory(VK_NULL_HANDLE),
-	mIndexBuffer(VK_NULL_HANDLE),
-	mIndexBufferMemory(VK_NULL_HANDLE)
+	mIndexBuffer(VK_NULL_HANDLE)
 {
 
 }
@@ -31,14 +29,12 @@ void Mesh::Destroy()
 	if (mVertexBuffer != VK_NULL_HANDLE)
 	{
 		vkDestroyBuffer(device, mIndexBuffer, nullptr);
-		vkFreeMemory(device, mIndexBufferMemory, nullptr);
+		Allocator::Free(mIndexBufferMemory);
 		vkDestroyBuffer(device, mVertexBuffer, nullptr);
-		vkFreeMemory(device, mVertexBufferMemory, nullptr);
+		Allocator::Free(mVertexBufferMemory);
 
 		mIndexBuffer = VK_NULL_HANDLE;
-		mIndexBufferMemory = VK_NULL_HANDLE;
 		mVertexBuffer = VK_NULL_HANDLE;
-		mVertexBufferMemory = VK_NULL_HANDLE;
 	}
 
 	if (mOwnsMaterial)
@@ -181,7 +177,7 @@ void Mesh::CreateVertexBuffer(aiVector3D* positions,
 	renderer->CopyBuffer(stagingBuffer, mVertexBuffer, bufferSize);
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
-	vkFreeMemory(device, stagingBufferMemory, nullptr);
+	Allocator::Free(stagingBufferMemory);
 
 	free(vertices);
 }

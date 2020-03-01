@@ -5,7 +5,6 @@ ShadowCaster::ShadowCaster() :
 	mShadowRenderPass(VK_NULL_HANDLE),
 	mShadowFramebuffer(VK_NULL_HANDLE),
 	mShadowMapImage(VK_NULL_HANDLE),
-	mShadowMapImageMemory(VK_NULL_HANDLE),
 	mShadowMapImageView(VK_NULL_HANDLE),
 	mShadowMapSampler(VK_NULL_HANDLE)
 {
@@ -36,8 +35,7 @@ void ShadowCaster::Destroy()
 		vkDestroySampler(device, mShadowMapSampler, nullptr);
 		mShadowMapSampler = VK_NULL_HANDLE;
 
-		vkFreeMemory(device, mShadowMapImageMemory, nullptr);
-		mShadowMapImageMemory = VK_NULL_HANDLE;
+		Allocator::Free(mShadowMapImageMemory);
 	}
 }
 

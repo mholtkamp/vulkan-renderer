@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Enums.h"
+#include "Allocator.h"
 
 #include <vector>
 #include <vulkan/vulkan.h>

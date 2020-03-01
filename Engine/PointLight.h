@@ -4,6 +4,8 @@
 #include <glm/glm.hpp>
 #include <vulkan/vulkan.h>
 
+#include "Allocator.h"
+
 struct LightData
 {
 	glm::mat4 mWVP;
