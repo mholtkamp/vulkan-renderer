@@ -131,6 +131,11 @@ void Renderer::DestroySwapchain()
 	vkDestroyImageView(mDevice, mDepthImageView, nullptr);
 	Allocator::Free(mDepthImageMemory);
 
+	vkDestroyImage(mDevice, mLitColorImage, nullptr);
+	vkDestroyImageView(mDevice, mLitColorImageView, nullptr);
+	vkDestroySampler(mDevice, mLitColorSampler, nullptr);
+	Allocator::Free(mLitColorImageMemory);
+
 	vkDestroyBuffer(mDevice, mGlobalUniformBuffer, nullptr);
 	Allocator::Free(mGlobalUniformBufferMemory);
 	vkFreeDescriptorSets(mDevice, mDescriptorPool, 1, &mGlobalDescriptorSet);

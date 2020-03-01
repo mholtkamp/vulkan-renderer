@@ -264,7 +264,6 @@ void Texture::CreateTextureSampler()
 
 	// With mip mapping
 	sampler.maxLod = (float)mMipLevels;
-	vkCreateSampler(device, &sampler, nullptr, &mSampler);
 
 	if (vkCreateSampler(device, &sampler, nullptr, &mSampler) != VK_SUCCESS)
 	{

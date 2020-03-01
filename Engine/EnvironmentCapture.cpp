@@ -29,7 +29,23 @@ EnvironmentCapture::EnvironmentCapture() :
 
 EnvironmentCapture::~EnvironmentCapture()
 {
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
 	DestroyCubemap();
+
+	if (mLitColorImage != VK_NULL_HANDLE)
+	{
+		vkDestroyImage(device, mLitColorImage, nullptr);
+		vkDestroySampler(device, mLitColorSampler, nullptr);
+		vkDestroyImageView(device, mLitColorImageView, nullptr);
+
+		mLitColorImage = VK_NULL_HANDLE;
+		mLitColorSampler = VK_NULL_HANDLE;
+		mLitColorImageView = VK_NULL_HANDLE;
+
+		Allocator::Free(mLitColorImageMemory);
+	}
 }
 
 VkImageView EnvironmentCapture::GetFaceImageView(uint32_t index)
