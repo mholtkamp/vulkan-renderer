@@ -7,7 +7,11 @@
 #include "Engine.h"
 #include "Scene.h"
 
+#ifndef _DEBUG
 int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int32_t nCmdShow)
+#else
+int32_t main(int32_t argc, char** argv)
+#endif
 {
 	Initialize(1280, 720);
 

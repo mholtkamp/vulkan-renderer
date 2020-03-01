@@ -199,6 +199,7 @@
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Engine.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="TextureCube.h" />
     <ClInclude Include="DebugActionHandler.h" />
     <ClInclude Include="DescriptorSet.h" />

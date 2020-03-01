@@ -1,5 +1,7 @@
 #include "Allocator.h"
 #include "Renderer.h"
+#include "Log.h"
+
 #include <assert.h>
 #include <exception>
 
@@ -124,12 +126,16 @@ void Allocator::Alloc(uint64_t size, uint64_t alignment, uint32_t memoryType, Al
 
 	sNumAllocations++;
 	sNumAllocatedBytes += maxAlignSize;
+
+	LogDebug("ALLOC: NumAllocations = %lld, NumAllocatedBytes = %lld", sNumAllocations, sNumAllocatedBytes);
 }
 
 void Allocator::Free(Allocation& allocation)
 {
 	sNumAllocations--;
 	sNumAllocatedBytes -= allocation.mSize;
+
+	LogDebug("FREE: NumAllocations = %lld, NumAllocatedBytes = %lld", sNumAllocations, sNumAllocatedBytes);
 
 	bool bFreed = false;
 	for (int32_t i = 0; i < sBlocks.size(); ++i)
