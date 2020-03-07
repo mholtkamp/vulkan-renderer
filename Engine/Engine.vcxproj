@@ -169,6 +169,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="Rect.cpp" />
     <ClCompile Include="TextureCube.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
     <ClCompile Include="DescriptorSet.cpp" />
@@ -188,6 +189,7 @@
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Texture2D.cpp" />
     <ClCompile Include="Utilities.cpp" />
+    <ClCompile Include="Widget.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Actor.h" />
@@ -200,6 +202,7 @@
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="Rect.h" />
     <ClInclude Include="TextureCube.h" />
     <ClInclude Include="DebugActionHandler.h" />
     <ClInclude Include="DescriptorSet.h" />
@@ -220,6 +223,7 @@
     <ClInclude Include="Texture2D.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="Vertex.h" />
+    <ClInclude Include="Widget.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\src\debugDeferredShader.frag" />
