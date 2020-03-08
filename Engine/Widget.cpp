@@ -59,7 +59,7 @@ Widget* Widget::GetChild(int32_t index)
 	return mChildren[index];
 }
 
-void Widget::Render(VkCommandBuffer commandBuffer, Rect area)
+void Widget::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
 {
 
 }
@@ -74,4 +74,21 @@ void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)
 	scissorRect.offset.y = static_cast<int32_t>(area.mY);
 
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect);
+}
+
+void Widget::RenderChildren(VkCommandBuffer commandBuffer, Rect area)
+{
+	for (int32_t i = 0; i < mChildren.size(); ++i)
+	{
+		Widget* child = mChildren[i];
+
+		Rect childArea;
+		childArea.mX = area.mX + child->mRect.mX;
+		childArea.mY = area.mY + child->mRect.mY;
+		childArea.mWidth = child->mRect.mWidth;
+		childArea.mHeight = child->mRect.mHeight;
+		childArea.Clamp(area);
+
+		child->Render(commandBuffer, childArea, area);
+	}
 }

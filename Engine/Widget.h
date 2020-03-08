@@ -11,7 +11,7 @@ public:
 	Widget();
 	virtual ~Widget();
 
-	virtual void Render(VkCommandBuffer commandBuffer, Rect area);
+	virtual void Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea);
 
 	void AddChild(Widget* widget);
 
@@ -24,6 +24,8 @@ public:
 protected:
 
 	void SetScissor(VkCommandBuffer commandBuffer, Rect& area);
+
+	void RenderChildren(VkCommandBuffer commandBuffer, Rect area);
 
 	Widget* mParent;
 	std::vector<Widget*> mChildren;

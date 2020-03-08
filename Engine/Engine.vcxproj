@@ -168,7 +168,9 @@
     <ClCompile Include="Allocator.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
+    <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Rect.cpp" />
     <ClCompile Include="TextureCube.cpp" />
     <ClCompile Include="DebugActionHandler.cpp" />
@@ -198,10 +200,12 @@
     <ClInclude Include="ApplicationState.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraController.h" />
+    <ClInclude Include="Canvas.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="Engine.h" />
     <ClInclude Include="Log.h" />
+    <ClInclude Include="Quad.h" />
     <ClInclude Include="Rect.h" />
     <ClInclude Include="TextureCube.h" />
     <ClInclude Include="DebugActionHandler.h" />
