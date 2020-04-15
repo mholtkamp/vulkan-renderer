@@ -27,12 +27,12 @@ public:
 
 	void Create(const aiNode& node, std::vector<Mesh>& meshes);
 
-	void Draw(VkCommandBuffer commandBuffer);
+	virtual void Draw(VkCommandBuffer commandBuffer);
 
-	void Update(class Scene* scene,
+	virtual void Update(class Scene* scene,
 		float deltaTime);
 
-	void Destroy();
+	virtual void Destroy();
 
 	void SetEnvironmentCapture(EnvironmentCapture* environmentCapture);
 
@@ -40,7 +40,7 @@ public:
 
 	glm::vec3 GetPosition();
 
-private:
+protected:
 
 	void UpdateUniformBuffer(class Scene* camera,
 		float DeltaTime);

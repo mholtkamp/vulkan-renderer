@@ -18,6 +18,7 @@
 #include "GBuffer.h"
 
 #include "ShadowCaster.h"
+#include "WaterSurface.h"
 
 struct GlobalUniformData
 {
@@ -150,6 +151,8 @@ public:
 
 	Texture2D* GetBlackTexture();
 	TextureCube* GetBlackCubemap();
+
+	Material* GetDefaultMaterial();
 
 private:
 
@@ -308,6 +311,8 @@ private:
     uint32_t mEnvironmentDebugFace;
 
 	ShadowCaster mShadowCaster;
+	WaterSurface mWaterSurface;
+	Material mDefaultMaterial;
 
 	public:
 

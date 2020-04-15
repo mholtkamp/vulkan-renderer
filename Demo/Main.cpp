@@ -17,6 +17,7 @@ int32_t main(int32_t argc, char** argv)
 
 	Scene* scene = new Scene();
 	scene->Load("Scenes/Sponza/", "Sponza.dae");
+	//scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
 
 	AssignDebugCamera(scene->GetActiveCamera());
 	SetScene(scene);

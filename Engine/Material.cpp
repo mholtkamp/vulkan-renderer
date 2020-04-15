@@ -26,6 +26,17 @@ void Material::Destroy()
 
 }
 
+void Material::Create()
+{
+	Renderer* renderer = Renderer::Get();
+
+	mName = "Material";
+	mTextures[SLOT_DIFFUSE] = &renderer->mWhiteTexture;
+	mTextures[SLOT_SPECULAR] = &renderer->mWhiteTexture;
+	mTextures[SLOT_NORMALS] = &renderer->mWhiteTexture;
+	mTextures[SLOT_ORM] = &renderer->mWhiteTexture;
+}
+
 void Material::Create(const Scene& scene,
 					  const aiMaterial& material,
 					  std::map<std::string, Texture2D>& textures)

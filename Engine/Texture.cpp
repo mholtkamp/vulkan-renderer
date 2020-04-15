@@ -397,7 +397,9 @@ void Texture::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayou
 	}
 	else
 	{
-		throw std::invalid_argument("Unsupported layout transition!");
+		//throw std::invalid_argument("Unsupported layout transition!");
+		barrier.srcAccessMask = VK_ACCESS_MEMORY_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
 	}
 
 	vkCmdPipelineBarrier(commandBuffer,

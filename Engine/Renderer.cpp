@@ -3,6 +3,7 @@
 #include "Utilities.h"
 #include "Constants.h"
 #include "Allocator.h"
+#include "WaterSurface.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -98,6 +99,11 @@ TextureCube* Renderer::GetBlackCubemap()
 	return &mBlackCubemap;
 }
 
+Material* Renderer::GetDefaultMaterial()
+{
+	return &mDefaultMaterial;
+}
+
 Renderer* Renderer::Get()
 {
 	return sInstance;
@@ -152,6 +158,9 @@ Renderer::~Renderer()
 {
 	DestroyDefaultTextures();
 
+	mWaterSurface.Destroy();
+
+	WaterSurface::DestroyWaterPlaneMesh();
 	PointLight::DestroySphereMesh();
 
     mShadowCaster.Destroy();
@@ -199,7 +208,12 @@ void Renderer::Initialize()
 	CreateCommandBuffers();
 	CreateSemaphores();
 
+	mDefaultMaterial.Create();
+
 	PointLight::LoadSphereMesh();
+	WaterSurface::LoadWaterPlaneMesh();
+
+	mWaterSurface.CreateWaterSurface();
 
 	mInitialized = true;
 }
@@ -286,6 +300,8 @@ void Renderer::Render()
 		return;
 	}
 
+	mWaterSurface.Update(mScene, 0.016f);
+
 	if (mCommandBuffers.size() == 0)
 	{
 		CreateCommandBuffers();
@@ -326,6 +342,9 @@ void Renderer::Render()
 
 	SetViewportAndScissor(mCommandBuffers[imageIndex], 0, 0, mSwapchainExtent.width, mSwapchainExtent.height);
 
+	// First, run the water simulation
+	mWaterSurface.Simulate(mCommandBuffers[imageIndex]);
+
 	VkRenderPassBeginInfo renderPassInfo = {};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = mRenderPass;
@@ -354,6 +373,7 @@ void Renderer::Render()
 	mGeometryPipeline.BindPipeline(mCommandBuffers[imageIndex]);
 	vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mGeometryPipeline.GetPipelineLayout(), 0, 1, &mGlobalDescriptorSet, 0, 0);
 	mScene->RenderGeometry(mCommandBuffers[imageIndex]);
+	mWaterSurface.Draw(mCommandBuffers[imageIndex]);
 	vkCmdNextSubpass(mCommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
 
 	// ******************
@@ -1499,15 +1519,19 @@ void Renderer::CreateSemaphores()
 
 void Renderer::CreateDescriptorPool()
 {
-	VkDescriptorPoolSize poolSizes[2] = {};
+	VkDescriptorPoolSize poolSizes[4] = {};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	poolSizes[0].descriptorCount = RENDERER_MAX_UNIFORM_BUFFER_DESCRIPTORS;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	poolSizes[1].descriptorCount = RENDERER_MAX_SAMPLER_DESCRIPTORS;
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	poolSizes[2].descriptorCount = RENDERER_MAX_STORAGE_BUFFER_DESCRIPTORS;
+	poolSizes[3].type = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+	poolSizes[3].descriptorCount = RENDERER_MAX_STORAGE_IMAGE_DESCRIPTORS;
 
 	VkDescriptorPoolCreateInfo ciPool = {};
 	ciPool.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	ciPool.poolSizeCount = 2;
+	ciPool.poolSizeCount = 4;
 	ciPool.pPoolSizes = poolSizes;
 	ciPool.maxSets = RENDERER_MAX_DESCRIPTOR_SETS;
 	ciPool.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
@@ -1775,7 +1799,8 @@ QueueFamilyIndices Renderer::FindQueueFamilies(VkPhysicalDevice device)
 	for (const auto& queueFamily : queueFamilies)
 	{
 		if (queueFamily.queueCount > 0 &&
-			queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+			(queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) /*&&
+			(queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)*/)
 		{
 			indices.mGraphicsFamily = i;
 		}

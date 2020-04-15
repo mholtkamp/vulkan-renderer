@@ -24,6 +24,8 @@ public:
 
 	class Material* GetMaterial();
 
+	void SetMaterial(class Material* newMaterial);
+
 	void UpdateDescriptorSets(VkDescriptorSet descriptorSet);
 
 	void LoadMesh(const std::string& path);

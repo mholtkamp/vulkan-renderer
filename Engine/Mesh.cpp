@@ -88,6 +88,11 @@ Material* Mesh::GetMaterial()
 	return mMaterial;
 }
 
+void Mesh::SetMaterial(class Material* newMaterial)
+{
+	mMaterial = newMaterial;
+}
+
 void Mesh::UpdateDescriptorSets(VkDescriptorSet descriptorSet)
 {
 	mMaterial->UpdateDescriptorSets(descriptorSet);

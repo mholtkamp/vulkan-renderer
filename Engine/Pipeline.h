@@ -29,6 +29,9 @@ public:
 
 protected:
 
+	void CreateGraphicsPipeline();
+	void CreateComputePipeline();
+
 	void PushSet();
 	void AddLayoutBinding(VkDescriptorType type, VkShaderStageFlags stageFlags);
 
@@ -48,10 +51,12 @@ public:
 
 	VkRenderPass mRenderpass;
     uint32_t mSubpass;
+	bool mComputePipeline;
 
 	// Shader stages
 	std::string mVertexShaderPath;
 	std::string mFragmentShaderPath;
+	std::string mComputeShaderPath;
 
     // Viewport
     uint32_t mViewportWidth;

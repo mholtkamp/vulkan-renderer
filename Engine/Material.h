@@ -20,6 +20,8 @@ public:
 
 	void Destroy();
 
+	void Create();
+
 	void Create(const class Scene& scene,
 				const aiMaterial& material,
 				std::map<std::string, Texture2D>& textures);

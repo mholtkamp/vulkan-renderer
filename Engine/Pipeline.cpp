@@ -10,6 +10,7 @@ Pipeline::Pipeline() :
 	mPipelineLayout(VK_NULL_HANDLE),
 	mRenderpass(VK_NULL_HANDLE),
 	mSubpass(0),
+	mComputePipeline(false),
 	mVertexShaderPath("Shaders/bin/geometryShader.vert"),
 	mFragmentShaderPath("Shaders/bin/geometryShader.frag"),
 	mRasterizerDiscard(VK_FALSE),
@@ -53,13 +54,10 @@ VkDescriptorSetLayout Pipeline::GetDescriptorSetLayout(uint32_t index)
 	return mDescriptorSetLayouts[index];
 }
 
-void Pipeline::Create()
+void Pipeline::CreateGraphicsPipeline()
 {
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
-
-	PopulateLayoutBindings();
-	CreateDescriptorSetLayouts();
 
 	vector<char> vertShaderCode = ReadFile(mVertexShaderPath);
 
@@ -121,15 +119,15 @@ void Pipeline::Create()
 	VkViewport viewport = {};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float) ((mViewportWidth == 0) ? swapchainExtent.width : mViewportWidth);
-	viewport.height = (float)  ((mViewportHeight == 0) ? swapchainExtent.height : mViewportHeight);
+	viewport.width = (float)((mViewportWidth == 0) ? swapchainExtent.width : mViewportWidth);
+	viewport.height = (float)((mViewportHeight == 0) ? swapchainExtent.height : mViewportHeight);
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
 	scissor.offset = { 0, 0 };
 	scissor.extent.width = (mViewportWidth == 0) ? swapchainExtent.width : mViewportWidth;
-    scissor.extent.height = (mViewportHeight == 0) ? swapchainExtent.height : mViewportHeight;
+	scissor.extent.height = (mViewportHeight == 0) ? swapchainExtent.height : mViewportHeight;
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -227,6 +225,60 @@ void Pipeline::Create()
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
 }
 
+void Pipeline::CreateComputePipeline()
+{
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	vector<char> computeShaderCode = ReadFile(mComputeShaderPath);
+
+	VkShaderModule computeShaderModule;
+
+	computeShaderModule = CreateShaderModule(computeShaderCode);
+
+	VkPipelineShaderStageCreateInfo computeShaderStageInfo = {};
+	computeShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	computeShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+	computeShaderStageInfo.module = computeShaderModule;
+	computeShaderStageInfo.pName = "main";
+
+	CreatePipelineLayout();
+
+	VkComputePipelineCreateInfo ci = { };
+	ci.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	ci.stage = computeShaderStageInfo;
+	ci.layout = mPipelineLayout;
+	ci.basePipelineHandle = VK_NULL_HANDLE;
+	ci.basePipelineIndex = -1;
+
+	if (vkCreateComputePipelines(renderer->GetDevice(),
+		VK_NULL_HANDLE,
+		1,
+		&ci,
+		nullptr,
+		&mPipeline) != VK_SUCCESS)
+	{
+		throw exception("Failed to create compute pipeline");
+	}
+
+	vkDestroyShaderModule(device, computeShaderModule, nullptr);
+}
+
+void Pipeline::Create()
+{
+	PopulateLayoutBindings();
+	CreateDescriptorSetLayouts();
+
+	if (mComputePipeline)
+	{
+		CreateComputePipeline();
+	}
+	else
+	{
+		CreateGraphicsPipeline();
+	}
+}
+
 
 void Pipeline::Destroy()
 {
@@ -246,7 +298,8 @@ void Pipeline::Destroy()
 
 void Pipeline::BindPipeline(VkCommandBuffer commandBuffer)
 {
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, mPipeline);
+	VkPipelineBindPoint bindPoint = mComputePipeline ? VK_PIPELINE_BIND_POINT_COMPUTE : VK_PIPELINE_BIND_POINT_GRAPHICS;
+	vkCmdBindPipeline(commandBuffer, bindPoint, mPipeline);
 }
 
 VkPipelineLayout Pipeline::GetPipelineLayout()
