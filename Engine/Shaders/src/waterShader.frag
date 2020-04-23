@@ -59,6 +59,11 @@ void main()
     //vec3 normal = texture(normalSampler, inTexcoord).rgb;
     //normal = normalize(normal * 2.0 - 1.0);
     //outNormal = vec4(normalize(inTBN * normal), 0.0);
+	
+	// ---Reconstructed normal---
+	//vec3 reconstructedNormal = -normalize(cross(dFdx(inPosition), dFdy(inPosition)));
+	//outNormal = vec4(reconstructedNormal, 0.0);
+	
 	outNormal = vec4(inNormal.xyz, 0.0);
     
     //if (outColor.a < 0.5)

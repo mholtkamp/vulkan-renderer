@@ -45,14 +45,25 @@ out gl_PerVertex
 
 void main()
 {
-	vec3 displacedWorldPos = (uboGeometry.mWorldMatrix * vec4(inPosition, 1.0)).xyz;
-	displacedWorldPos.y += WATER_DISPLACEMENT_SCALE * texture(displacementMapSampler, inTexcoord).r;
+	vec3 worldPos = (uboGeometry.mWorldMatrix * vec4(inPosition, 1.0)).xyz;
+	worldPos.y += WATER_DISPLACEMENT_SCALE * texture(displacementMapSampler, inTexcoord).r;
 	
-    gl_Position = uboGeometry.mWVP * vec4(displacedWorldPos, 1.0);
+	vec3 rightPos = vec3(worldPos.x + 2.2727, inPosition.y, worldPos.z);
+	vec3 downPos = vec3(worldPos.x, inPosition.y, worldPos.z + 2.2727);
+	
+	vec2 rightUV = inTexcoord + vec2(0.0113635, 0.0);
+	vec2 downUV = inTexcoord + vec2(0.0, 0.0113635);
+	
+	rightPos.y += WATER_DISPLACEMENT_SCALE * texture(displacementMapSampler, rightUV).r;
+	downPos.y += WATER_DISPLACEMENT_SCALE * texture(displacementMapSampler, downUV).r;
+
+	outNormal = -normalize(cross(rightPos - worldPos, downPos - worldPos ));
+	
+    gl_Position = uboGeometry.mWVP * vec4(worldPos, 1.0);
     
-    outPosition = displacedWorldPos;    
+    outPosition = worldPos;    
     outTexcoord = inTexcoord;    
-    outNormal = normalize((uboGeometry.mNormalMatrix * vec4(inNormal, 0.0)).xyz);
+    //outNormal = normalize((uboGeometry.mNormalMatrix * vec4(inNormal, 0.0)).xyz);
     outTangent = normalize((uboGeometry.mNormalMatrix * vec4(inTangent, 0.0)).xyz);
     outBitangent = normalize(cross(outNormal, outTangent));
     outTBN = mat3(outTangent, outBitangent, outNormal);

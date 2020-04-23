@@ -83,21 +83,28 @@ void WaterSurface::Update(class Scene* scene, float deltaTime)
 		WaveParticleData* particle = reinterpret_cast<WaveParticleData*>(data) + i;
 
 		particle->mPosition += particle->mVelocity * deltaTime;
-		
-		particle->mPosition.x = glm::mod(particle->mPosition.x, 1.0f);
-		particle->mPosition.y = glm::mod(particle->mPosition.y, 1.0f);
 
-		//if (particle->mPosition.x < 0.0f)
-		//	particle->mPosition.x += 1.0f;
-		//if (particle->mPosition.x > 1.0f)
-		//	particle->mPosition.x -= 1.0f;
-		//if (particle->mPosition.y < 0.0f)
-		//	particle->mPosition.y += 1.0f;
-		//if (particle->mPosition.y > 1.0f)
-		//	particle->mPosition.y -= 1.0f;
+		if (particle->mPosition.x < 0.0f)
+		{
+			particle->mPosition.x = 0.0f;
+			particle->mVelocity.x *= -1.0f;
+		}
+		else if (particle->mPosition.x > 1.0f)
+		{
+			particle->mPosition.x = 1.0f;
+			particle->mVelocity.x *= -1.0f;
+		}
 
-		//particle->mRadius = 0.05f;
-		//particle->mFalloff = 1.0f;
+		if (particle->mPosition.y < 0.0f)
+		{
+			particle->mPosition.y = 0.0f;
+			particle->mVelocity.y *= -1.0f;
+		}
+		else if (particle->mPosition.y > 1.0f)
+		{
+			particle->mPosition.y = 1.0f;
+			particle->mVelocity.y *= -1.0f;
+		}
 	}
 
 	vkUnmapMemory(device, mParticleBufferMemory.mDeviceMemory);
@@ -106,7 +113,6 @@ void WaterSurface::Update(class Scene* scene, float deltaTime)
 void WaterSurface::Draw(VkCommandBuffer cb)
 {
 	Renderer* renderer = Renderer::Get();
-	//Pipeline& geometryPipeline = renderer->GetGeometryPipeline();
 
 	if (mMesh != nullptr)
 	{
@@ -253,8 +259,6 @@ void WaterSurface::CreateParticleBuffer()
 
 		particle->mRadiusFalloff = glm::vec4(0.05f, 1.0f, 0.0f, 0.0f);
 		particle->mRadiusFalloff.x = VkrMath::RandRange(0.03f, 0.07f);
-		//particle->mRadius = 0.05f;
-		//particle->mFalloff = 1.0f;
 	}
 
 	vkUnmapMemory(device, mParticleBufferMemory.mDeviceMemory);
