@@ -192,7 +192,6 @@
     <ClCompile Include="Texture.cpp" />
     <ClCompile Include="Texture2D.cpp" />
     <ClCompile Include="Utilities.cpp" />
-    <ClCompile Include="WaterSurface.cpp" />
     <ClCompile Include="Widget.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -230,7 +229,6 @@
     <ClInclude Include="Texture2D.h" />
     <ClInclude Include="Utilities.h" />
     <ClInclude Include="Vertex.h" />
-    <ClInclude Include="WaterSurface.h" />
     <ClInclude Include="Widget.h" />
   </ItemGroup>
   <ItemGroup>

@@ -18,7 +18,6 @@
 #include "GBuffer.h"
 
 #include "ShadowCaster.h"
-#include "WaterSurface.h"
 
 struct GlobalUniformData
 {
@@ -311,7 +310,6 @@ private:
     uint32_t mEnvironmentDebugFace;
 
 	ShadowCaster mShadowCaster;
-	WaterSurface mWaterSurface;
 	Material mDefaultMaterial;
 
 	public:
