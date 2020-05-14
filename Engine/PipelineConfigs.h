@@ -308,3 +308,45 @@ public:
 		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 };
+
+class QuadPipeline : public Pipeline
+{
+public:
+
+	QuadPipeline()
+	{
+		mVertexShaderPath = ENGINE_SHADER_DIR "quadShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "quadShader.frag";
+		mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+		mCullMode = VK_CULL_MODE_NONE;
+		mSubpass = PASS_UI;
+		mDepthTestEnabled = VK_FALSE;
+		mUseVertexBinding = true;
+	}
+
+	virtual void PopulateLayoutBindings() override
+	{
+		Pipeline::PopulateLayoutBindings();
+
+		PushSet();
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
+	}
+};
+
+class TextPipeline : public QuadPipeline
+{
+public:
+
+	TextPipeline()
+	{
+		mVertexShaderPath = ENGINE_SHADER_DIR "textShader.vert";
+		mFragmentShaderPath = ENGINE_SHADER_DIR "textShader.frag";
+		mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	}
+
+	virtual void PopulateLayoutBindings() override
+	{
+		QuadPipeline::PopulateLayoutBindings();
+	}
+};

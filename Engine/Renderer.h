@@ -87,6 +87,8 @@ public:
 	GeometryPipeline& GetGeometryPipeline();
 	LightPipeline& GetLightPipeline();
 	Pipeline& GetDeferredPipeline();
+	QuadPipeline& GetQuadPipeline();
+	TextPipeline& GetTextPipeline();
 
 	uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
 
@@ -95,6 +97,8 @@ public:
 					  VkMemoryPropertyFlags properties,
 					  VkBuffer& buffer,
 					  Allocation& bufferMemory);
+
+	void CreateVertexBuffer(void* vertexData, uint32_t vertexSize, uint32_t numVertices, VkBuffer& outVertexBuffer, Allocation& outVertexBufferMemory);
 
 	void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -147,6 +151,9 @@ public:
 	void ToggleIrradianceDebug();
 
 	void ToggleEnvironmentCaptureDebug();
+
+	void SetInterfaceResolution(glm::vec2 newResolution);
+	glm::vec2 GetInterfaceResolution() const;
 
 	Texture2D* GetBlackTexture();
 	TextureCube* GetBlackCubemap();
@@ -286,6 +293,8 @@ private:
 	ShadowMapDebugPipeline mShadowMapDebugPipeline;
 	PostProcessPipeline mPostProcessPipeline;
 	NullPostProcessPipeline mNullPostProcessPipeline;
+	QuadPipeline mQuadPipeline;
+	TextPipeline mTextPipeline;
 
 	VkDescriptorSet mGlobalDescriptorSet;
 	VkBuffer mGlobalUniformBuffer;
@@ -311,6 +320,8 @@ private:
 
 	ShadowCaster mShadowCaster;
 	Material mDefaultMaterial;
+
+	glm::vec2 mInterfaceResolution;
 
 	public:
 

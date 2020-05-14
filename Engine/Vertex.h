@@ -89,7 +89,7 @@ struct VertexUI
 		attributeDescriptions[1].format = VK_FORMAT_R32G32_SFLOAT;
 		attributeDescriptions[1].offset = offsetof(VertexUI, mTexcoord);
 
-		// Normal
+		// Color
 		attributeDescriptions.push_back(VkVertexInputAttributeDescription());
 		attributeDescriptions[2].binding = 0;
 		attributeDescriptions[2].location = 2;

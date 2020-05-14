@@ -2,7 +2,9 @@
 
 Widget::Widget() :
 	mParent(nullptr),
-	mSetScissor(false)
+	mColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),
+	mSetScissor(false),
+	mDirty(true)
 {
 
 }
@@ -16,6 +18,65 @@ Widget::~Widget()
 	}
 
 	mChildren.clear();
+	
+	Destroy();
+}
+
+// Setup any resources required by the widget.
+void Widget::Create()
+{
+
+}
+
+void Widget::Destroy()
+{
+
+}
+
+// Issue gpu commands to display the widget.
+// Recursively render children.
+void Widget::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
+{
+	RenderChildren(commandBuffer, area);
+}
+
+// Refresh any data used for rendering based on this widget's state. Use dirty flag.
+// Recursively update children.
+void Widget::Update()
+{
+	UpdateChildren();
+}
+
+void Widget::SetPosition(glm::vec2 position)
+{
+	mRect.mX = position.x;
+	mRect.mY = position.y;
+	mDirty = true;
+}
+
+void Widget::SetDimensions(glm::vec2 dimensions)
+{
+	mRect.mWidth = dimensions.x;
+	mRect.mHeight = dimensions.y;
+	mDirty = true;
+}
+
+void Widget::SetRect(glm::vec2 position, glm::vec2 dimensions)
+{
+	SetPosition(position);
+	SetDimensions(dimensions);
+}
+
+void Widget::SetRect(Rect rect)
+{
+	SetPosition(glm::vec2(rect.mX, rect.mY));
+	SetDimensions(glm::vec2(rect.mWidth, rect.mHeight));
+}
+
+void Widget::SetColor(glm::vec4 color)
+{
+	mColor = color;
+	mDirty = true;
 }
 
 void Widget::AddChild(Widget* widget)
@@ -59,11 +120,6 @@ Widget* Widget::GetChild(int32_t index)
 	return mChildren[index];
 }
 
-void Widget::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
-{
-
-}
-
 void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)
 {
 	// Set scissor to the target area.
@@ -90,5 +146,13 @@ void Widget::RenderChildren(VkCommandBuffer commandBuffer, Rect area)
 		childArea.Clamp(area);
 
 		child->Render(commandBuffer, childArea, area);
+	}
+}
+
+void Widget::UpdateChildren()
+{
+	for (int32_t i = 0; i < mChildren.size(); ++i)
+	{
+		mChildren[i]->Update();
 	}
 }

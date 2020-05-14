@@ -79,7 +79,8 @@ enum SubPasses
 	PASS_DEPTH = 0,
 	PASS_GEOMETRY = 1,
 	PASS_DEFERRED = 2,
-    PASS_POST_PROCESS = 3
+    PASS_POST_PROCESS = 3,
+	PASS_UI = 4
 };
 
 enum class ProjectionMode

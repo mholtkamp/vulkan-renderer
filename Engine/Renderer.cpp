@@ -58,6 +58,8 @@ Renderer::Renderer() :
 	mGlobalUniformData.mSunDirection = glm::vec4(2.0f, -4.0f, -8.0f, 0.0f);
 	mGlobalUniformData.mScreenDimensions = glm::vec2(800.0f, 600.0f);
 	mGlobalUniformData.mVisualizationMode = 0;
+
+	mInterfaceResolution = glm::vec2(1280, 720);
 }
 
 void Renderer::Create()
@@ -86,6 +88,16 @@ void Renderer::ToggleEnvironmentCaptureDebug()
 {
 	sDebugEnvironmentCaptureIndex++;
 	UpdateDebugDescriptorSet();
+}
+
+void Renderer::SetInterfaceResolution(glm::vec2 newResolution)
+{
+	mInterfaceResolution = newResolution;
+}
+
+glm::vec2 Renderer::GetInterfaceResolution() const
+{
+	return mInterfaceResolution;
 }
 
 Texture2D* Renderer::GetBlackTexture()
@@ -416,8 +428,12 @@ void Renderer::Render()
 		vkCmdBindDescriptorSets(mCommandBuffers[imageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, mPostProcessPipeline.GetPipelineLayout(), 1, 1, &mPostProcessDescriptorSet, 0, 0);
 		vkCmdDraw(mCommandBuffers[imageIndex], 4, 1, 0, 0);
 	}
+	vkCmdNextSubpass(mCommandBuffers[imageIndex], VK_SUBPASS_CONTENTS_INLINE);
 
-
+	// ******************
+	//  UI
+	// ******************
+	// if (mRootWidget != nullptr) { mRootWidget->Render(cb); }
 	vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
 
 	if (vkEndCommandBuffer(mCommandBuffers[imageIndex]) != VK_SUCCESS)
@@ -994,6 +1010,20 @@ void Renderer::CreateRenderPass()
 			nullptr, // depth attachment
 			0, // preserve attachments
 			nullptr
+		},
+
+		// Subpass 5 - UI
+		{
+			0,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			0, // input attachments
+			0,
+			backReferenceCount,
+			backAttachmentReference,
+			nullptr, // resolve attachments
+			nullptr, // depth attachment
+			0, // preserve attachments
+			nullptr
 		}
 	};
 
@@ -1025,6 +1055,17 @@ void Renderer::CreateRenderPass()
 		{
 			PASS_DEFERRED,
 			PASS_POST_PROCESS,
+			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_DEPENDENCY_BY_REGION_BIT
+		},
+
+		// UI pass depends on post process pass
+		{
+			PASS_POST_PROCESS,
+			PASS_UI,
 			VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
@@ -1595,6 +1636,27 @@ void Renderer::CreateBuffer(VkDeviceSize size,
 	vkBindBufferMemory(mDevice, buffer, bufferMemory.mDeviceMemory, bufferMemory.mOffset);
 }
 
+void Renderer::CreateVertexBuffer(void* vertexData, uint32_t vertexSize, uint32_t numVertices, VkBuffer& outVertexBuffer, Allocation& outVertexBufferMemory)
+{
+	VkDeviceSize bufferSize = vertexSize * numVertices;
+
+	VkBuffer stagingBuffer;
+	Allocation stagingBufferMemory;
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(mDevice, stagingBufferMemory.mDeviceMemory, stagingBufferMemory.mOffset, bufferSize, 0, &data);
+	memcpy(data, vertexData, (size_t)bufferSize);
+	vkUnmapMemory(mDevice, stagingBufferMemory.mDeviceMemory);
+
+	CreateBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, outVertexBuffer, outVertexBufferMemory);
+
+	CopyBuffer(stagingBuffer, outVertexBuffer, bufferSize);
+
+	vkDestroyBuffer(mDevice, stagingBuffer, nullptr);
+	Allocator::Free(stagingBufferMemory);
+}
+
 void Renderer::CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
 	VkCommandBuffer commandBuffer = BeginSingleSubmissionCommands();
@@ -1653,6 +1715,16 @@ Pipeline& Renderer::GetDeferredPipeline()
 {
 	return mLightPipeline;
 	//return mDeferredPipeline;
+}
+
+QuadPipeline& Renderer::GetQuadPipeline()
+{
+	return mQuadPipeline;
+}
+
+TextPipeline& Renderer::GetTextPipeline()
+{
+	return mTextPipeline;
 }
 
 VkDescriptorSet& Renderer::GetGlobalDescriptorSet()
@@ -1961,6 +2033,8 @@ void Renderer::CreatePipelines()
 	mShadowMapDebugPipeline.Create();
 	mPostProcessPipeline.Create();
 	mNullPostProcessPipeline.Create();
+	mQuadPipeline.Create();
+	mTextPipeline.Destroy();
 }
 
 void Renderer::DestroyPipelines()
@@ -1974,6 +2048,8 @@ void Renderer::DestroyPipelines()
 	mShadowMapDebugPipeline.Destroy();
 	mPostProcessPipeline.Destroy();
 	mNullPostProcessPipeline.Destroy();
+	mQuadPipeline.Destroy();
+	mTextPipeline.Destroy();
 }
 
 void Renderer::SetDebugMode(DebugMode mode)
