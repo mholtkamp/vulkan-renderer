@@ -25,6 +25,8 @@ public:
 	// Recursively update children.
 	virtual void Update();
 
+	Rect GetRect();
+
 	virtual void SetPosition(glm::vec2 position);
 	virtual void SetDimensions(glm::vec2 dimensions);
 	virtual void SetRect(glm::vec2 position, glm::vec2 dimensions);
@@ -39,6 +41,8 @@ public:
 	Widget* RemoveChild(int32_t index);
 
 	Widget* GetChild(int32_t index);
+
+	void MarkDirty();
 
 protected:
 

@@ -47,6 +47,11 @@ void Widget::Update()
 	UpdateChildren();
 }
 
+Rect Widget::GetRect()
+{
+	return mRect;
+}
+
 void Widget::SetPosition(glm::vec2 position)
 {
 	mRect.mX = position.x;
@@ -82,6 +87,7 @@ void Widget::SetColor(glm::vec4 color)
 void Widget::AddChild(Widget* widget)
 {
 	mChildren.push_back(widget);
+	mChildren.back()->mParent = this;
 }
 
 Widget* Widget::RemoveChild(Widget* widget)
@@ -93,6 +99,7 @@ Widget* Widget::RemoveChild(Widget* widget)
 		if (mChildren[i] == widget)
 		{
 			removedWidget = mChildren[i];
+			removedWidget->mParent = nullptr;
 			mChildren.erase(mChildren.begin() + i);
 			break;
 		}
@@ -118,6 +125,16 @@ Widget* Widget::RemoveChild(int32_t index)
 Widget* Widget::GetChild(int32_t index)
 {
 	return mChildren[index];
+}
+
+void Widget::MarkDirty()
+{
+	mDirty = true;
+
+	for (int32_t i = 0; i < mChildren.size(); ++i)
+	{
+		mChildren[i]->MarkDirty();
+	}
 }
 
 void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)

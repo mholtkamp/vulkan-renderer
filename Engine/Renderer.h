@@ -309,6 +309,7 @@ private:
 	GBuffer mGBuffer;
 
 	Scene* mScene;
+	class Widget* mRootWidget;
 
 	AppState* mAppState;
 

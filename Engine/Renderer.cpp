@@ -3,6 +3,7 @@
 #include "Utilities.h"
 #include "Constants.h"
 #include "Allocator.h"
+#include "Widget.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -49,6 +50,7 @@ Renderer::Renderer() :
 	mImageAvailableSemaphore(0),
 	mRenderFinishedSemaphore(0),
 	mScene(nullptr),
+	mRootWidget(nullptr),
 	mDebugMode(DEBUG_NONE),
 	mInitialized(false),
     mEnvironmentDebugFace(0),
@@ -324,6 +326,11 @@ void Renderer::Render()
 		throw exception("Failed to acquire swapchain image");
 	}
 
+	if (mRootWidget != nullptr)
+	{
+		mRootWidget->Update();
+	}
+
 	// Reset our command buffer to record a fresh set of commands for this frame.
 	vkResetCommandBuffer(mCommandBuffers[imageIndex], 0);
 
@@ -433,7 +440,12 @@ void Renderer::Render()
 	// ******************
 	//  UI
 	// ******************
-	// if (mRootWidget != nullptr) { mRootWidget->Render(cb); }
+	Rect mScreenRect;
+	mScreenRect.mX = 0.0f;
+	mScreenRect.mY = 0.0f;
+	mScreenRect.mWidth = mInterfaceResolution.x;
+	mScreenRect.mHeight = mInterfaceResolution.y;
+	if (mRootWidget != nullptr) { mRootWidget->Render(mCommandBuffers[imageIndex], mScreenRect, mScreenRect); }
 	vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
 
 	if (vkEndCommandBuffer(mCommandBuffers[imageIndex]) != VK_SUCCESS)

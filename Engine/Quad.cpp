@@ -144,6 +144,14 @@ void Quad::UpdateVertexPositions()
 	Renderer* renderer = Renderer::Get();
 	glm::vec2 resolution = renderer->GetInterfaceResolution();
 
+	Rect rect = mRect;
+
+	if (mParent != nullptr)
+	{
+		rect.mX += mParent->GetRect().mX;
+		rect.mY += mParent->GetRect().mY;
+	}
+
 	mVertices[0].mPosition.x = mRect.mX / resolution.x;
 	mVertices[0].mPosition.y = mRect.mY / resolution.y;
 
