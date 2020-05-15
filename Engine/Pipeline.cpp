@@ -25,7 +25,8 @@ Pipeline::Pipeline() :
 	mBlendEnabled(VK_FALSE),
     mViewportWidth(0),
     mViewportHeight(0),
-	mUseVertexBinding(true)
+	mUseVertexBinding(true),
+	mVertexType(VertexType::Vertex)
 {
 	AddBlendAttachmentState();
 }
@@ -96,8 +97,18 @@ void Pipeline::CreateGraphicsPipeline()
 
 	if (mUseVertexBinding)
 	{
-		bindingDescription = Vertex::GetBindingDescription();
-		attributeDescription = Vertex::GetAttributeDescriptions();
+		switch (mVertexType)
+		{
+		case VertexType::VertexUI:
+			bindingDescription = VertexUI::GetBindingDescription();
+			attributeDescription = VertexUI::GetAttributeDescriptions();
+			break;
+		default:
+			bindingDescription = Vertex::GetBindingDescription();
+			attributeDescription = Vertex::GetAttributeDescriptions();
+			break;
+		}
+
 		vertexInputInfo.vertexBindingDescriptionCount = 1;
 		vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
 		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescription.size());

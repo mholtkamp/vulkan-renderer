@@ -14,6 +14,8 @@ struct QuadUniformBuffer
 
 class Quad : public Widget
 {
+public:
+
 	Quad();
 	virtual ~Quad();
 
@@ -33,9 +35,11 @@ class Quad : public Widget
 protected:
 
 	void CreateVertexBuffer();
+	void CreateUniformBuffer();
 	void CreateDescriptorSet();
 
 	void DestroyVertexBuffer();
+	void DestroyUniformBuffer();
 	void DestroyDescriptorSet();
 
 	void InitVertexData();

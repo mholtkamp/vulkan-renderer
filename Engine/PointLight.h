@@ -31,6 +31,7 @@ class PointLight
 public:
 
 	PointLight();
+	~PointLight();
 
 	void Create(glm::vec3 position,
 		glm::vec3 color,
@@ -38,6 +39,8 @@ public:
 
 	void Create(const aiLight& light,
 				glm::vec3 position);
+
+	void Destroy();
 
 	void Update(class Scene* scene,
 		float deltaTime);
@@ -71,8 +74,10 @@ private:
 	static class Mesh* sSphereMesh;
 
 	void CreateDescriptorSet();
-
 	void CreateUniformBuffer();
+
+	void DestroyDescriptorSet();
+	void DestroyUniformBuffer();
 
 	void UpdateUniformBuffer(class Camera* camera, float deltaTime);
 

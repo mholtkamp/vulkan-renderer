@@ -322,6 +322,7 @@ public:
 		mSubpass = PASS_UI;
 		mDepthTestEnabled = VK_FALSE;
 		mUseVertexBinding = true;
+		mVertexType = VertexType::VertexUI;
 	}
 
 	virtual void PopulateLayoutBindings() override

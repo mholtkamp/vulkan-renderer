@@ -1,5 +1,14 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
+enum class VertexType
+{
+	Vertex,
+	VertexUI,
+	Max
+};
+
 struct Vertex
 {
 	glm::vec3 mPosition;
@@ -52,8 +61,6 @@ struct Vertex
 		return attributeDescriptions;
 	}
 };
-
-#pragma once
 
 struct VertexUI
 {

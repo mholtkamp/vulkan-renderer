@@ -73,6 +73,10 @@ public:
 
 	Scene* GetScene();
 
+	void SetRootWidget(class Widget* widget);
+	
+	class Widget* GetRootWidget();
+
 	void SetAppState(AppState* appState);
 
 	void WaitOnExecutionFinished();

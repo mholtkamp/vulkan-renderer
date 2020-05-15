@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include "Vertex.h"
+
 class Pipeline
 {
 
@@ -64,6 +66,7 @@ public:
 
 	// Vertex Input
 	bool mUseVertexBinding; // (Generally only false for post process / full screen quad pipelines.)
+	VertexType mVertexType;
 
 	// Rasterizer stage
 	VkBool32 mRasterizerDiscard;

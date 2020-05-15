@@ -19,6 +19,11 @@ PointLight::PointLight() :
 
 }
 
+PointLight::~PointLight()
+{
+	//Destroy();
+}
+
 void PointLight::Create(glm::vec3 position,
 	glm::vec3 color,
 	float radius)
@@ -52,6 +57,12 @@ void PointLight::Create(const aiLight& light,
 	mLightData.mRadius = (-l + sqrt(l * l - 4 * q * (c - (inv) * i))) / (2 * q);
 
 	CreateDescriptorSet();
+}
+
+void PointLight::Destroy()
+{
+	DestroyUniformBuffer();
+	DestroyDescriptorSet();
 }
 
 void PointLight::LoadSphereMesh()
@@ -223,6 +234,33 @@ void PointLight::CreateUniformBuffer()
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		mUniformBuffer,
 		mUniformBufferMemory);
+}
+
+void PointLight::DestroyDescriptorSet()
+{
+	if (mDescriptorSet != VK_NULL_HANDLE)
+	{
+		Renderer* renderer = Renderer::Get();
+		vkFreeDescriptorSets(renderer->GetDevice(),
+			renderer->GetDescriptorPool(),
+			1,
+			&mDescriptorSet);
+
+		mDescriptorSet = VK_NULL_HANDLE;
+	}
+}
+
+void PointLight::DestroyUniformBuffer()
+{
+	if (mUniformBuffer != VK_NULL_HANDLE)
+	{
+		Renderer* renderer = Renderer::Get();
+
+		vkDestroyBuffer(renderer->GetDevice(), mUniformBuffer, nullptr);
+		mUniformBuffer = VK_NULL_HANDLE;
+
+		Allocator::Free(mUniformBufferMemory);
+	}
 }
 
 void PointLight::UpdateUniformBuffer(Camera* camera, float deltaTime)

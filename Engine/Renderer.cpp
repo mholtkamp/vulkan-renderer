@@ -510,6 +510,16 @@ Scene* Renderer::GetScene()
 	return mScene;
 }
 
+void Renderer::SetRootWidget(class Widget* widget)
+{
+	mRootWidget = widget;
+}
+
+class Widget* Renderer::GetRootWidget()
+{
+	return mRootWidget;
+}
+
 VKAPI_ATTR VkBool32 VKAPI_CALL Renderer::DebugCallback(VkDebugReportFlagsEXT flags,
 	VkDebugReportObjectTypeEXT objType,
 	uint64_t obj,

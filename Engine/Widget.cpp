@@ -137,6 +137,11 @@ void Widget::MarkDirty()
 	}
 }
 
+float Widget::InterfaceToNormalized(float interfaceCoord, float interfaceSize)
+{
+	return (interfaceCoord / interfaceSize) * 2.0f - 1.0f;
+}
+
 void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)
 {
 	// Set scissor to the target area.

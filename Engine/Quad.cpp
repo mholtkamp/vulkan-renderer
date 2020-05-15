@@ -19,6 +19,7 @@ void Quad::Create()
 	Widget::Create();
 
 	CreateVertexBuffer();
+	CreateUniformBuffer();
 	CreateDescriptorSet();
 }
 
@@ -27,6 +28,7 @@ void Quad::Destroy()
 	Widget::Destroy();
 
 	DestroyVertexBuffer();
+	DestroyUniformBuffer();
 	DestroyDescriptorSet();
 }
 
@@ -51,13 +53,6 @@ void Quad::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
 		nullptr);
 
 	vkCmdDraw(commandBuffer, 4, 1, 0, 0);
-
-	//vkCmdDrawIndexed(commandBuffer,
-	//	6,
-	//	1,
-	//	0,
-	//	0,
-	//	0);
 
 	RenderChildren(commandBuffer, area);
 }
@@ -114,6 +109,18 @@ void Quad::CreateVertexBuffer()
 		mVertexBufferMemory);
 }
 
+void Quad::CreateUniformBuffer()
+{
+	Renderer* renderer = Renderer::Get();
+
+	VkDeviceSize bufferSize = sizeof(QuadUniformBuffer);
+	renderer->CreateBuffer(bufferSize,
+		VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		mUniformBuffer,
+		mUniformBufferMemory);
+}
+
 void Quad::CreateDescriptorSet()
 {
 	Renderer* renderer = Renderer::Get();
@@ -122,15 +129,28 @@ void Quad::CreateDescriptorSet()
 
 void Quad::DestroyVertexBuffer()
 {
-	Renderer* renderer = Renderer::Get();
-	VkDevice device = renderer->GetDevice();
-
 	if (mVertexBuffer != VK_NULL_HANDLE)
 	{
+		Renderer* renderer = Renderer::Get();
+		VkDevice device = renderer->GetDevice();
+
 		vkDestroyBuffer(device, mVertexBuffer, nullptr);
 		mVertexBuffer = VK_NULL_HANDLE;
 
 		Allocator::Free(mVertexBufferMemory);
+	}
+}
+
+void Quad::DestroyUniformBuffer()
+{
+	if (mUniformBuffer != VK_NULL_HANDLE)
+	{
+		Renderer* renderer = Renderer::Get();
+
+		vkDestroyBuffer(renderer->GetDevice(), mUniformBuffer, nullptr);
+		mUniformBuffer = VK_NULL_HANDLE;
+
+		Allocator::Free(mUniformBufferMemory);
 	}
 }
 
@@ -152,18 +172,17 @@ void Quad::UpdateVertexPositions()
 		rect.mY += mParent->GetRect().mY;
 	}
 
-	mVertices[0].mPosition.x = mRect.mX / resolution.x;
-	mVertices[0].mPosition.y = mRect.mY / resolution.y;
+	mVertices[0].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
+	mVertices[0].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
 
-	mVertices[1].mPosition.x = mRect.mX / resolution.x;
-	mVertices[1].mPosition.y = (mRect.mY + mRect.mHeight) / resolution.y;
+	mVertices[1].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
+	mVertices[1].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
 
-	mVertices[2].mPosition.x = (mRect.mX + mRect.mWidth) / resolution.x;
-	mVertices[2].mPosition.y = mRect.mY / resolution.y;
+	mVertices[2].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
+	mVertices[2].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
 
-
-	mVertices[3].mPosition.x = (mRect.mX + mRect.mWidth) / resolution.x;
-	mVertices[3].mPosition.y = (mRect.mY + mRect.mHeight) / resolution.y;
+	mVertices[3].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
+	mVertices[3].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
 }
 
 void Quad::InitVertexData()

@@ -44,6 +44,8 @@ public:
 
 	void MarkDirty();
 
+	static float InterfaceToNormalized(float interfaceCoord, float interfaceSize);
+
 protected:
 
 	void SetScissor(VkCommandBuffer commandBuffer, Rect& area);
