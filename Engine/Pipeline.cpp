@@ -22,7 +22,6 @@ Pipeline::Pipeline() :
 	mDepthTestEnabled(VK_TRUE),
 	mDepthWriteEnabled(VK_TRUE),
 	mDepthCompareOp(VK_COMPARE_OP_LESS),
-	mBlendEnabled(VK_FALSE),
     mViewportWidth(0),
     mViewportHeight(0),
 	mUseVertexBinding(true),
@@ -343,7 +342,7 @@ void Pipeline::AddBlendAttachmentState()
 {
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = mBlendEnabled;
+	colorBlendAttachment.blendEnable = false;
 	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
 	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
 	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;

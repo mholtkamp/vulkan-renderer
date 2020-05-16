@@ -31,8 +31,24 @@ int32_t main(int32_t argc, char** argv)
 	testTexture->Load("Scenes/MonkeyScene/Blender/grid_tex.png");
 	quad1->SetColor(glm::vec4(0.2, 1, 0.5, 1));
 	quad1->SetTexture(testTexture);
+
+	glm::vec4 colors[4];
+	colors[0] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	colors[1] = glm::vec4(1.0f, 0.0f, 0.0f, 1.0f);
+	colors[2] = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+	colors[3] = glm::vec4(1.0f, 1.0f, 0.0f, 1.0f);
+	quad1->SetColor(colors);
+
+	Quad* quad2 = new Quad();
+	quad2->Create();
+	quad2->SetPosition(glm::vec2(100, 200));
+	quad2->SetDimensions(glm::vec2(400, 150));
+	colors[1] = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
+	colors[3] = glm::vec4(0.0f, 1.0f, 1.0f, 0.0f);
+	quad2->SetColor(colors);
+
 	
-	Renderer::Get()->SetRootWidget(quad1);
+	Renderer::Get()->SetRootWidget(quad2);
 
 	AssignDebugCamera(scene->GetActiveCamera());
 	SetScene(scene);
@@ -46,6 +62,7 @@ int32_t main(int32_t argc, char** argv)
 
 	delete scene;
 	delete quad1;
+	delete quad2;
 	delete testTexture;
 	Shutdown();
 }

@@ -82,7 +82,6 @@ public:
 	VkCompareOp mDepthCompareOp;
 
 	// Color Blend State
-	VkBool32 mBlendEnabled;
 	std::vector<VkPipelineColorBlendAttachmentState> mBlendAttachments;
 
 	std::vector<std::vector<VkDescriptorSetLayoutBinding> > mLayoutBindings;

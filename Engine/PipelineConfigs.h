@@ -130,7 +130,6 @@ public:
 	{
 		mVertexShaderPath = ENGINE_SHADER_DIR "lightShader.vert";
 		mFragmentShaderPath = ENGINE_SHADER_DIR "lightShader.frag";
-		mBlendEnabled = true;
 		mCullMode = VK_CULL_MODE_FRONT_BIT;
 
 		assert(mBlendAttachments.size() > 0);
@@ -159,7 +158,6 @@ public:
     {
         mVertexShaderPath = ENGINE_SHADER_DIR "directionalLightShader.vert";
         mFragmentShaderPath = ENGINE_SHADER_DIR "directionalLightShader.frag";
-        mBlendEnabled = true;
         mCullMode = VK_CULL_MODE_NONE;
 
         assert(mBlendAttachments.size() > 0);
@@ -294,7 +292,6 @@ public:
 
         mDepthTestEnabled = false;
         mCullMode = VK_CULL_MODE_NONE;
-        mBlendEnabled = false;
         mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		mUseVertexBinding = false;
 	}
@@ -323,6 +320,10 @@ public:
 		mDepthTestEnabled = VK_FALSE;
 		mUseVertexBinding = true;
 		mVertexType = VertexType::VertexUI;
+		
+		mBlendAttachments[0].blendEnable = VK_TRUE;
+		mBlendAttachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		mBlendAttachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	}
 
 	virtual void PopulateLayoutBindings() override
