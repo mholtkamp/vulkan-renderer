@@ -27,7 +27,10 @@ int32_t main(int32_t argc, char** argv)
 	quad1->SetDimensions(glm::vec2(400, 150));
 	//quad1->SetPosition(glm::vec2(40, 10));
 	//quad1->SetDimensions(glm::vec2(1200, 700));
-	quad1->SetColor(glm::vec4(1, 0, 0, 1));
+	Texture* testTexture = new Texture2D();
+	testTexture->Load("Scenes/MonkeyScene/Blender/grid_tex.png");
+	quad1->SetColor(glm::vec4(0.2, 1, 0.5, 1));
+	quad1->SetTexture(testTexture);
 	
 	Renderer::Get()->SetRootWidget(quad1);
 
@@ -43,5 +46,6 @@ int32_t main(int32_t argc, char** argv)
 
 	delete scene;
 	delete quad1;
+	delete testTexture;
 	Shutdown();
 }

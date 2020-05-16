@@ -18,6 +18,7 @@ void Quad::Create()
 {
 	Widget::Create();
 
+	InitVertexData();
 	CreateVertexBuffer();
 	CreateUniformBuffer();
 	CreateDescriptorSet();
