@@ -1,23 +1,31 @@
 #pragma once
 
 #include "Widget.h"
-#include "Texture.h"
-#include "Vertex.h"
+#include "Allocator.h"
 #include "DescriptorSet.h"
-#include "glm/glm.hpp"
 
-struct QuadUniformBuffer
+struct TextUniformBuffer
 {
-	glm::vec4 mHighlightColor;
-	float mHighlightTime;
+	float mX;
+	float mY;
+	float mCutoff;
+	float mOutlineSize;
+
+	float mSize;
+	float mPadding1;
+	float mPadding2;
+	float mPadding3;
+
+	int32_t mDistanceField;
+	int32_t mEffect;
 };
 
-class Quad : public Widget
+class Text : public Widget
 {
 public:
 
-	Quad();
-	virtual ~Quad();
+	Text();
+	virtual ~Text();
 
 	virtual void Create() override;
 	virtual void Destroy() override;
@@ -26,11 +34,9 @@ public:
 
 	virtual void Update() override;
 
-	void SetTexture(class Texture* texture);
-
-	virtual void SetColor(glm::vec4 color) override;
-
-	void SetColor(glm::vec4 colors[4]);
+	void SetFont(struct Font* font);
+	void SetColor(glm::vec4 color);
+	void SetOutlineColor(glm::vec4 color);
 
 protected:
 
@@ -42,19 +48,14 @@ protected:
 	void DestroyUniformBuffer();
 	void DestroyDescriptorSet();
 
-	void UpdateVertexPositions();
 	void UpdateVertexBuffer();
 	void UpdateDescriptorSet();
 
-	void InitVertexData();
+	void ConstructVertexData();
 
-	Texture* mTexture;
-	VertexUI mVertices[4];
-
+	Font* mFont;
+	
 	VkBuffer mVertexBuffer;
 	Allocation mVertexBufferMemory;
-
 	DescriptorSet mDescriptorSet;
-	VkBuffer mUniformBuffer;
-	Allocation mUniformBufferMemory;
 };

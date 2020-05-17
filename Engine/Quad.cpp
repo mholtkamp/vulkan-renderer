@@ -5,7 +5,6 @@ Quad::Quad() :
 	mTexture(nullptr),
 	mVertexBuffer(VK_NULL_HANDLE)
 {
-	CreateVertexBuffer();
 
 }
 
@@ -55,7 +54,8 @@ void Quad::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
 
 	vkCmdDraw(commandBuffer, 4, 1, 0, 0);
 
-	RenderChildren(commandBuffer, area);
+	// Should not have any children?
+	//RenderChildren(commandBuffer, area);
 }
 
 void Quad::Update()
