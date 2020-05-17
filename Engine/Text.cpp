@@ -1,6 +1,7 @@
 #include "Text.h"
 #include "Renderer.h"
 #include "Font.h"
+#include "Vertex.h"
 
 Text::Text() :
 	mFont(nullptr),
@@ -186,6 +187,9 @@ void Text::UpdateVertexBuffer()
 	if (mFont == nullptr)
 		return;
 
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
 	// Check if we need to reallocate a bigger buffer.
 	size_t requiredSize = sizeof(VertexUI) * 6 * mText.size();
 	if (requiredSize > mVertexBufferMemory.mSize)
@@ -193,6 +197,84 @@ void Text::UpdateVertexBuffer()
 		DestroyVertexBuffer();
 		CreateVertexBuffer();
 	}
+
+	assert(mFont);
+	assert(mFont->mCharacters);
+
+	void* data = nullptr;
+	vkMapMemory(device, mVertexBufferMemory.mDeviceMemory, mVertexBufferMemory.mOffset, mVertexBufferMemory.mSize, 0, &data);
+
+	mVisibleCharacters = 0;
+
+	// Run through each of the characters and construct vertices for it.
+	// Not using an index buffer currently, so each character is 6 vertices.
+	// Topology is triangles.
+	
+	const char* characters = mText.c_str();
+	float cursorX = 0.0f;
+	float cursorY = 0.0f;
+
+	for (int32_t i = 0; i < mText.size(); ++i)
+	{
+		char textChar = characters[i];
+		if (textChar == '\n')
+		{
+			cursorY -= mFont->mSize;
+			cursorX = 0.0f;
+			continue;
+		}
+
+		// Only ASCII is supported.
+		if (textChar < ' ' ||
+			textChar > '~')
+		{
+			continue;
+		}
+
+		Character& fontChar = mFont->mCharacters[textChar - ' '];
+		VertexUI* vertices = reinterpret_cast<VertexUI*>(data) + (mVisibleCharacters * 6);
+
+		//   0---2  3
+		//   |  / / |
+		//   | / /  |
+		//   1  4---5
+		vertices[0].mPosition.x = cursorX + fontChar.mOriginX;
+		vertices[0].mPosition.y = cursorY + fontChar.mOriginY;
+		vertices[0].mTexcoord.x = (float) fontChar.mX;
+		vertices[0].mTexcoord.y = (float) fontChar.mY;
+
+		vertices[1].mPosition.x = cursorX + fontChar.mOriginX;
+		vertices[1].mPosition.y = cursorY;
+		vertices[1].mTexcoord.x = (float) fontChar.mX;
+		vertices[1].mTexcoord.y = (float) fontChar.mY + fontChar.mHeight;
+
+		vertices[2].mPosition.x = cursorX + fontChar.mOriginX + fontChar.mWidth;
+		vertices[2].mPosition.y = cursorY + fontChar.mOriginY;
+		vertices[2].mTexcoord.x = (float) fontChar.mX + fontChar.mWidth;
+		vertices[2].mTexcoord.y = (float) fontChar.mY;
+
+		vertices[3] = vertices[2]; // duplicated
+		vertices[4] = vertices[1]; // duplicated
+
+		vertices[5].mPosition.x = cursorX + fontChar.mOriginX + fontChar.mWidth;
+		vertices[5].mPosition.y = cursorY;
+		vertices[5].mTexcoord.x = (float) fontChar.mX + fontChar.mWidth;
+		vertices[5].mTexcoord.y = (float) fontChar.mY + fontChar.mHeight;
+
+		for (int32_t i = 0; i < 6; ++i)
+		{
+			// Fill out uniform data first.
+			// TODO: DELETE COLOR FROM VERTEX DATA
+			vertices[i].mColor = mColor;
+
+			// Transform texcoords into 0-1 UV space
+			vertices[i].mTexcoord /= glm::vec2(mFont->mWidth, mFont->mHeight);
+		}
+
+		mVisibleCharacters++;
+	}
+
+	vkUnmapMemory(device, mVertexBufferMemory.mDeviceMemory);
 
 	//mVisibleCharacters = TODO;
 }
