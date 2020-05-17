@@ -4,6 +4,7 @@
 #include "Constants.h"
 #include "Allocator.h"
 #include "Widget.h"
+#include "DefaultFonts.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -171,6 +172,7 @@ Renderer::~Renderer()
 {
 	DestroyDefaultTextures();
 
+	DefaultFonts::Destroy();
 	PointLight::DestroySphereMesh();
 
     mShadowCaster.Destroy();
@@ -220,6 +222,7 @@ void Renderer::Initialize()
 
 	mDefaultMaterial.Create();
 
+	DefaultFonts::Create();
 	PointLight::LoadSphereMesh();
 
 	mInitialized = true;

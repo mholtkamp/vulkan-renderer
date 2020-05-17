@@ -1,6 +1,17 @@
+#include "DefaultFonts.h"
 #include "Font.h"
 
-// Consolas
+void DefaultFonts::Create()
+{
+	sConsolas32.Create();
+}
+
+void DefaultFonts::Destroy()
+{
+	sConsolas32.Destroy();
+}
+
+#pragma region Consolas32
 
 static Character characters_Consolas[] = {
   {' ', 34, 78, 3, 3, 1, 1},
@@ -99,3 +110,7 @@ static Character characters_Consolas[] = {
   {'}', 36, 0, 15, 31, -2, 24},
   {'~', 454, 56, 19, 8, 1, 13},
 };
+
+Font DefaultFonts::sConsolas32 = { "Consolas32", 32, 0, 0, 512, 128, 95, characters_Consolas, "Engine/Textures/Fonts/Consolas32.png" };
+
+#pragma endregion

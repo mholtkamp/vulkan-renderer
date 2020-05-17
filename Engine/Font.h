@@ -16,18 +16,26 @@ struct Character
 
 struct Font
 {
-	Font() :
-		mName("Font"),
-		mSize(0),
-		mBold(false),
-		mItalic(false),
-		mWidth(0),
-		mHeight(0),
-		mCharacterCount(0),
-		mCharacters(nullptr),
-		mTexture(nullptr)
+	Font(std::string name,
+		int32_t size,
+		bool bold,
+		bool italic,
+		int32_t width,
+		int32_t height,
+		int32_t characterCount,
+		Character* characters,
+		std::string texturePath)
 	{
-
+		mName = name;
+		mSize = size;
+		mBold = bold;
+		mItalic = italic;
+		mWidth = width;
+		mHeight = height;
+		mCharacterCount = characterCount;
+		mCharacters = characters;
+		mTexturePath = texturePath;
+		mTexture = nullptr;
 	}
 
 	std::string mName;
@@ -38,5 +46,9 @@ struct Font
 	int32_t mHeight;
 	int32_t mCharacterCount;
 	Character* mCharacters;
+	std::string mTexturePath;
 	class Texture2D* mTexture;
+
+	void Create();
+	void Destroy();
 };

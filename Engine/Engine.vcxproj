@@ -171,6 +171,7 @@
     <ClCompile Include="Canvas.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DefaultFonts.cpp" />
+    <ClCompile Include="Font.cpp" />
     <ClCompile Include="VkrMath.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Rect.cpp" />
