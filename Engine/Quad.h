@@ -8,8 +8,7 @@
 
 struct QuadUniformBuffer
 {
-	glm::vec4 mHighlightColor;
-	float mHighlightTime;
+	glm::vec4 mPadding; // Temp placeholder
 };
 
 class Quad : public Widget
@@ -42,8 +41,8 @@ protected:
 	void DestroyUniformBuffer();
 	void DestroyDescriptorSet();
 
-	void UpdateVertexPositions();
 	void UpdateVertexBuffer();
+	void UpdateUniformBuffer();
 	void UpdateDescriptorSet();
 
 	void InitVertexData();

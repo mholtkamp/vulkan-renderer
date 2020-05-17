@@ -10,8 +10,7 @@ layout (set = 0, binding = 0) uniform GlobalUniformBuffer
 
 layout (set = 1, binding = 0) uniform QuadUniformBuffer
 {
-	vec4 mHighlightColor;
-	float mHighlightTime;
+	vec4 mPadding;
 
 } quadData;
 layout (set = 1, binding = 1) uniform sampler2D quadSampler;

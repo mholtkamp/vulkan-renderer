@@ -35,8 +35,11 @@ public:
 	virtual void Update() override;
 
 	void SetFont(struct Font* font);
-	void SetColor(glm::vec4 color);
 	void SetOutlineColor(glm::vec4 color);
+	void SetSize(float size);
+
+	void SetText(std::string& text);
+	std::string& GetText();
 
 protected:
 
@@ -49,13 +52,25 @@ protected:
 	void DestroyDescriptorSet();
 
 	void UpdateVertexBuffer();
+	void UpdateUniformBuffer();
 	void UpdateDescriptorSet();
 
-	void ConstructVertexData();
-
 	Font* mFont;
-	
+	std::string mText;
+	float mCutoff;
+	float mOutlineSize;
+	float mSize;
+	glm::vec4 mOutlineColor;
+
+	int32_t mVisibleCharacters; // ( \n excluded )
+
 	VkBuffer mVertexBuffer;
 	Allocation mVertexBufferMemory;
+
+	VkBuffer mUniformBuffer;
+	Allocation mUniformBufferMemory;
+
 	DescriptorSet mDescriptorSet;
+
+	bool mVertexBufferDirty;
 };

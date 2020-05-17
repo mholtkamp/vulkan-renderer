@@ -24,7 +24,8 @@ struct Font
 		int32_t height,
 		int32_t characterCount,
 		Character* characters,
-		std::string texturePath)
+		std::string texturePath,
+		bool distanceField)
 	{
 		mName = name;
 		mSize = size;
@@ -36,6 +37,7 @@ struct Font
 		mCharacters = characters;
 		mTexturePath = texturePath;
 		mTexture = nullptr;
+		mDistanceField = distanceField;
 	}
 
 	std::string mName;
@@ -48,6 +50,7 @@ struct Font
 	Character* mCharacters;
 	std::string mTexturePath;
 	class Texture2D* mTexture;
+	bool mDistanceField;
 
 	void Create();
 	void Destroy();

@@ -111,6 +111,6 @@ static Character characters_Consolas[] = {
   {'~', 454, 56, 19, 8, 1, 13},
 };
 
-Font DefaultFonts::sConsolas32 = { "Consolas32", 32, 0, 0, 512, 128, 95, characters_Consolas, "Engine/Textures/Fonts/Consolas32.png" };
+Font DefaultFonts::sConsolas32 = { "Consolas32", 32, 0, 0, 512, 128, 95, characters_Consolas, "Engine/Textures/Fonts/Consolas32.png", false };
 
 #pragma endregion

@@ -62,13 +62,13 @@ void Quad::Update()
 {
 	if (mDirty)
 	{
-		UpdateVertexPositions();
 		UpdateVertexBuffer();
+		UpdateUniformBuffer();
 		UpdateDescriptorSet();
 		mDirty = false;
 	}
 
-	UpdateChildren();
+	//UpdateChildren();
 }
 
 void Quad::SetTexture(class Texture* texture)
@@ -120,6 +120,8 @@ void Quad::CreateUniformBuffer()
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 		mUniformBuffer,
 		mUniformBufferMemory);
+
+	UpdateUniformBuffer();
 }
 
 void Quad::CreateDescriptorSet()
@@ -160,32 +162,6 @@ void Quad::DestroyDescriptorSet()
 	mDescriptorSet.Destroy();
 }
 
-void Quad::UpdateVertexPositions()
-{
-	Renderer* renderer = Renderer::Get();
-	glm::vec2 resolution = renderer->GetInterfaceResolution();
-
-	Rect rect = mRect;
-
-	if (mParent != nullptr)
-	{
-		rect.mX += mParent->GetRect().mX;
-		rect.mY += mParent->GetRect().mY;
-	}
-
-	mVertices[0].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
-	mVertices[0].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
-
-	mVertices[1].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
-	mVertices[1].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
-
-	mVertices[2].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
-	mVertices[2].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
-
-	mVertices[3].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
-	mVertices[3].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
-}
-
 void Quad::InitVertexData()
 {
 	mVertices[0].mPosition.x = 0.0f;
@@ -215,12 +191,49 @@ void Quad::InitVertexData()
 
 void Quad::UpdateVertexBuffer()
 {
+	Renderer* renderer = Renderer::Get();
 	VkDevice device = Renderer::Get()->GetDevice();
+
+	glm::vec2 resolution = renderer->GetInterfaceResolution();
+
+	Rect rect = mRect;
+
+	if (mParent != nullptr)
+	{
+		rect.mX += mParent->GetRect().mX;
+		rect.mY += mParent->GetRect().mY;
+	}
+
+	mVertices[0].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
+	mVertices[0].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
+
+	mVertices[1].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
+	mVertices[1].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
+
+	mVertices[2].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
+	mVertices[2].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
+
+	mVertices[3].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
+	mVertices[3].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
 
 	void* data = nullptr;
 	vkMapMemory(device, mVertexBufferMemory.mDeviceMemory, mVertexBufferMemory.mOffset, mVertexBufferMemory.mSize, 0, &data);
 	memcpy(data, mVertices, sizeof(VertexUI) * 4);
 	vkUnmapMemory(device, mVertexBufferMemory.mDeviceMemory);
+}
+
+void Quad::UpdateUniformBuffer()
+{
+	Renderer* renderer = Renderer::Get();
+	VkDevice device = renderer->GetDevice();
+
+	QuadUniformBuffer ubo = {};
+	ubo.mPadding = glm::vec4(1337, 1337, 1337, 1337);
+
+	void* data;
+	vkMapMemory(device, mUniformBufferMemory.mDeviceMemory, mUniformBufferMemory.mOffset, sizeof(ubo), 0, &data);
+	memcpy(data, &ubo, sizeof(ubo));
+	vkUnmapMemory(device, mUniformBufferMemory.mDeviceMemory);
 }
 
 void Quad::UpdateDescriptorSet()
