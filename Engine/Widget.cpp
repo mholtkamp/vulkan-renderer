@@ -52,18 +52,28 @@ Rect Widget::GetRect()
 	return mRect;
 }
 
+void Widget::SetPosition(float x, float y)
+{
+	mRect.mX = x;
+	mRect.mY = y;
+	mDirty = true;
+}
+
+void Widget::SetDimensions(float width, float height)
+{
+	mRect.mWidth = width;
+	mRect.mHeight = height;
+	mDirty = true;
+}
+
 void Widget::SetPosition(glm::vec2 position)
 {
-	mRect.mX = position.x;
-	mRect.mY = position.y;
-	mDirty = true;
+	SetPosition(position.x, position.y);
 }
 
 void Widget::SetDimensions(glm::vec2 dimensions)
 {
-	mRect.mWidth = dimensions.x;
-	mRect.mHeight = dimensions.y;
-	mDirty = true;
+	SetDimensions(dimensions.x, dimensions.y);
 }
 
 void Widget::SetRect(glm::vec2 position, glm::vec2 dimensions)

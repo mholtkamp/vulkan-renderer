@@ -8,6 +8,7 @@
 #include "Scene.h"
 #include "Quad.h"
 #include "Renderer.h"
+#include "Text.h"
 
 #ifndef _DEBUG
 int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int32_t nCmdShow)
@@ -47,8 +48,14 @@ int32_t main(int32_t argc, char** argv)
 	colors[3] = glm::vec4(0.0f, 1.0f, 1.0f, 0.0f);
 	quad2->SetColor(colors);
 
+	Text* text1 = new Text();
+	text1->Create();
+	text1->SetPosition(200, 200);
+	text1->SetDimensions(800, 800);
+	text1->SetText("Beep Boop!!\nThis is a test...");
+
 	
-	Renderer::Get()->SetRootWidget(quad2);
+	Renderer::Get()->SetRootWidget(text1);
 
 	AssignDebugCamera(scene->GetActiveCamera());
 	SetScene(scene);

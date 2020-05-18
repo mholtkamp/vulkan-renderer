@@ -336,7 +336,7 @@ public:
 	}
 };
 
-class TextPipeline : public QuadPipeline
+class TextPipeline : public Pipeline
 {
 public:
 
@@ -345,10 +345,24 @@ public:
 		mVertexShaderPath = ENGINE_SHADER_DIR "textShader.vert";
 		mFragmentShaderPath = ENGINE_SHADER_DIR "textShader.frag";
 		mPrimitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+		mCullMode = VK_CULL_MODE_NONE;
+		mSubpass = PASS_UI;
+		mDepthTestEnabled = VK_FALSE;
+		mUseVertexBinding = true;
+		mVertexType = VertexType::VertexUI;
+
+		mBlendAttachments[0].blendEnable = VK_TRUE;
+		mBlendAttachments[0].srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		mBlendAttachments[0].dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 	}
 
 	virtual void PopulateLayoutBindings() override
 	{
-		QuadPipeline::PopulateLayoutBindings();
+		Pipeline::PopulateLayoutBindings();
+
+		PushSet();
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+		AddLayoutBinding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
 	}
 };

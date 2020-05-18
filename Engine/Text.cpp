@@ -2,6 +2,7 @@
 #include "Renderer.h"
 #include "Font.h"
 #include "Vertex.h"
+#include "DefaultFonts.h"
 
 Text::Text() :
 	mFont(nullptr),
@@ -14,7 +15,7 @@ Text::Text() :
 	mUniformBuffer(VK_NULL_HANDLE),
 	mVertexBufferDirty(true)
 {
-
+	mFont = &DefaultFonts::sConsolas32;
 }
 
 Text::~Text()
@@ -46,7 +47,24 @@ void Text::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
 
 	if (mText.size() > 0 && mVertexBuffer != VK_NULL_HANDLE)
 	{
+		Renderer* renderer = Renderer::Get();
+		TextPipeline& textPipeline = renderer->GetTextPipeline();
+		textPipeline.BindPipeline(commandBuffer);
 
+		VkDeviceSize offset = 0;
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &mVertexBuffer, &offset);
+
+		VkDescriptorSet quadDescriptorSet = mDescriptorSet.GetDescriptorSet();
+		vkCmdBindDescriptorSets(commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			textPipeline.GetPipelineLayout(),
+			1,
+			1,
+			&quadDescriptorSet,
+			0,
+			nullptr);
+
+		vkCmdDraw(commandBuffer, 6 * mVisibleCharacters, 1, 0, 0);
 	}
 
 	// Should not have children
@@ -99,7 +117,7 @@ void Text::SetSize(float size)
 	}
 }
 
-void Text::SetText(std::string& text)
+void Text::SetText(std::string text)
 {
 	if (mText != text)
 	{
@@ -272,6 +290,7 @@ void Text::UpdateVertexBuffer()
 		}
 
 		mVisibleCharacters++;
+		cursorX += fontChar.mWidth;
 	}
 
 	vkUnmapMemory(device, mVertexBufferMemory.mDeviceMemory);

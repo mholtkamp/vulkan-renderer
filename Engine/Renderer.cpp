@@ -62,7 +62,7 @@ Renderer::Renderer() :
 	mGlobalUniformData.mScreenDimensions = glm::vec2(800.0f, 600.0f);
 	mGlobalUniformData.mVisualizationMode = 0;
 
-	mInterfaceResolution = glm::vec2(1280, 720);
+	SetInterfaceResolution(glm::vec2(1280, 720));
 }
 
 void Renderer::Create()
@@ -96,6 +96,7 @@ void Renderer::ToggleEnvironmentCaptureDebug()
 void Renderer::SetInterfaceResolution(glm::vec2 newResolution)
 {
 	mInterfaceResolution = newResolution;
+	mGlobalUniformData.mInterfaceResolution = mInterfaceResolution;
 }
 
 glm::vec2 Renderer::GetInterfaceResolution() const
@@ -2059,7 +2060,7 @@ void Renderer::CreatePipelines()
 	mPostProcessPipeline.Create();
 	mNullPostProcessPipeline.Create();
 	mQuadPipeline.Create();
-	mTextPipeline.Destroy();
+	mTextPipeline.Create();
 }
 
 void Renderer::DestroyPipelines()

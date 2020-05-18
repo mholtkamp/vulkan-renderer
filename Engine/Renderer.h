@@ -26,6 +26,7 @@ struct GlobalUniformData
 	glm::vec4 mSunColor;
 	glm::vec4 mViewPosition;
 	glm::vec2 mScreenDimensions;
+	glm::vec2 mInterfaceResolution;
 	float mShadowIntensity;
 	int32_t mVisualizationMode;
 };
