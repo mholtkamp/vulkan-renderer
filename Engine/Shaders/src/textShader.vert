@@ -43,7 +43,7 @@ void main()
 	outColor = inColor;
 	vec2 position = inPosition.xy;
 	position.xy /= globals.mInterfaceResolution;
-	position.y *= -1.0;
+	//position.y *= -1.0;
 	position.xy *= 3.0; 
 	
 	gl_Position = vec4(position.xy, 0.0, 1.0);

@@ -208,6 +208,8 @@ void Text::UpdateVertexBuffer()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
+	glm::vec2 interfaceResolution = renderer->GetInterfaceResolution();
+
 	// Check if we need to reallocate a bigger buffer.
 	size_t requiredSize = sizeof(VertexUI) * 6 * mText.size();
 	if (requiredSize > mVertexBufferMemory.mSize)
@@ -237,7 +239,7 @@ void Text::UpdateVertexBuffer()
 		char textChar = characters[i];
 		if (textChar == '\n')
 		{
-			cursorY -= mFont->mSize;
+			cursorY += mFont->mSize;
 			cursorX = 0.0f;
 			continue;
 		}
@@ -256,26 +258,26 @@ void Text::UpdateVertexBuffer()
 		//   |  / / |
 		//   | / /  |
 		//   1  4---5
-		vertices[0].mPosition.x = cursorX + fontChar.mOriginX;
-		vertices[0].mPosition.y = cursorY + fontChar.mOriginY;
+		vertices[0].mPosition.x = cursorX - fontChar.mOriginX;
+		vertices[0].mPosition.y = cursorY - fontChar.mOriginY;
 		vertices[0].mTexcoord.x = (float) fontChar.mX;
 		vertices[0].mTexcoord.y = (float) fontChar.mY;
 
-		vertices[1].mPosition.x = cursorX + fontChar.mOriginX;
-		vertices[1].mPosition.y = cursorY;
+		vertices[1].mPosition.x = cursorX - fontChar.mOriginX;
+		vertices[1].mPosition.y = cursorY - fontChar.mOriginY + fontChar.mHeight;
 		vertices[1].mTexcoord.x = (float) fontChar.mX;
 		vertices[1].mTexcoord.y = (float) fontChar.mY + fontChar.mHeight;
 
-		vertices[2].mPosition.x = cursorX + fontChar.mOriginX + fontChar.mWidth;
-		vertices[2].mPosition.y = cursorY + fontChar.mOriginY;
+		vertices[2].mPosition.x = cursorX - fontChar.mOriginX + fontChar.mWidth;
+		vertices[2].mPosition.y = cursorY - fontChar.mOriginY;
 		vertices[2].mTexcoord.x = (float) fontChar.mX + fontChar.mWidth;
 		vertices[2].mTexcoord.y = (float) fontChar.mY;
 
 		vertices[3] = vertices[2]; // duplicated
 		vertices[4] = vertices[1]; // duplicated
 
-		vertices[5].mPosition.x = cursorX + fontChar.mOriginX + fontChar.mWidth;
-		vertices[5].mPosition.y = cursorY;
+		vertices[5].mPosition.x = cursorX - fontChar.mOriginX + fontChar.mWidth;
+		vertices[5].mPosition.y = cursorY - fontChar.mOriginY + fontChar.mHeight;
 		vertices[5].mTexcoord.x = (float) fontChar.mX + fontChar.mWidth;
 		vertices[5].mTexcoord.y = (float) fontChar.mY + fontChar.mHeight;
 
@@ -287,6 +289,9 @@ void Text::UpdateVertexBuffer()
 
 			// Transform texcoords into 0-1 UV space
 			vertices[i].mTexcoord /= glm::vec2(mFont->mWidth, mFont->mHeight);
+
+			//vertices[i].mPosition.x = InterfaceToNormalized(vertices[i].mPosition.x, interfaceResolution.x);
+			//vertices[i].mPosition.y = InterfaceToNormalized(vertices[i].mPosition.y, interfaceResolution.y);
 		}
 
 		mVisibleCharacters++;
