@@ -50,9 +50,11 @@ int32_t main(int32_t argc, char** argv)
 
 	Text* text1 = new Text();
 	text1->Create();
-	text1->SetPosition(200, 200);
+	text1->SetPosition(450, 20);
 	text1->SetDimensions(800, 800);
-	text1->SetText("Beep Boop!!\nThis is a test...");
+	text1->SetSize(48.0f);
+	text1->SetColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+	text1->SetText("Vulkan Renderer 2 Deluxe 3D");
 
 	
 	Renderer::Get()->SetRootWidget(text1);

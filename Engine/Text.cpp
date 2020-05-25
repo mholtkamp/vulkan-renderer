@@ -208,7 +208,7 @@ void Text::UpdateVertexBuffer()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = renderer->GetDevice();
 
-	glm::vec2 interfaceResolution = renderer->GetInterfaceResolution();
+	const glm::vec2 interfaceResolution = renderer->GetInterfaceResolution();
 
 	// Check if we need to reallocate a bigger buffer.
 	size_t requiredSize = sizeof(VertexUI) * 6 * mText.size();
@@ -232,7 +232,7 @@ void Text::UpdateVertexBuffer()
 	
 	const char* characters = mText.c_str();
 	float cursorX = 0.0f;
-	float cursorY = 0.0f;
+	float cursorY = 0.0f + mFont->mSize;
 
 	for (int32_t i = 0; i < mText.size(); ++i)
 	{
@@ -290,8 +290,8 @@ void Text::UpdateVertexBuffer()
 			// Transform texcoords into 0-1 UV space
 			vertices[i].mTexcoord /= glm::vec2(mFont->mWidth, mFont->mHeight);
 
-			//vertices[i].mPosition.x = InterfaceToNormalized(vertices[i].mPosition.x, interfaceResolution.x);
-			//vertices[i].mPosition.y = InterfaceToNormalized(vertices[i].mPosition.y, interfaceResolution.y);
+			vertices[i].mPosition.x = vertices[i].mPosition.x / mFont->mSize;
+			vertices[i].mPosition.y = (vertices[i].mPosition.y / mFont->mSize);
 		}
 
 		mVisibleCharacters++;
@@ -299,8 +299,6 @@ void Text::UpdateVertexBuffer()
 	}
 
 	vkUnmapMemory(device, mVertexBufferMemory.mDeviceMemory);
-
-	//mVisibleCharacters = TODO;
 }
 
 void Text::UpdateUniformBuffer()
