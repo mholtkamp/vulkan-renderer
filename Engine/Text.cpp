@@ -295,7 +295,7 @@ void Text::UpdateVertexBuffer()
 		}
 
 		mVisibleCharacters++;
-		cursorX += fontChar.mWidth;
+		cursorX += fontChar.mAdvance;
 	}
 
 	vkUnmapMemory(device, mVertexBufferMemory.mDeviceMemory);

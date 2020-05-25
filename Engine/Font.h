@@ -12,6 +12,7 @@ struct Character
 	int32_t mHeight;
 	int32_t mOriginX;
 	int32_t mOriginY;
+	int32_t mAdvance;
 };
 
 struct Font
