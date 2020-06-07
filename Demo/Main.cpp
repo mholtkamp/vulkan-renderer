@@ -9,6 +9,7 @@
 #include "Quad.h"
 #include "Renderer.h"
 #include "Text.h"
+#include "Canvas.h"
 
 #ifndef _DEBUG
 int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int32_t nCmdShow)
@@ -19,8 +20,11 @@ int32_t main(int32_t argc, char** argv)
 	Initialize(1280, 720);
 
 	Scene* scene = new Scene();
-	scene->Load("Scenes/Sponza/", "Sponza.dae");
-	//scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
+	//scene->Load("Scenes/Sponza/", "Sponza.dae");
+	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
+
+	Canvas* rootCanvas = new Canvas();
+	rootCanvas->SetRect(0, 0, 1280, 720);
 
 	Quad* quad1 = new Quad();
 	quad1->Create();
@@ -42,8 +46,8 @@ int32_t main(int32_t argc, char** argv)
 
 	Quad* quad2 = new Quad();
 	quad2->Create();
-	quad2->SetPosition(glm::vec2(100, 200));
-	quad2->SetDimensions(glm::vec2(400, 150));
+	quad2->SetPosition(glm::vec2(0, 0));
+	quad2->SetDimensions(glm::vec2(1280, 150));
 	colors[1] = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
 	colors[3] = glm::vec4(0.0f, 1.0f, 1.0f, 0.0f);
 	quad2->SetColor(colors);
@@ -56,8 +60,11 @@ int32_t main(int32_t argc, char** argv)
 	text1->SetColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
 	text1->SetText("Vulkan Renderer 2 Deluxe 3D");
 
-	
-	Renderer::Get()->SetRootWidget(text1);
+	rootCanvas->AddChild(quad1);
+	rootCanvas->AddChild(quad2);
+	rootCanvas->AddChild(text1);
+
+	Renderer::Get()->SetRootWidget(rootCanvas);
 
 	AssignDebugCamera(scene->GetActiveCamera());
 	SetScene(scene);

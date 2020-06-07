@@ -1,4 +1,5 @@
 #include "Widget.h"
+#include "Renderer.h"
 
 Widget::Widget() :
 	mParent(nullptr),
@@ -74,6 +75,12 @@ void Widget::SetPosition(glm::vec2 position)
 void Widget::SetDimensions(glm::vec2 dimensions)
 {
 	SetDimensions(dimensions.x, dimensions.y);
+}
+
+void Widget::SetRect(float x, float y, float width, float height)
+{
+	SetPosition(x, y);
+	SetDimensions(width, height);
 }
 
 void Widget::SetRect(glm::vec2 position, glm::vec2 dimensions)
@@ -154,12 +161,24 @@ float Widget::InterfaceToNormalized(float interfaceCoord, float interfaceSize)
 
 void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)
 {
+	// Area is provided in interface dimensions, so we need to convert to actual pixel dimensions
+	VkExtent2D extent = Renderer::Get()->GetSwapchainExtent();
+	glm::vec2 interfaceRes = Renderer::Get()->GetInterfaceResolution();
+	const float xScale = extent.width / interfaceRes.x;
+	const float yScale = extent.height / interfaceRes.y;
+
+	Rect pixelRect = area;
+	pixelRect.mX *= xScale;
+	pixelRect.mY *= yScale;
+	pixelRect.mWidth *= xScale;
+	pixelRect.mHeight *= yScale;
+
 	// Set scissor to the target area.
 	VkRect2D scissorRect = {};
-	scissorRect.extent.width = static_cast<uint32_t>(area.mWidth);
-	scissorRect.extent.height = static_cast<uint32_t>(area.mHeight);
-	scissorRect.offset.x = static_cast<int32_t>(area.mX);
-	scissorRect.offset.y = static_cast<int32_t>(area.mY);
+	scissorRect.extent.width = static_cast<uint32_t>(pixelRect.mWidth);
+	scissorRect.extent.height = static_cast<uint32_t>(pixelRect.mHeight);
+	scissorRect.offset.x = static_cast<int32_t>(pixelRect.mX);
+	scissorRect.offset.y = static_cast<int32_t>(pixelRect.mY);
 
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect);
 }

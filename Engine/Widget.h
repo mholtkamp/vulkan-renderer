@@ -31,6 +31,7 @@ public:
 	virtual void SetDimensions(float width, float height);
 	void SetPosition(glm::vec2 position);
 	void SetDimensions(glm::vec2 dimensions);
+	void SetRect(float x, float y, float width, float height);
 	void SetRect(glm::vec2 position, glm::vec2 dimensions);
 	void SetRect(Rect rect);
 
