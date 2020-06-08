@@ -1,4 +1,5 @@
 #include "Canvas.h"
+#include "Renderer.h"
 
 Canvas::Canvas()
 {
@@ -10,11 +11,33 @@ Canvas::~Canvas()
 
 }
 
-void Canvas::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
+void Canvas::Render(VkCommandBuffer commandBuffer)
 {
-	SetScissor(commandBuffer, area);
+	Rect scissorRect = mAbsoluteRect;
+	
+	if (mParent != nullptr)
+	{
+		mAbsoluteRect.Clamp(mParent->GetAbsoluteRect());
+	}
 
-	RenderChildren(commandBuffer, area);
+	SetScissor(commandBuffer, mAbsoluteRect);
 
-	SetScissor(commandBuffer, parentArea);
+	RenderChildren(commandBuffer);
+
+	if (mParent != nullptr)
+	{
+		SetScissor(commandBuffer, mParent->GetAbsoluteRect());
+	}
+	else
+	{
+		glm::vec2 interfaceRes = Renderer::Get()->GetInterfaceResolution();
+
+		Rect screenRect;
+		screenRect.mX = 0;
+		screenRect.mY = 0;
+		screenRect.mWidth = interfaceRes.x;
+		screenRect.mHeight = interfaceRes.y;
+
+		SetScissor(commandBuffer, screenRect);
+	}
 }

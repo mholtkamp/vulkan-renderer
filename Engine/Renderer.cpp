@@ -444,12 +444,12 @@ void Renderer::Render()
 	// ******************
 	//  UI
 	// ******************
-	Rect mScreenRect;
-	mScreenRect.mX = 0.0f;
-	mScreenRect.mY = 0.0f;
-	mScreenRect.mWidth = mInterfaceResolution.x;
-	mScreenRect.mHeight = mInterfaceResolution.y;
-	if (mRootWidget != nullptr) { mRootWidget->Render(mCommandBuffers[imageIndex], mScreenRect, mScreenRect); }
+	Rect screenRect;
+	screenRect.mX = 0.0f;
+	screenRect.mY = 0.0f;
+	screenRect.mWidth = mInterfaceResolution.x;
+	screenRect.mHeight = mInterfaceResolution.y;
+	if (mRootWidget != nullptr) { mRootWidget->Render(mCommandBuffers[imageIndex]); }
 	vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
 
 	if (vkEndCommandBuffer(mCommandBuffers[imageIndex]) != VK_SUCCESS)

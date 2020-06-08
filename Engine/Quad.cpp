@@ -32,7 +32,7 @@ void Quad::Destroy()
 	DestroyDescriptorSet();
 }
 
-void Quad::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
+void Quad::Render(VkCommandBuffer commandBuffer)
 {
 	// Make sure to bind the quad pipeline. Quad and text rendering will be interleaved.
 	Renderer* renderer = Renderer::Get();
@@ -53,13 +53,12 @@ void Quad::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
 		nullptr);
 
 	vkCmdDraw(commandBuffer, 4, 1, 0, 0);
-
-	// Should not have any children?
-	//RenderChildren(commandBuffer, area);
 }
 
 void Quad::Update()
 {
+	Widget::Update();
+
 	if (mDirty)
 	{
 		UpdateVertexBuffer();
@@ -67,8 +66,6 @@ void Quad::Update()
 		UpdateDescriptorSet();
 		mDirty = false;
 	}
-
-	//UpdateChildren();
 }
 
 void Quad::SetTexture(class Texture* texture)
@@ -194,27 +191,17 @@ void Quad::UpdateVertexBuffer()
 	Renderer* renderer = Renderer::Get();
 	VkDevice device = Renderer::Get()->GetDevice();
 
-	glm::vec2 resolution = renderer->GetInterfaceResolution();
-
-	Rect rect = mRect;
-
-	if (mParent != nullptr)
-	{
-		rect.mX += mParent->GetRect().mX;
-		rect.mY += mParent->GetRect().mY;
-	}
-
-	mVertices[0].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
-	mVertices[0].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
-
-	mVertices[1].mPosition.x = Widget::InterfaceToNormalized(mRect.mX, resolution.x);
-	mVertices[1].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
-
-	mVertices[2].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
-	mVertices[2].mPosition.y = Widget::InterfaceToNormalized(mRect.mY, resolution.y);
-
-	mVertices[3].mPosition.x = Widget::InterfaceToNormalized(mRect.mX + mRect.mWidth, resolution.x);
-	mVertices[3].mPosition.y = Widget::InterfaceToNormalized(mRect.mY + mRect.mHeight, resolution.y);
+	mVertices[0].mPosition.x = mAbsoluteRect.mX;
+	mVertices[0].mPosition.y = mAbsoluteRect.mY;
+							   
+	mVertices[1].mPosition.x = mAbsoluteRect.mX;
+	mVertices[1].mPosition.y = mAbsoluteRect.mY + mAbsoluteRect.mHeight;
+							   
+	mVertices[2].mPosition.x = mAbsoluteRect.mX + mAbsoluteRect.mWidth;
+	mVertices[2].mPosition.y = mAbsoluteRect.mY;
+							   
+	mVertices[3].mPosition.x = mAbsoluteRect.mX + mAbsoluteRect.mWidth;
+	mVertices[3].mPosition.y = mAbsoluteRect.mY + mAbsoluteRect.mHeight;
 
 	void* data = nullptr;
 	vkMapMemory(device, mVertexBufferMemory.mDeviceMemory, mVertexBufferMemory.mOffset, mVertexBufferMemory.mSize, 0, &data);

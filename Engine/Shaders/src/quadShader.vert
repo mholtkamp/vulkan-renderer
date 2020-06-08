@@ -31,5 +31,7 @@ void main()
 {	
     outTexcoord = inTexcoord;
 	outColor = inColor;
-	gl_Position = vec4(inPosition.xy, 0.0, 1.0);
+	vec2 outPos = inPosition;
+	outPos = (inPosition / globals.mInterfaceResolution) * 2.0f - 1.0f ;
+	gl_Position = vec4(outPos, 0.0, 1.0);
 }

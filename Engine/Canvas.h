@@ -9,6 +9,6 @@ public:
 	Canvas();
 	virtual ~Canvas();
 
-	virtual void Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea) override;
+	virtual void Render(VkCommandBuffer commandBuffer) override;
 
 };

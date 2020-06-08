@@ -26,12 +26,13 @@ int32_t main(int32_t argc, char** argv)
 	Canvas* rootCanvas = new Canvas();
 	rootCanvas->SetRect(0, 0, 1280, 720);
 
+	Canvas* canvas2 = new Canvas();
+	canvas2->SetRect(50, 570, 100, 100);
+
 	Quad* quad1 = new Quad();
 	quad1->Create();
-	quad1->SetPosition(glm::vec2(100, 200));
-	quad1->SetDimensions(glm::vec2(400, 150));
-	//quad1->SetPosition(glm::vec2(40, 10));
-	//quad1->SetDimensions(glm::vec2(1200, 700));
+	quad1->SetPosition(glm::vec2(-150, -150));
+	quad1->SetDimensions(glm::vec2(400, 400));
 	Texture* testTexture = new Texture2D();
 	testTexture->Load("Scenes/MonkeyScene/Blender/grid_tex.png");
 	quad1->SetColor(glm::vec4(0.2, 1, 0.5, 1));
@@ -57,12 +58,14 @@ int32_t main(int32_t argc, char** argv)
 	text1->SetPosition(450, 20);
 	text1->SetDimensions(800, 800);
 	text1->SetSize(48.0f);
-	text1->SetColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
+	//text1->SetColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
 	text1->SetText("Vulkan Renderer 2 Deluxe 3D");
 
-	rootCanvas->AddChild(quad1);
+	canvas2->AddChild(quad1);
 	rootCanvas->AddChild(quad2);
 	rootCanvas->AddChild(text1);
+	rootCanvas->AddChild(canvas2);
+	
 
 	Renderer::Get()->SetRootWidget(rootCanvas);
 

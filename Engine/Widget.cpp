@@ -36,21 +36,39 @@ void Widget::Destroy()
 
 // Issue gpu commands to display the widget.
 // Recursively render children.
-void Widget::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
+void Widget::Render(VkCommandBuffer commandBuffer)
 {
-	RenderChildren(commandBuffer, area);
+	RenderChildren(commandBuffer);
 }
 
 // Refresh any data used for rendering based on this widget's state. Use dirty flag.
 // Recursively update children.
 void Widget::Update()
 {
+	if (mParent != nullptr)
+	{
+		Rect parentRect = mParent->GetAbsoluteRect();
+		mAbsoluteRect.mX = parentRect.mX + mRect.mX;
+		mAbsoluteRect.mY = parentRect.mY + mRect.mY;
+		mAbsoluteRect.mWidth = mRect.mWidth;
+		mAbsoluteRect.mHeight = mRect.mHeight;
+	}
+	else
+	{
+		mAbsoluteRect = mRect;
+	}
+
 	UpdateChildren();
 }
 
 Rect Widget::GetRect()
 {
 	return mRect;
+}
+
+Rect Widget::GetAbsoluteRect()
+{
+	return mAbsoluteRect;
 }
 
 void Widget::SetPosition(float x, float y)
@@ -183,20 +201,12 @@ void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect);
 }
 
-void Widget::RenderChildren(VkCommandBuffer commandBuffer, Rect area)
+void Widget::RenderChildren(VkCommandBuffer commandBuffer)
 {
 	for (int32_t i = 0; i < mChildren.size(); ++i)
 	{
 		Widget* child = mChildren[i];
-
-		Rect childArea;
-		childArea.mX = area.mX + child->mRect.mX;
-		childArea.mY = area.mY + child->mRect.mY;
-		childArea.mWidth = child->mRect.mWidth;
-		childArea.mHeight = child->mRect.mHeight;
-		childArea.Clamp(area);
-
-		child->Render(commandBuffer, childArea, area);
+		child->Render(commandBuffer);
 	}
 }
 

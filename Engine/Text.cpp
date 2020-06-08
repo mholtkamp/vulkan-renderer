@@ -41,10 +41,8 @@ void Text::Destroy()
 	DestroyDescriptorSet();
 }
 
-void Text::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
+void Text::Render(VkCommandBuffer commandBuffer)
 {
-	// TODO
-
 	if (mText.size() > 0 && mVertexBuffer != VK_NULL_HANDLE)
 	{
 		Renderer* renderer = Renderer::Get();
@@ -66,13 +64,12 @@ void Text::Render(VkCommandBuffer commandBuffer, Rect area, Rect parentArea)
 
 		vkCmdDraw(commandBuffer, 6 * mVisibleCharacters, 1, 0, 0);
 	}
-
-	// Should not have children
-	// RenderChildren()
 }
 
 void Text::Update()
 {
+	Widget::Update();
+
 	if (mVertexBufferDirty)
 	{
 		UpdateVertexBuffer();
@@ -85,8 +82,6 @@ void Text::Update()
 		UpdateDescriptorSet();
 		mDirty = false;
 	}
-
-	//UpdateChildren();
 }
 
 void Text::SetFont(struct Font* font)
@@ -307,17 +302,9 @@ void Text::UpdateUniformBuffer()
 	VkDevice device = renderer->GetDevice();
 	glm::vec2 resolution = renderer->GetInterfaceResolution();
 
-	Rect rect = mRect;
-
-	if (mParent != nullptr)
-	{
-		rect.mX += mParent->GetRect().mX;
-		rect.mY += mParent->GetRect().mY;
-	}
-
 	TextUniformBuffer ubo = {};
-	ubo.mX = rect.mX;
-	ubo.mY = rect.mY;
+	ubo.mX = mAbsoluteRect.mX;
+	ubo.mY = mAbsoluteRect.mY;
 	ubo.mCutoff = mCutoff;
 	ubo.mOutlineSize = mOutlineSize;
 	ubo.mSize = mSize;
