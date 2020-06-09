@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdio.h>
+
 #ifdef _DEBUG
 #define LogDebug(...) printf( __VA_ARGS__ ); printf("\n");
 #else

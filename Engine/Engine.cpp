@@ -8,6 +8,7 @@
 #include "Scene.h"
 #include "CameraController.h"
 #include "DebugActionHandler.h"
+#include "Input.h"
 
 static AppState sAppState;
 static bool sQuit = false;
@@ -42,6 +43,104 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		}
 		break;
 	}
+	case WM_KEYDOWN:                              // Is A Key Being Held Down?
+	{
+		SetKey(wParam);                         // If So, Mark It As TRUE
+		return 0;                                 // Jump Back
+	}
+
+	case WM_KEYUP:                                // Has A Key Been Released?
+	{
+		ClearKey(wParam);                        // If So, Mark It As FALSE
+		return 0;                                 // Jump Back
+	}
+
+	case WM_LBUTTONDOWN:
+	{
+		SetButton(VBUTTON_LEFT);
+		return 0;
+	}
+
+	case WM_RBUTTONDOWN:
+	{
+		SetButton(VBUTTON_RIGHT);
+		return 0;
+	}
+
+	case WM_MBUTTONDOWN:
+	{
+		SetButton(VBUTTON_MIDDLE);
+		return 0;
+	}
+
+	case WM_XBUTTONDOWN:
+	{
+		int nButton = HIWORD(wParam);
+
+		if (nButton == 1)
+		{
+			SetButton(VBUTTON_X1);
+		}
+		else if (nButton == 2)
+		{
+			SetButton(VBUTTON_X2);
+		}
+
+		return 0;
+	}
+
+	case WM_LBUTTONUP:
+	{
+		ClearButton(VBUTTON_LEFT);
+		return 0;
+	}
+
+	case WM_RBUTTONUP:
+	{
+		ClearButton(VBUTTON_RIGHT);
+		return 0;
+	}
+
+	case WM_MBUTTONUP:
+	{
+		ClearButton(VBUTTON_MIDDLE);
+		return 0;
+	}
+
+	case WM_XBUTTONUP:
+	{
+		int nButton = HIWORD(wParam);
+
+		if (nButton == 1)
+		{
+			ClearButton(VBUTTON_X1);
+		}
+		else if (nButton == 2)
+		{
+			ClearButton(VBUTTON_X2);
+		}
+
+		return 0;
+	}
+
+	case WM_MOUSEWHEEL:
+	{
+		SetScrollWheelDelta(GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA);
+
+		return 0;
+	}
+	case WM_MOUSEMOVE:
+	{
+		int nX = LOWORD(lParam);
+		int nY = HIWORD(lParam);
+
+		// Invert the y axis to match the bottom-left origin
+		// convention used thoughout Vakz.
+		SetMousePosition(nX, (sAppState.mWindowHeight - 1) - nY);
+
+		return 0;
+	}
+
 	//case WM_PAINT:
 	//	// The validation callback calls MessageBox which can generate paint
 	//	// events - don't make more Vulkan calls if we got here from the
@@ -160,6 +259,7 @@ bool Initialize(int32_t width, int32_t height)
 
 bool Update()
 {
+	ResetJusts(); // TODO: This needs a better name.
 	ProcessMessages();
 	sClock.Update();
 	sDebugHandler.Update();
@@ -187,4 +287,9 @@ void SetScene(Scene* scene)
 	Renderer* renderer = Renderer::Get();
 	renderer->SetScene(scene);
 	sScene = scene;
+}
+
+const AppState* GetAppState()
+{
+	return &sAppState;
 }

@@ -11,3 +11,5 @@ void Shutdown();
 void AssignDebugCamera(class Camera* camera);
 
 void SetScene(class Scene* scene);
+
+const struct AppState* GetAppState();

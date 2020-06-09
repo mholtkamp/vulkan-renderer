@@ -1,7 +1,7 @@
 #include "DebugActionHandler.h"
 #include "Enums.h"
 #include "Renderer.h"
-
+#include "Input.h"
 #include <Windows.h>
 
 DebugActionHandler::DebugActionHandler() :
@@ -17,13 +17,13 @@ void DebugActionHandler::Update()
 {
 	GBufferIndex currentDebugView = mGBufferViewMode;
 
-	if (GetAsyncKeyState(VK_CONTROL))
+	if (IsKeyDown(VKEY_CONTROL))
 	{
 		char numKey = '1';
 
 		for (uint32_t i = 0; i < GB_COUNT; ++i)
 		{
-			if (GetAsyncKeyState(numKey))
+			if (IsKeyJustDown(numKey))
 			{
 				mGBufferViewMode = static_cast<GBufferIndex>(i);
 			}
@@ -31,7 +31,7 @@ void DebugActionHandler::Update()
 			++numKey;
 		}
 
-		if (GetAsyncKeyState('0'))
+		if (IsKeyJustDown('0'))
 		{
 			// Disable debug view
 			mGBufferViewMode = GB_COUNT;
@@ -44,102 +44,82 @@ void DebugActionHandler::Update()
 	}
 
 
-	if (GetAsyncKeyState(VK_CONTROL) &&
-		GetAsyncKeyState(VK_TAB))
+	if (IsKeyDown(VKEY_CONTROL) &&
+		IsKeyJustDown(VKEY_TAB))
 	{
 		Renderer::Get()->SetDebugMode(DEBUG_GBUFFER);
 	}
 
-	if (GetAsyncKeyState(VK_CONTROL) &&
-		GetAsyncKeyState(VK_SHIFT))
+	if (IsKeyDown(VKEY_CONTROL) &&
+		IsKeyJustDown(VKEY_SHIFT))
 	{
 		Renderer::Get()->SetDebugMode(DEBUG_NONE);
 	}
 
-	if (GetAsyncKeyState(VK_CONTROL) &&
-		GetAsyncKeyState('F'))
+	if (IsKeyDown(VKEY_CONTROL) &&
+		IsKeyJustDown(VKEY_F))
 	{
 		Renderer::Get()->SetDebugMode(DEBUG_ENVIRONMENT_CAPTURE);
 	}
 
-	if (GetAsyncKeyState(VK_CONTROL) &&
-		GetAsyncKeyState('M'))
+	if (IsKeyDown(VKEY_CONTROL) &&
+		IsKeyJustDown(VKEY_M))
 	{
 		Renderer::Get()->SetDebugMode(DEBUG_SHADOW_MAP);
 	}
 
-    if (GetAsyncKeyState('F') &&
-        GetAsyncKeyState('1'))
+    if (IsKeyDown(VKEY_F) &&
+		IsKeyJustDown(VKEY_1))
     {
         Renderer::Get()->SetEnvironmentDebugFace(0);
     }
 
-    if (GetAsyncKeyState('F') &&
-        GetAsyncKeyState('2'))
+    if (IsKeyDown(VKEY_F) &&
+		IsKeyJustDown(VKEY_2))
     {
         Renderer::Get()->SetEnvironmentDebugFace(1);
     }
 
-    if (GetAsyncKeyState('F') &&
-        GetAsyncKeyState('3'))
+    if (IsKeyDown(VKEY_F) &&
+		IsKeyJustDown(VKEY_3))
     {
         Renderer::Get()->SetEnvironmentDebugFace(2);
     }
 
-    if (GetAsyncKeyState('F') &&
-        GetAsyncKeyState('4'))
+    if (IsKeyDown(VKEY_F) &&
+		IsKeyJustDown(VKEY_4))
     {
         Renderer::Get()->SetEnvironmentDebugFace(3);
     }
 
-    if (GetAsyncKeyState('F') &&
-        GetAsyncKeyState('5'))
+    if (IsKeyDown(VKEY_F) &&
+		IsKeyJustDown(VKEY_5))
     {
         Renderer::Get()->SetEnvironmentDebugFace(4);
     }
 
-    if (GetAsyncKeyState('F') &&
-        GetAsyncKeyState('6'))
+    if (IsKeyDown(VKEY_F) &&
+		IsKeyJustDown(VKEY_6))
     {
         Renderer::Get()->SetEnvironmentDebugFace(5);
     }
 
-	static bool kDown = false;
-	if (GetAsyncKeyState('K') &&
-		GetAsyncKeyState(VK_CONTROL))
+	if (IsKeyJustDown(VKEY_K) &&
+		IsKeyDown(VKEY_CONTROL))
 	{
-		if (!kDown)
-		{
-			Renderer::Get()->ToggleEnvironmentCaptureDebug();
-		}
-
-		kDown = true;
-	}
-	else
-	{
-		kDown = false;
+		Renderer::Get()->ToggleEnvironmentCaptureDebug();
 	}
 
-	static bool lDown = false;
-	if (GetAsyncKeyState('L') &&
-		GetAsyncKeyState(VK_CONTROL))
+	if (IsKeyJustDown(VKEY_L) &&
+		IsKeyDown(VKEY_CONTROL))
 	{
-		if (!lDown)
-		{
-			Renderer::Get()->ToggleIrradianceDebug();
-		}
-
-		lDown = true;
-	}
-	else
-	{
-		lDown = false;
+		Renderer::Get()->ToggleIrradianceDebug();
 	}
 
     static bool eDown = false;
 
-    if (GetAsyncKeyState('E') &&
-        GetAsyncKeyState(VK_CONTROL))
+    if (IsKeyJustDown(VKEY_E) &&
+        IsKeyDown(VKEY_CONTROL))
     {
         if (!eDown)
         {
