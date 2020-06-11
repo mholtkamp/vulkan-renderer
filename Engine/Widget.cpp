@@ -201,6 +201,38 @@ void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissorRect);
 }
 
+void Widget::PushScissor(VkCommandBuffer commandBuffer)
+{
+	Rect scissorRect = mAbsoluteRect;
+
+	if (mParent != nullptr)
+	{
+		scissorRect.Clamp(mParent->GetAbsoluteRect());
+	}
+
+	SetScissor(commandBuffer, scissorRect);
+}
+
+void Widget::PopScissor(VkCommandBuffer commandBuffer)
+{
+	if (mParent != nullptr)
+	{
+		SetScissor(commandBuffer, mParent->GetAbsoluteRect());
+	}
+	else
+	{
+		glm::vec2 interfaceRes = Renderer::Get()->GetInterfaceResolution();
+
+		Rect screenRect;
+		screenRect.mX = 0;
+		screenRect.mY = 0;
+		screenRect.mWidth = interfaceRes.x;
+		screenRect.mHeight = interfaceRes.y;
+
+		SetScissor(commandBuffer, screenRect);
+	}
+}
+
 void Widget::RenderChildren(VkCommandBuffer commandBuffer)
 {
 	for (int32_t i = 0; i < mChildren.size(); ++i)

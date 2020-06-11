@@ -35,6 +35,10 @@ class Button : public Widget
 	// Recursively update children.
 	virtual void Update() override;
 
+	// These functions need to adjust quad/text widget pos/dim.
+	virtual void SetPosition(float x, float y) override;
+	virtual void SetDimensions(float width, float height) override;
+
 	ButtonState GetState();
 	void SetState(ButtonState newState);
 
@@ -48,8 +52,11 @@ class Button : public Widget
 	void SetPressedColor(glm::vec4 color);
 	void SetDisabledColor(glm::vec4 color);
 
-	void SetHoverHandler();
-	void SetPressedHandler();
+	void SetHoverHandler(HandlerFP newHandler);
+	void SetPressedHandler(HandlerFP newHandler);
+
+	void SetTextString(const std::string& newTextString);
+	const std::string& GetTextString() const;
 
 	Text* GetText();
 	Quad* GetQuad();

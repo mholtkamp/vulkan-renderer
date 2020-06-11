@@ -54,6 +54,9 @@ protected:
 
 	void SetScissor(VkCommandBuffer commandBuffer, Rect& area);
 
+	void PushScissor(VkCommandBuffer commandBuffer);
+	void PopScissor(VkCommandBuffer commandBuffer);
+
 	void RenderChildren(VkCommandBuffer commandBuffer);
 	void UpdateChildren();
 
