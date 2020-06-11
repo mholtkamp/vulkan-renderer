@@ -8,13 +8,12 @@
 
 
 static int s_arKeys[VINPUT_MAX_KEYS] = { 0 };
-static int s_arJustDownRepeatKeys[VINPUT_MAX_KEYS] = { 0 };
-static int s_arJustDownKeys[VINPUT_MAX_KEYS] = { 0 };
-static int s_arJustUpKeys[VINPUT_MAX_KEYS] = { 0 };
+static int s_arPrevKeys[VINPUT_MAX_KEYS] = { 0 };
+static int s_arRepeatKeys[VINPUT_MAX_KEYS] = { 0 };
 static int s_arButtons[VINPUT_MAX_BUTTONS] = { 0 };
+static int s_arPrevButtons[VINPUT_MAX_BUTTONS] = { 0 };
 static int s_arTouches[VINPUT_MAX_TOUCHES] = { 0 };
-static int s_arJustUpTouches[VINPUT_MAX_TOUCHES] = { 0 };
-static int s_arJustDownTouches[VINPUT_MAX_TOUCHES] = { 0 };
+static int s_arPrevTouches[VINPUT_MAX_TOUCHES] = { 0 };
 
 static int s_nScrollWheelDelta = 0;
 
@@ -42,21 +41,17 @@ void SetKey(int nKey)
 	if (nKey >= 0 &&
 		nKey < VINPUT_MAX_KEYS)
 	{
-		if (s_arKeys[nKey] == 0)
-			s_arJustDownKeys[nKey] = 1;
 		s_arKeys[nKey] = 1;
-		s_arJustDownRepeatKeys[nKey] = 1;
+		s_arRepeatKeys[nKey] = 1;
 	}
 }
 
-void ResetJusts()
+void UpdateInput()
 {
-	memset(s_arJustDownKeys, 0, VINPUT_MAX_KEYS * sizeof(int));
-	memset(s_arJustDownRepeatKeys, 0, VINPUT_MAX_KEYS * sizeof(int));
-	memset(s_arJustUpKeys, 0, VINPUT_MAX_KEYS * sizeof(int));
-
-	memset(s_arJustUpTouches, 0, VINPUT_MAX_TOUCHES * sizeof(int));
-	memset(s_arJustDownTouches, 0, VINPUT_MAX_TOUCHES * sizeof(int));
+	memcpy(s_arPrevKeys, s_arKeys, VINPUT_MAX_KEYS * sizeof(int32_t));
+	memcpy(s_arPrevButtons, s_arButtons, VINPUT_MAX_BUTTONS * sizeof(int32_t));
+	memcpy(s_arPrevTouches, s_arTouches, VINPUT_MAX_TOUCHES * sizeof(int32_t));
+	memset(s_arRepeatKeys, 0, VINPUT_MAX_KEYS * sizeof(int32_t));
 
 	s_nScrollWheelDelta = 0;
 }
@@ -69,8 +64,6 @@ void ClearKey(int nKey)
 	if (nKey >= 0 &&
 		nKey < VINPUT_MAX_KEYS)
 	{
-		if (s_arKeys[nKey] != 0)
-			s_arJustUpKeys[nKey] = 1;
 		s_arKeys[nKey] = 0;
 	}
 }
@@ -117,7 +110,7 @@ int IsKeyJustDownRepeat(int nKey)
 	if (nKey >= 0 &&
 		nKey < VINPUT_MAX_KEYS)
 	{
-		return s_arJustDownRepeatKeys[nKey];
+		return s_arRepeatKeys[nKey];
 	}
 	else
 	{
@@ -131,7 +124,7 @@ int IsKeyJustDown(int nKey)
 	if (nKey >= 0 &&
 		nKey < VINPUT_MAX_KEYS)
 	{
-		return s_arJustDownKeys[nKey];
+		return s_arKeys[nKey] && !s_arPrevKeys[nKey];
 	}
 	else
 	{
@@ -145,7 +138,7 @@ int IsKeyJustUp(int nKey)
 	if (nKey >= 0 &&
 		nKey < VINPUT_MAX_KEYS)
 	{
-		return s_arJustUpKeys[nKey];
+		return s_arPrevKeys[nKey] && !s_arKeys[nKey];
 	}
 	else
 	{
@@ -166,8 +159,6 @@ void SetButton(int nButton)
 
 		if (nButton == VBUTTON_LEFT)
 		{
-			if (s_arTouches[0] == 0)
-				s_arJustDownTouches[0] = 1;
 			s_arTouches[0] = 1;
 		}
 	}
@@ -185,8 +176,6 @@ void ClearButton(int nButton)
 
 		if (nButton == VBUTTON_LEFT)
 		{
-			if (s_arTouches[0] == 1)
-				s_arJustUpTouches[0] = 1;
 			s_arTouches[0] = 0;
 		}
 	}
@@ -209,6 +198,34 @@ int IsButtonDown(int nButton)
 	}
 }
 
+int IsButtonJustDown(int nButton)
+{
+	if (nButton >= 0 &&
+		nButton < VINPUT_MAX_BUTTONS)
+	{
+		return s_arButtons[nButton] && !s_arPrevButtons[nButton];
+	}
+	else
+	{
+		LogWarning("Invalid button queried in IsButtonJustDown().");
+		return 0;
+	}
+}
+
+int IsButtonJustUp(int nButton)
+{
+	if (nButton >= 0 &&
+		nButton < VINPUT_MAX_BUTTONS)
+	{
+		return !s_arButtons[nButton] && s_arPrevButtons[nButton];
+	}
+	else
+	{
+		LogWarning("Invalid button queried in IsButtonJustUp().");
+		return 0;
+	}
+}
+
 //*****************************************************************************
 // SetTouch
 //*****************************************************************************
@@ -217,8 +234,6 @@ void SetTouch(int nTouch)
 	if (nTouch >= 0 &&
 		nTouch < VINPUT_MAX_TOUCHES)
 	{
-		if (s_arTouches[nTouch] == 0)
-			s_arJustDownTouches[nTouch] = 1;
 		s_arTouches[nTouch] = 1;
 	}
 	else
@@ -235,8 +250,6 @@ void ClearTouch(int nTouch)
 	if (nTouch >= 0 &&
 		nTouch < VINPUT_MAX_TOUCHES)
 	{
-		if (s_arTouches[nTouch] != 0)
-			s_arJustUpTouches[nTouch] = 1;
 		s_arTouches[nTouch] = 0;
 	}
 }
@@ -335,7 +348,7 @@ int IsPointerJustUp(int nPointer)
 	{
 		// If either the left mouse button is down or the specified
 		// touch index is down, then return 1.
-		if (s_arJustUpTouches[nPointer] != 0)
+		if (s_arTouches[nPointer] == 0 && s_arPrevTouches[nPointer] != 0)
 		{
 			if (s_nKeyboardEnable != 0)
 			{
@@ -380,7 +393,7 @@ int IsPointerJustDown(int nPointer)
 	{
 		// If either the left mouse button is down or the specified
 		// touch index is down, then return 1.
-		if (s_arJustDownTouches[nPointer] != 0)
+		if (s_arTouches[nPointer] != 0 && s_arPrevTouches[nPointer] == 0)
 		{
 			if (s_nKeyboardEnable != 0)
 			{
@@ -608,6 +621,8 @@ int IsControllerButtonJustDown(int nControllerButton,
 	{
 		return 0;
 	}
+#else
+	return 0;
 #endif
 }
 

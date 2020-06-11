@@ -324,7 +324,7 @@ void SetKey(int nKey);
 //## **********************************************************************
 void ClearKey(int nKey);
 
-void ResetJusts();
+void UpdateInput();
 
 void ClearAllKeys();
 
@@ -383,6 +383,9 @@ void ClearButton(int nButton);
 //##       - '0' if mouse button is not pressed.
 //## **********************************************************************
 int IsButtonDown(int nButton);
+
+int IsButtonJustDown(int nButton);
+int IsButtonJustUp(int nButton);
 
 //## **********************************************************************
 //## SetTouch

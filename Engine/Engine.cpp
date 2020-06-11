@@ -43,16 +43,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 		}
 		break;
 	}
-	case WM_KEYDOWN:                              // Is A Key Being Held Down?
+	case WM_KEYDOWN:
 	{
-		SetKey(wParam);                         // If So, Mark It As TRUE
-		return 0;                                 // Jump Back
+		SetKey((int32_t)wParam);
+		return 0;
 	}
 
-	case WM_KEYUP:                                // Has A Key Been Released?
+	case WM_KEYUP:
 	{
-		ClearKey(wParam);                        // If So, Mark It As FALSE
-		return 0;                                 // Jump Back
+		ClearKey((int32_t)wParam);
+		return 0;
 	}
 
 	case WM_LBUTTONDOWN:
@@ -133,10 +133,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
 	{
 		int nX = LOWORD(lParam);
 		int nY = HIWORD(lParam);
-
-		// Invert the y axis to match the bottom-left origin
-		// convention used thoughout Vakz.
-		SetMousePosition(nX, (sAppState.mWindowHeight - 1) - nY);
+		SetMousePosition(nX, nY);
 
 		return 0;
 	}
@@ -259,7 +256,7 @@ bool Initialize(int32_t width, int32_t height)
 
 bool Update()
 {
-	ResetJusts(); // TODO: This needs a better name.
+	UpdateInput();
 	ProcessMessages();
 	sClock.Update();
 	sDebugHandler.Update();

@@ -6,6 +6,7 @@
 
 Text::Text() :
 	mFont(nullptr),
+	mText("Text"),
 	mCutoff(0.5f),
 	mOutlineSize(0.0f),
 	mSize(32.0f),
@@ -204,10 +205,13 @@ void Text::UpdateVertexBuffer()
 	assert(mFont);
 	assert(mFont->mCharacters);
 
+	mVisibleCharacters = 0;
+
+	if (mText.size() == 0)
+		return;
+
 	void* data = nullptr;
 	vkMapMemory(device, mVertexBufferMemory.mDeviceMemory, mVertexBufferMemory.mOffset, mVertexBufferMemory.mSize, 0, &data);
-
-	mVisibleCharacters = 0;
 
 	// Run through each of the characters and construct vertices for it.
 	// Not using an index buffer currently, so each character is 6 vertices.

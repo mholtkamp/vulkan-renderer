@@ -19,6 +19,8 @@ enum class ButtonState
 
 class Button : public Widget
 {
+public:
+
 	Button();
 	virtual ~Button();
 
@@ -47,6 +49,10 @@ class Button : public Widget
 	void SetPressedColor(glm::vec4 color);
 	void SetDisabledColor(glm::vec4 color);
 
+	void SetUseQuadStateColor(bool inUse);
+	void SetUseTextStateColor(bool inUse);
+	void SetHandleMouseInput(bool inHandle);
+
 	void SetHoverHandler(HandlerFP newHandler);
 	void SetPressedHandler(HandlerFP newHandler);
 
@@ -73,6 +79,7 @@ protected:
 
 	bool mUseTextStateColor;
 	bool mUseQuadStateColor;
+	bool mHandleMouseInput;
 
 	HandlerFP mHoveredHandler;
 	HandlerFP mPressedHandler;

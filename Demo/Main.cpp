@@ -7,9 +7,19 @@
 #include "Engine.h"
 #include "Scene.h"
 #include "Quad.h"
+#include "Button.h"
 #include "Renderer.h"
 #include "Text.h"
 #include "Canvas.h"
+#include "Log.h"
+
+static Text* text1 = nullptr;
+
+void OnButton1Pressed()
+{
+	text1->SetText("Beep Boop - Pressed the Button!");
+	LogDebug("Beep!");
+}
 
 #ifndef _DEBUG
 int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int32_t nCmdShow)
@@ -51,14 +61,21 @@ int32_t main(int32_t argc, char** argv)
 	colors[3] = glm::vec4(0.0f, 1.0f, 1.0f, 0.0f);
 	quad2->SetColor(colors);
 
-	Text* text1 = new Text();
+	text1 = new Text();
 	text1->SetPosition(450, 20);
 	text1->SetDimensions(800, 800);
 	text1->SetSize(48.0f);
 	//text1->SetColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
 	text1->SetText("Vulkan Renderer 2 Deluxe 3D");
 
+	Button* button1 = new Button();
+	button1->GetText()->SetColor(glm::vec4(0, 0, 1, 1));
+	button1->SetPosition(30, 200);
+	button1->SetDimensions(200, 45);
+	button1->SetPressedHandler(OnButton1Pressed);
+
 	canvas2->AddChild(quad1);
+	rootCanvas->AddChild(button1);
 	rootCanvas->AddChild(quad2);
 	rootCanvas->AddChild(text1);
 	rootCanvas->AddChild(canvas2);
