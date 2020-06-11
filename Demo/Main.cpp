@@ -30,7 +30,6 @@ int32_t main(int32_t argc, char** argv)
 	canvas2->SetRect(50, 570, 100, 100);
 
 	Quad* quad1 = new Quad();
-	quad1->Create();
 	quad1->SetPosition(glm::vec2(-150, -150));
 	quad1->SetDimensions(glm::vec2(400, 400));
 	Texture* testTexture = new Texture2D();
@@ -46,7 +45,6 @@ int32_t main(int32_t argc, char** argv)
 	quad1->SetColor(colors);
 
 	Quad* quad2 = new Quad();
-	quad2->Create();
 	quad2->SetPosition(glm::vec2(0, 0));
 	quad2->SetDimensions(glm::vec2(1280, 150));
 	colors[1] = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
@@ -54,7 +52,6 @@ int32_t main(int32_t argc, char** argv)
 	quad2->SetColor(colors);
 
 	Text* text1 = new Text();
-	text1->Create();
 	text1->SetPosition(450, 20);
 	text1->SetDimensions(800, 800);
 	text1->SetSize(48.0f);

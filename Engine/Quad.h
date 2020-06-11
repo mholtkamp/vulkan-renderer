@@ -18,9 +18,6 @@ public:
 	Quad();
 	virtual ~Quad();
 
-	virtual void Create() override;
-	virtual void Destroy() override;
-
 	virtual void Render(VkCommandBuffer commandBuffer) override;
 
 	virtual void Update() override;

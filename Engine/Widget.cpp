@@ -19,19 +19,6 @@ Widget::~Widget()
 	}
 
 	mChildren.clear();
-	
-	Destroy();
-}
-
-// Setup any resources required by the widget.
-void Widget::Create()
-{
-
-}
-
-void Widget::Destroy()
-{
-
 }
 
 // Issue gpu commands to display the widget.

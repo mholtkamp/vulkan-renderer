@@ -12,11 +12,6 @@ public:
 	Widget();
 	virtual ~Widget();
 
-	// Setup any resources required by the widget.
-	virtual void Create();
-
-	virtual void Destroy();
-
 	// Issue gpu commands to display the widget.
 	// Recursively render children.
 	virtual void Render(VkCommandBuffer commandBuffer);

@@ -22,11 +22,6 @@ class Button : public Widget
 	Button();
 	virtual ~Button();
 
-	// Setup any resources required by the widget.
-	virtual void Create() override;
-
-	virtual void Destroy() override;
-
 	// Issue gpu commands to display the widget.
 	// Recursively render children.
 	virtual void Render(VkCommandBuffer commandBuffer) override;

@@ -23,30 +23,21 @@ Button::Button() :
 	mText(nullptr)
 
 {
-
-}
-
-Button::~Button()
-{
-
-}
-
-// Setup any resources required by the widget.
-void Button::Create()
-{
-	Widget::Create();
-
 	mQuad = new Quad();
 	mText = new Text();
-
-	mQuad->Create();
-	mText->Create();
 
 	AddChild(mQuad);
 	AddChild(mText);
 }
 
-void Destroy();
+Button::~Button()
+{
+	delete mQuad;
+	mQuad = nullptr;
+
+	delete mText;
+	mText = nullptr;
+}
 
 void Button::Render(VkCommandBuffer commandBuffer)
 {

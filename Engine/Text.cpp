@@ -16,26 +16,14 @@ Text::Text() :
 	mVertexBufferDirty(true)
 {
 	mFont = &DefaultFonts::sConsolas32;
-}
-
-Text::~Text()
-{
-	Destroy();
-}
-
-void Text::Create()
-{
-	Widget::Create();
 
 	CreateVertexBuffer();
 	CreateUniformBuffer();
 	CreateDescriptorSet();
 }
 
-void Text::Destroy()
+Text::~Text()
 {
-	Widget::Destroy();
-
 	DestroyVertexBuffer();
 	DestroyUniformBuffer();
 	DestroyDescriptorSet();

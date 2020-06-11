@@ -5,28 +5,14 @@ Quad::Quad() :
 	mTexture(nullptr),
 	mVertexBuffer(VK_NULL_HANDLE)
 {
-
-}
-
-Quad::~Quad()
-{
-	Destroy();
-}
-
-void Quad::Create()
-{
-	Widget::Create();
-
 	InitVertexData();
 	CreateVertexBuffer();
 	CreateUniformBuffer();
 	CreateDescriptorSet();
 }
 
-void Quad::Destroy()
+Quad::~Quad()
 {
-	Widget::Destroy();
-
 	DestroyVertexBuffer();
 	DestroyUniformBuffer();
 	DestroyDescriptorSet();
