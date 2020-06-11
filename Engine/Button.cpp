@@ -21,6 +21,8 @@ Button::Button() :
 	mStateColorChangeSpeed(5.0f),
 	mUseTextStateColor(false),
 	mUseQuadStateColor(true),
+	mAutoSizeText(true),
+	mTextPaddingRatio(glm::vec2(0.035f, 0.05f)),
 	mHoveredHandler(nullptr),
 	mPressedHandler(nullptr),
 	mHandleMouseInput(true),
@@ -144,7 +146,6 @@ void Button::SetPosition(float x, float y)
 {
 	Widget::SetPosition(x, y);
 	mQuad->SetPosition(0, 0);
-	mText->SetPosition(0, 0);
 }
 
 void Button::SetDimensions(float width, float height)
@@ -152,6 +153,15 @@ void Button::SetDimensions(float width, float height)
 	Widget::SetDimensions(width, height);
 	mQuad->SetDimensions(width, height);
 	mText->SetDimensions(width, height);
+
+	if (mAutoSizeText)
+	{
+		const float textScaleFactor = 1.5f;
+		const float textSize = textScaleFactor * height * (1 - 2 * mTextPaddingRatio.y);
+		mText->SetSize(textSize);
+	}
+
+	mText->SetPosition(width * mTextPaddingRatio.x, height * mTextPaddingRatio.y);
 }
 
 ButtonState Button::GetState()

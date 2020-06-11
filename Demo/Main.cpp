@@ -71,7 +71,7 @@ int32_t main(int32_t argc, char** argv)
 	Button* button1 = new Button();
 	button1->GetText()->SetColor(glm::vec4(0, 0, 1, 1));
 	button1->SetPosition(30, 200);
-	button1->SetDimensions(200, 45);
+	button1->SetDimensions(200, 35);
 	button1->SetPressedHandler(OnButton1Pressed);
 
 	canvas2->AddChild(quad1);

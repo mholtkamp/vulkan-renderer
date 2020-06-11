@@ -80,6 +80,8 @@ protected:
 	bool mUseTextStateColor;
 	bool mUseQuadStateColor;
 	bool mHandleMouseInput;
+	bool mAutoSizeText;
+	glm::vec2 mTextPaddingRatio;
 
 	HandlerFP mHoveredHandler;
 	HandlerFP mPressedHandler;
