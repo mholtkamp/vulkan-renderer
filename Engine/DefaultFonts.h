@@ -9,9 +9,6 @@ public:
 	static void Create();
 	static void Destroy();
 
-	static Font sConsolas32;
-	static Font sConsolas32_DF;
-
 	// Regular
 	static Font sRoboto32;
 	static Font sPressStart16;

@@ -62,6 +62,9 @@ public:
 	Text* GetText();
 	Quad* GetQuad();
 
+	virtual void OnPressed();
+	virtual void OnHover();
+
 protected:
 
 	Texture* mNormalTexture;

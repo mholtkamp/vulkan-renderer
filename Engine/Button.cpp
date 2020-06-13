@@ -47,11 +47,7 @@ Button::Button() :
 
 Button::~Button()
 {
-	delete mQuad;
-	mQuad = nullptr;
-
-	delete mText;
-	mText = nullptr;
+	// Children are deleted automatically in ~Widget().
 }
 
 void Button::Render(VkCommandBuffer commandBuffer)
@@ -87,10 +83,9 @@ void Button::Update()
 		if (containsMouse)
 		{
 			if (mouseJustUp &&
-				mState == ButtonState::Pressed &&
-				mPressedHandler)
+				mState == ButtonState::Pressed)
 			{
-				mPressedHandler();
+				OnPressed();
 			}
 			else if (mouseJustDown)
 			{
@@ -99,6 +94,7 @@ void Button::Update()
 			else if (!mouseDown)
 			{
 				SetState(ButtonState::Hovered);
+				OnHover();
 			}
 		}
 		else
@@ -189,11 +185,11 @@ void Button::SetState(ButtonState newState)
 		{
 			if (newState == ButtonState::Hovered && mHoveredHandler != nullptr)
 			{
-				mHoveredHandler();
+				OnHover();
 			}
 			else if (newState == ButtonState::Pressed && mPressedHandler != nullptr)
 			{
-				mPressedHandler();
+				OnPressed();
 			}
 		}
 	}
@@ -314,4 +310,20 @@ Text* Button::GetText()
 Quad* Button::GetQuad()
 {
 	return mQuad;
+}
+
+void Button::OnPressed()
+{
+	if (mPressedHandler)
+	{
+		mPressedHandler();
+	}
+}
+
+void Button::OnHover()
+{
+	if (mHoveredHandler)
+	{
+		mHoveredHandler();
+	}
 }

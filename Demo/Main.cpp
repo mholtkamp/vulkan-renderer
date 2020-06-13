@@ -155,9 +155,9 @@ int32_t main(int32_t argc, char** argv)
 		ret = Update();
 	}
 
+	delete rootCanvas;
 	delete scene;
-	delete quad1;
-	delete quad2;
 	delete testTexture;
+
 	Shutdown();
 }
