@@ -80,6 +80,21 @@ void Quad::SetColor(glm::vec4 colors[4])
 	mDirty = true;
 }
 
+void Quad::SetColor(glm::vec4 topLeft,
+	glm::vec4 topRight,
+	glm::vec4 bottomLeft,
+	glm::vec4 bottomRight)
+{
+	glm::vec4 colors[4] = { topLeft, bottomLeft, topRight, bottomRight };
+	SetColor(colors);
+}
+
+void Quad::SetTint(glm::vec4 tint)
+{
+	mTint = tint;
+	MarkDirty();
+}
+
 void Quad::CreateVertexBuffer()
 {
 	DestroyVertexBuffer();
@@ -201,7 +216,7 @@ void Quad::UpdateUniformBuffer()
 	VkDevice device = renderer->GetDevice();
 
 	QuadUniformBuffer ubo = {};
-	ubo.mPadding = glm::vec4(1337, 1337, 1337, 1337);
+	ubo.mTint = mTint;
 
 	void* data;
 	vkMapMemory(device, mUniformBufferMemory.mDeviceMemory, mUniformBufferMemory.mOffset, sizeof(ubo), 0, &data);

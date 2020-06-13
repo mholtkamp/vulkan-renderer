@@ -12,13 +12,48 @@
 #include "Text.h"
 #include "Canvas.h"
 #include "Log.h"
+#include "DefaultFonts.h"
 
-static Text* text1 = nullptr;
+static Text* fontDemoText = nullptr;
+static Text* fontNameText = nullptr;
 
-void OnButton1Pressed()
+static float fontDemoSize = 32.0f;
+
+static Font* demoFonts[] =
 {
-	text1->SetText("Beep Boop - Pressed the Button!");
-	LogDebug("Beep!");
+	&DefaultFonts::sRoboto32,
+	&DefaultFonts::sUbuntu32,
+	&DefaultFonts::sPressStart16,
+	&DefaultFonts::sRoboto32_DF,
+	&DefaultFonts::sRobotoMono24,
+	&DefaultFonts::sUbuntuMono24
+};
+
+static int32_t numFonts = ARRAYSIZE(demoFonts);
+static int32_t currentFont = 0;
+
+void PlusSize()
+{
+	const float increment = 4.0f;
+	fontDemoSize += increment;
+	fontDemoText->SetSize(fontDemoSize);
+}
+
+void MinusSize()
+{
+	const float decrement = 4.0f;
+	fontDemoSize -= decrement;
+	fontDemoSize = glm::max(fontDemoSize, 4.0f);
+	fontDemoText->SetSize(fontDemoSize);
+}
+
+void CycleFont()
+{
+	currentFont++;
+	if (currentFont >= numFonts) { currentFont = 0; }
+	Font* font = demoFonts[currentFont];
+	fontNameText->SetText(font->mName);
+	fontDemoText->SetFont(font);
 }
 
 #ifndef _DEBUG
@@ -61,25 +96,52 @@ int32_t main(int32_t argc, char** argv)
 	colors[3] = glm::vec4(0.0f, 1.0f, 1.0f, 0.0f);
 	quad2->SetColor(colors);
 
-	text1 = new Text();
+	Text* text1 = new Text();
 	text1->SetPosition(450, 20);
 	text1->SetDimensions(800, 800);
 	text1->SetSize(48.0f);
-	//text1->SetColor(glm::vec4(1.0f, 0.0f, 1.0f, 1.0f));
 	text1->SetText("Vulkan Renderer 2 Deluxe 3D");
 
-	Button* button1 = new Button();
-	button1->GetText()->SetColor(glm::vec4(0, 0, 1, 1));
-	button1->SetPosition(30, 200);
-	button1->SetDimensions(200, 35);
-	button1->SetPressedHandler(OnButton1Pressed);
+	fontNameText = new Text();
+	fontNameText->SetPosition(100, 250);
+	fontNameText->SetDimensions(1000, 400);
+	fontNameText->SetSize(48);
+	fontNameText->SetText(demoFonts[currentFont]->mName);
+
+	fontDemoText = new Text();
+	fontDemoText->SetPosition(100, 300);
+	fontDemoText->SetDimensions(1000, 400);
+	fontDemoText->SetSize(fontDemoSize);
+	fontDemoText->SetText("This is a font test!! How is it working?\nDoes it look good? Thanks :)");
+
+	Button* buttonMinus = new Button();
+	buttonMinus->GetText()->SetText("  -");
+	buttonMinus->SetPosition(100, 200);
+	buttonMinus->SetDimensions(32, 32);
+	buttonMinus->SetPressedHandler(MinusSize);
+
+	Button* buttonPlus = new Button();
+	buttonPlus->GetText()->SetText("  +");
+	buttonPlus->SetPosition(140, 200);
+	buttonPlus->SetDimensions(32, 32);
+	buttonPlus->SetPressedHandler(PlusSize);
+
+	Button* buttonCycle = new Button();
+	buttonCycle->GetText()->SetText(" Cycle");
+	buttonCycle->SetPosition(180, 200);
+	buttonCycle->SetDimensions(70, 32);
+	buttonCycle->SetPressedHandler(CycleFont);
 
 	canvas2->AddChild(quad1);
-	rootCanvas->AddChild(button1);
+
+	rootCanvas->AddChild(buttonMinus);
+	rootCanvas->AddChild(buttonPlus);
+	rootCanvas->AddChild(buttonCycle);
+	rootCanvas->AddChild(fontNameText);
+	rootCanvas->AddChild(fontDemoText);
 	rootCanvas->AddChild(quad2);
 	rootCanvas->AddChild(text1);
 	rootCanvas->AddChild(canvas2);
-	
 
 	Renderer::Get()->SetRootWidget(rootCanvas);
 

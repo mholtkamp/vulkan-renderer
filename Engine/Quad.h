@@ -8,7 +8,7 @@
 
 struct QuadUniformBuffer
 {
-	glm::vec4 mPadding; // Temp placeholder
+	glm::vec4 mTint;
 };
 
 class Quad : public Widget
@@ -27,6 +27,12 @@ public:
 	virtual void SetColor(glm::vec4 color) override;
 
 	void SetColor(glm::vec4 colors[4]);
+	void SetColor(glm::vec4 topLeft,
+				  glm::vec4 topRight,
+				  glm::vec4 bottomLeft,
+				  glm::vec4 bottomRight);
+
+	void SetTint(glm::vec4 tint);
 
 protected:
 
@@ -53,4 +59,6 @@ protected:
 	DescriptorSet mDescriptorSet;
 	VkBuffer mUniformBuffer;
 	Allocation mUniformBufferMemory;
+
+	glm::vec4 mTint;
 };

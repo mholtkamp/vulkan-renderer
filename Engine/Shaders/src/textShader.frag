@@ -16,9 +16,9 @@ layout (set = 1, binding = 0) uniform TextUniformBuffer
 	float mOutlineSize;
 
 	float mSize;
+	float mSoftness;
 	float mPadding1;
 	float mPadding2;
-	float mPadding3;
 
 	int mDistanceField;
 	int mEffect;
@@ -32,6 +32,19 @@ layout (location = 0) out vec4 outFinalColor;
 
 void main()
 {
-	float fontColor = texture(fontSampler, inTexcoord).r;
-	outFinalColor = fontColor * inColor;
+	float fontAlpha = texture(fontSampler, inTexcoord).r;
+
+	if (textData.mDistanceField != 0)
+	{
+		float cutoff = textData.mCutoff;
+		float fadeDist = textData.mSoftness;
+
+		//fontAlpha = smoothstep(cutoff - fadeDist, cutoff + fadeDist, fontAlpha);
+		
+		float scale = 1.0 / max(fwidth(fontAlpha), 0.00001);
+		float signedDistance = (fontAlpha - cutoff) * scale;
+		fontAlpha = clamp(signedDistance + cutoff + scale * fadeDist, 0.0, 1.0);
+	}
+	
+	outFinalColor = vec4(inColor.rgb, fontAlpha * inColor.a);
 }

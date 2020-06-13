@@ -12,9 +12,9 @@ struct TextUniformBuffer
 	float mOutlineSize;
 
 	float mSize;
+	float mSoftness;
 	float mPadding1;
 	float mPadding2;
-	float mPadding3;
 
 	int32_t mDistanceField;
 	int32_t mEffect;
@@ -57,6 +57,7 @@ protected:
 	float mCutoff;
 	float mOutlineSize;
 	float mSize;
+	float mSoftness;
 	glm::vec4 mOutlineColor;
 
 	int32_t mVisibleCharacters; // ( \n excluded )

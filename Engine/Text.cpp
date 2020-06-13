@@ -7,16 +7,17 @@
 Text::Text() :
 	mFont(nullptr),
 	mText("Text"),
-	mCutoff(0.5f),
+	mCutoff(0.55f),
 	mOutlineSize(0.0f),
 	mSize(32.0f),
+	mSoftness(0.125f),
 	mOutlineColor(0.0f, 0.0f, 0.0, 1.0f),
 	mVisibleCharacters(0),
 	mVertexBuffer(VK_NULL_HANDLE),
 	mUniformBuffer(VK_NULL_HANDLE),
 	mVertexBufferDirty(true)
 {
-	mFont = &DefaultFonts::sConsolas32;
+	mFont = &DefaultFonts::sRoboto32;
 
 	CreateVertexBuffer();
 	CreateUniformBuffer();
@@ -300,9 +301,9 @@ void Text::UpdateUniformBuffer()
 	ubo.mCutoff = mCutoff;
 	ubo.mOutlineSize = mOutlineSize;
 	ubo.mSize = mSize;
+	ubo.mSoftness = mSoftness;
 	ubo.mPadding1 = 1337;
 	ubo.mPadding2 = 1337;
-	ubo.mPadding3 = 1337;
 	ubo.mDistanceField = (mFont != nullptr) ? mFont->mDistanceField : false;
 	ubo.mEffect = 0;
 

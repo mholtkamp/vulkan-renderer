@@ -35,7 +35,15 @@ Button::Button() :
 
 	AddChild(mQuad);
 	AddChild(mText);
-}
+
+	// Default dimensions
+	SetDimensions(100, 30);
+
+	mQuad->SetColor({ 0.2f, 0.2f, 0.8f, 1.0f },
+		{ 0.2f, 0.2f, 0.8f, 1.0f },
+		{ 0.5f, 0.2f, 0.8f, 0.5f },
+		{ 0.5f, 0.2f, 0.8f, 0.5f });
+;}
 
 Button::~Button()
 {
@@ -128,7 +136,7 @@ void Button::Update()
 
 		if (mUseQuadStateColor)
 		{
-			mQuad->SetColor(stateColor);
+			mQuad->SetTint(stateColor);
 		}
 
 		if (mUseTextStateColor)
