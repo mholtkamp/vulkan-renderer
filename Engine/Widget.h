@@ -33,14 +33,13 @@ public:
 	void SetRect(glm::vec2 position, glm::vec2 dimensions);
 	void SetRect(Rect rect);
 
+	virtual void SetVisible(bool visible);
+	bool IsVisible() const;
 	virtual void SetColor(glm::vec4 color);
 
 	void AddChild(Widget* widget);
-
 	Widget* RemoveChild(Widget* widget);
-
 	Widget* RemoveChild(int32_t index);
-
 	Widget* GetChild(int32_t index);
 
 	void MarkDirty();
@@ -62,4 +61,5 @@ protected:
 	glm::vec4 mColor;
 	bool mUseScissor;
 	bool mDirty;
+	bool mVisible;
 };

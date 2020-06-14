@@ -33,6 +33,8 @@ Text::~Text()
 
 void Text::Render(VkCommandBuffer commandBuffer)
 {
+	Widget::Render(commandBuffer);
+
 	if (mText.size() > 0 && mVertexBuffer != VK_NULL_HANDLE)
 	{
 		Renderer* renderer = Renderer::Get();

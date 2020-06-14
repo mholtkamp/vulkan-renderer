@@ -5,7 +5,8 @@ Widget::Widget() :
 	mParent(nullptr),
 	mColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),
 	mUseScissor(false),
-	mDirty(true)
+	mDirty(true),
+	mVisible(true)
 {
 
 }
@@ -34,7 +35,10 @@ void Widget::RecursiveRender(VkCommandBuffer commandBuffer)
 
 	for (int32_t i = 0; i < mChildren.size(); ++i)
 	{
-		mChildren[i]->RecursiveRender(commandBuffer);
+		if (mChildren[i]->IsVisible())
+		{
+			mChildren[i]->RecursiveRender(commandBuffer);
+		}
 	}
 
 	if (mUseScissor)
@@ -57,7 +61,10 @@ void Widget::RecursiveUpdate()
 
 	for (int32_t i = 0; i < mChildren.size(); ++i)
 	{
-		mChildren[i]->RecursiveUpdate();
+		if (mChildren[i]->IsVisible())
+		{
+			mChildren[i]->RecursiveUpdate();
+		}
 	}
 }
 
@@ -94,14 +101,14 @@ void Widget::SetPosition(float x, float y)
 {
 	mRect.mX = x;
 	mRect.mY = y;
-	mDirty = true;
+	MarkDirty();
 }
 
 void Widget::SetDimensions(float width, float height)
 {
 	mRect.mWidth = width;
 	mRect.mHeight = height;
-	mDirty = true;
+	MarkDirty();
 }
 
 void Widget::SetPosition(glm::vec2 position)
@@ -132,16 +139,27 @@ void Widget::SetRect(Rect rect)
 	SetDimensions(glm::vec2(rect.mWidth, rect.mHeight));
 }
 
+void Widget::SetVisible(bool visible)
+{
+	mVisible = visible;
+}
+
+bool Widget::IsVisible() const
+{
+	return mVisible;;
+}
+
 void Widget::SetColor(glm::vec4 color)
 {
 	mColor = color;
-	mDirty = true;
+	MarkDirty();
 }
 
 void Widget::AddChild(Widget* widget)
 {
 	mChildren.push_back(widget);
 	mChildren.back()->mParent = this;
+	mChildren.back()->MarkDirty();
 }
 
 Widget* Widget::RemoveChild(Widget* widget)

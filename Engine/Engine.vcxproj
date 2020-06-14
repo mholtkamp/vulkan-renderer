@@ -170,6 +170,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Canvas.cpp" />
+    <ClCompile Include="Checkbox.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DefaultFonts.cpp" />
     <ClCompile Include="Font.cpp" />
@@ -209,6 +210,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Canvas.h" />
+    <ClInclude Include="Checkbox.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DefaultFonts.h" />

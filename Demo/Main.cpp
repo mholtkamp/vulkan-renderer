@@ -9,6 +9,7 @@
 #include "Quad.h"
 #include "Button.h"
 #include "Selector.h"
+#include "Checkbox.h"
 #include "Renderer.h"
 #include "Text.h"
 #include "Canvas.h"
@@ -17,6 +18,7 @@
 
 static Text* fontDemoText = nullptr;
 static Text* fontNameText = nullptr;
+static Canvas* fontTestCanvas = nullptr;
 
 static float fontDemoSize = 32.0f;
 
@@ -56,6 +58,12 @@ void CycleFont(Button* button)
 	fontDemoText->SetFont(font);
 }
 
+void ShowFontTest(Button* button)
+{
+	Checkbox* check = static_cast<Checkbox*>(button);
+	fontTestCanvas->SetVisible(check->IsChecked());
+}
+
 #ifndef _DEBUG
 int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int32_t nCmdShow)
 #else
@@ -73,6 +81,9 @@ int32_t main(int32_t argc, char** argv)
 
 	Canvas* canvas2 = new Canvas();
 	canvas2->SetRect(50, 570, 100, 100);
+
+	fontTestCanvas = new Canvas();
+	fontTestCanvas->SetRect(0, 0, 1280, 720);
 
 	Quad* quad1 = new Quad();
 	quad1->SetPosition(glm::vec2(-150, -150));
@@ -126,6 +137,15 @@ int32_t main(int32_t argc, char** argv)
 	buttonPlus->SetDimensions(32, 32);
 	buttonPlus->SetPressedHandler(PlusSize);
 
+	Checkbox* enableCheckbox = new Checkbox();
+	enableCheckbox->SetPressedHandler(ShowFontTest);
+	enableCheckbox->SetChecked(true);
+	enableCheckbox->SetPosition(1100, 683);
+
+	Text* enableLabel = new Text();
+	enableLabel->SetText("Enable Font Test");
+	enableLabel->SetPosition(1130, 685);
+
 	Selector* selectorFont = new Selector();
 	for (int32_t i = 0; i < numFonts; ++i)
 	{
@@ -137,14 +157,18 @@ int32_t main(int32_t argc, char** argv)
 
 	canvas2->AddChild(quad1);
 
-	rootCanvas->AddChild(buttonMinus);
-	rootCanvas->AddChild(buttonPlus);
-	rootCanvas->AddChild(selectorFont);
-	rootCanvas->AddChild(fontNameText);
-	rootCanvas->AddChild(fontDemoText);
+	fontTestCanvas->AddChild(buttonMinus);
+	fontTestCanvas->AddChild(buttonPlus);
+	fontTestCanvas->AddChild(selectorFont);
+	fontTestCanvas->AddChild(fontNameText);
+	fontTestCanvas->AddChild(fontDemoText);
+
+	rootCanvas->AddChild(enableCheckbox);
+	rootCanvas->AddChild(enableLabel);
 	rootCanvas->AddChild(quad2);
 	rootCanvas->AddChild(text1);
 	rootCanvas->AddChild(canvas2);
+	rootCanvas->AddChild(fontTestCanvas);
 
 	Renderer::Get()->SetRootWidget(rootCanvas);
 

@@ -20,6 +20,8 @@ Quad::~Quad()
 
 void Quad::Render(VkCommandBuffer commandBuffer)
 {
+	Widget::Render(commandBuffer);
+
 	// Make sure to bind the quad pipeline. Quad and text rendering will be interleaved.
 	Renderer* renderer = Renderer::Get();
 	QuadPipeline& quadPipeline = renderer->GetQuadPipeline();
@@ -56,7 +58,7 @@ void Quad::Update()
 void Quad::SetTexture(class Texture* texture)
 {
 	mTexture = texture;
-	mDirty = true;
+	MarkDirty();
 }
 
 void Quad::SetColor(glm::vec4 color)
@@ -66,7 +68,7 @@ void Quad::SetColor(glm::vec4 color)
 		mVertices[i].mColor = color;
 	}
 
-	mDirty = true;
+	MarkDirty();
 }
 
 void Quad::SetColor(glm::vec4 colors[4])
@@ -76,7 +78,7 @@ void Quad::SetColor(glm::vec4 colors[4])
 		mVertices[i].mColor = colors[i];
 	}
 
-	mDirty = true;
+	MarkDirty();
 }
 
 void Quad::SetColor(glm::vec4 topLeft,
