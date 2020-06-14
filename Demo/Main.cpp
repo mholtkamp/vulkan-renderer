@@ -9,7 +9,7 @@
 #include "Quad.h"
 #include "Button.h"
 #include "Selector.h"
-#include "Checkbox.h"
+#include "CheckBox.h"
 #include "Renderer.h"
 #include "Text.h"
 #include "Canvas.h"
@@ -60,7 +60,7 @@ void CycleFont(Button* button)
 
 void ShowFontTest(Button* button)
 {
-	Checkbox* check = static_cast<Checkbox*>(button);
+	CheckBox* check = static_cast<CheckBox*>(button);
 	fontTestCanvas->SetVisible(check->IsChecked());
 }
 
@@ -73,8 +73,8 @@ int32_t main(int32_t argc, char** argv)
 	Initialize(1280, 720);
 
 	Scene* scene = new Scene();
-	//scene->Load("Scenes/Sponza/", "Sponza.dae");
-	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
+	scene->Load("Scenes/Sponza/", "Sponza.dae");
+	//scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
 
 	Canvas* rootCanvas = new Canvas();
 	rootCanvas->SetRect(0, 0, 1280, 720);
@@ -102,8 +102,10 @@ int32_t main(int32_t argc, char** argv)
 
 	Quad* quad2 = new Quad();
 	quad2->SetPosition(glm::vec2(0, 0));
-	quad2->SetDimensions(glm::vec2(1280, 150));
+	quad2->SetDimensions(glm::vec2(1280, 100));
+	colors[0] = glm::vec4(1.0f, 0.0f, 0.0f, 0.5f);
 	colors[1] = glm::vec4(1.0f, 0.0f, 1.0f, 0.0f);
+	colors[2] = glm::vec4(1.0f, 1.0f, 0.0f, 0.5f);
 	colors[3] = glm::vec4(0.0f, 1.0f, 1.0f, 0.0f);
 	quad2->SetColor(colors);
 
@@ -137,7 +139,7 @@ int32_t main(int32_t argc, char** argv)
 	buttonPlus->SetDimensions(32, 32);
 	buttonPlus->SetPressedHandler(PlusSize);
 
-	Checkbox* enableCheckbox = new Checkbox();
+	CheckBox* enableCheckbox = new CheckBox();
 	enableCheckbox->SetPressedHandler(ShowFontTest);
 	enableCheckbox->SetChecked(true);
 	enableCheckbox->SetPosition(1100, 683);

@@ -170,13 +170,14 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CameraController.cpp" />
     <ClCompile Include="Canvas.cpp" />
-    <ClCompile Include="Checkbox.cpp" />
+    <ClCompile Include="CheckBox.cpp" />
     <ClCompile Include="Clock.cpp" />
     <ClCompile Include="DefaultFonts.cpp" />
     <ClCompile Include="Font.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="Selector.cpp" />
     <ClCompile Include="Text.cpp" />
+    <ClCompile Include="TextField.cpp" />
     <ClCompile Include="VkrMath.cpp" />
     <ClCompile Include="Quad.cpp" />
     <ClCompile Include="Rect.cpp" />
@@ -210,7 +211,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="CameraController.h" />
     <ClInclude Include="Canvas.h" />
-    <ClInclude Include="Checkbox.h" />
+    <ClInclude Include="CheckBox.h" />
     <ClInclude Include="Clock.h" />
     <ClInclude Include="Constants.h" />
     <ClInclude Include="DefaultFonts.h" />
@@ -220,6 +221,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="Selector.h" />
     <ClInclude Include="Text.h" />
+    <ClInclude Include="TextField.h" />
     <ClInclude Include="VkrMath.h" />
     <ClInclude Include="Quad.h" />
     <ClInclude Include="Rect.h" />

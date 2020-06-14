@@ -1,6 +1,6 @@
-#include "Checkbox.h"
+#include "CheckBox.h"
 
-Checkbox::Checkbox()
+CheckBox::CheckBox()
 {
 	AddSelection("");
 	AddSelection("X");
@@ -9,16 +9,16 @@ Checkbox::Checkbox()
 	SetDimensions(24, 24);
 }
 
-Checkbox::~Checkbox()
+CheckBox::~CheckBox()
 {
 }
 
-bool Checkbox::IsChecked() const
+bool CheckBox::IsChecked() const
 {
 	return mSelectionIndex != 0;
 }
 
-void Checkbox::SetChecked(bool checked)
+void CheckBox::SetChecked(bool checked)
 {
 	SetSelectionIndex(checked ? 1 : 0);
 }

@@ -2,12 +2,12 @@
 
 #include "Selector.h"
 
-class Checkbox : public Selector
+class CheckBox : public Selector
 {
 public:
 
-	Checkbox();
-	~Checkbox();
+	CheckBox();
+	~CheckBox();
 
 	bool IsChecked() const;
 	void SetChecked(bool checked);
