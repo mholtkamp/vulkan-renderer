@@ -80,6 +80,18 @@ void OnTextFieldConfirm(TextField* textField)
 	}
 }
 
+void OnFontTextFieldConfirm(TextField* textField)
+{
+	for (int32_t i = 0; i < numFonts; ++i)
+	{
+		if (demoFonts[i]->mName == textField->GetTextString())
+		{
+			fontNameText->SetText(demoFonts[i]->mName);
+			fontDemoText->SetFont(demoFonts[i]);
+		}
+	}
+}
+
 #ifndef _DEBUG
 int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int32_t nCmdShow)
 #else
@@ -164,11 +176,16 @@ int32_t main(int32_t argc, char** argv)
 	enableLabel->SetText("Enable Font Test");
 	enableLabel->SetPosition(1130, 685);
 
-	TextField* textField = new TextField();
-	textField->SetPosition(100, 150);
-	textField->SetDimensions(400, 32);
-	textField->SetTextEditHandler(OnTextFieldEdit);
-	textField->SetTextConfirmHandler(OnTextFieldConfirm);
+	TextField* textFieldDemo = new TextField();
+	textFieldDemo->SetPosition(100, 120);
+	textFieldDemo->SetDimensions(400, 32);
+	textFieldDemo->SetTextEditHandler(OnTextFieldEdit);
+	textFieldDemo->SetTextConfirmHandler(OnTextFieldConfirm);
+
+	TextField* textFieldFont = new TextField();
+	textFieldFont->SetPosition(100, 160);
+	textFieldFont->SetDimensions(400, 32);
+	textFieldFont->SetTextConfirmHandler(OnFontTextFieldConfirm);
 
 	Selector* selectorFont = new Selector();
 	for (int32_t i = 0; i < numFonts; ++i)
@@ -181,7 +198,8 @@ int32_t main(int32_t argc, char** argv)
 
 	canvas2->AddChild(quad1);
 
-	fontTestCanvas->AddChild(textField);
+	fontTestCanvas->AddChild(textFieldFont);
+	fontTestCanvas->AddChild(textFieldDemo);
 	fontTestCanvas->AddChild(buttonMinus);
 	fontTestCanvas->AddChild(buttonPlus);
 	fontTestCanvas->AddChild(selectorFont);

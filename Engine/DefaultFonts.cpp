@@ -124,7 +124,7 @@ static Character characters_Roboto32[] = {
   {'~', 10, 85, 21, 9, 0, 14, 22},
 };
 
-Font DefaultFonts::sRoboto32 = { "Roboto", 32, 0, 0, 512, 128, 95, characters_Roboto32, "Engine/Textures/Fonts/Roboto32.png", false };
+Font DefaultFonts::sRoboto32 = { "Roboto32", 32, 0, 0, 512, 128, 95, characters_Roboto32, "Engine/Textures/Fonts/Roboto32.png", false };
 #pragma endregion
 
 #pragma region PressStart16
@@ -328,7 +328,7 @@ static Character characters_Ubuntu32[] = {
   {'~', 44, 81, 18, 8, 0, 14, 18},
 };
 
-Font DefaultFonts::sUbuntu32 = { "Ubuntu 32", 32, 0, 0, 512, 128, 95, characters_Ubuntu32, "Engine/Textures/Fonts/Ubuntu32.png", false };
+Font DefaultFonts::sUbuntu32 = { "Ubuntu32", 32, 0, 0, 512, 128, 95, characters_Ubuntu32, "Engine/Textures/Fonts/Ubuntu32.png", false };
 #pragma endregion
 
 #pragma region Roboto32_DF

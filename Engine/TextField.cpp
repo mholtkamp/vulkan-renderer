@@ -8,7 +8,7 @@
 
 TextField* TextField::sSelectedTextField = nullptr;
 float TextField::sCursorBlinkTime = 0.0f;
-const float TextField::sCursorBlinkPeriod = 0.2f;
+const float TextField::sCursorBlinkPeriod = 0.3f;
 
 TextField::TextField() :
 	mTextEditHandler(nullptr),
@@ -47,8 +47,11 @@ void TextField::Update()
 
 	if (sCursorBlinkTime <= 0.0f)
 	{
-		mCursorQuad->SetDimensions(10, mAbsoluteRect.mHeight * 0.8f);
-		mCursorQuad->SetPosition(10, mAbsoluteRect.mHeight * 0.1f);
+		// For now, cursor will just highlight the whole text field.
+		mCursorQuad->SetDimensions(mRect.mWidth, mRect.mHeight);
+		mCursorQuad->SetColor(glm::vec4(1, 1, 1, 0.2f));
+		//mCursorQuad->SetDimensions(10, mAbsoluteRect.mHeight * 0.8f);
+		//mCursorQuad->SetPosition(10, mAbsoluteRect.mHeight * 0.1f);
 
 		mCursorQuad->SetVisible(!mCursorQuad->IsVisible());
 		sCursorBlinkTime = sCursorBlinkPeriod;
@@ -101,15 +104,16 @@ void TextField::Update()
 		}
 	}
 
-	if (textStringModified)
+	if (textStringModified && mTextEditHandler != nullptr)
 	{
 		mTextEditHandler(this);
 	}
 
-	if (IsKeyJustDown(VKEY_ENTER) || ((IsButtonJustUp(VBUTTON_LEFT) || IsButtonJustUp(VBUTTON_RIGHT)) &&
-		!Widget::IsMouseInsideInterfaceRect(mAbsoluteRect)))
+	if (IsKeyJustDown(VKEY_ENTER) ||
+		((IsButtonJustUp(VBUTTON_LEFT) || IsButtonJustUp(VBUTTON_RIGHT)) && !Widget::IsMouseInsideInterfaceRect(mAbsoluteRect)))
 	{
 		SetSelectedTextField(nullptr);
+		Button::Update();
 	}
 }
 
@@ -134,7 +138,10 @@ void TextField::SetSelectedTextField(TextField * newField)
 	if (sSelectedTextField != nullptr)
 	{
 		sSelectedTextField->SetState(ButtonState::Normal);
-		sSelectedTextField->mTextConfirmHandler(sSelectedTextField);
+		if (sSelectedTextField->mTextConfirmHandler != nullptr)
+		{
+			sSelectedTextField->mTextConfirmHandler(sSelectedTextField);
+		}
 	}
 
 	sSelectedTextField = newField;
