@@ -3,19 +3,10 @@
 
 Canvas::Canvas()
 {
-
+	mUseScissor = true;
 }
 
 Canvas::~Canvas()
 {
 
-}
-
-void Canvas::Render(VkCommandBuffer commandBuffer)
-{
-	PushScissor(commandBuffer);
-
-	RenderChildren(commandBuffer);
-
-	PopScissor(commandBuffer);
 }

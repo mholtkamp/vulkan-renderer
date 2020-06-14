@@ -6,7 +6,7 @@ class Texture;
 class Quad;
 class Text;
 
-typedef void(*HandlerFP)(void);
+typedef void(*HandlerFP)(class Button* button);
 
 enum class ButtonState
 {
@@ -24,12 +24,6 @@ public:
 	Button();
 	virtual ~Button();
 
-	// Issue gpu commands to display the widget.
-	// Recursively render children.
-	virtual void Render(VkCommandBuffer commandBuffer) override;
-
-	// Refresh any data used for rendering based on this widget's state. Use dirty flag.
-	// Recursively update children.
 	virtual void Update() override;
 
 	// These functions need to adjust quad/text widget pos/dim.

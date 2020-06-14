@@ -8,6 +8,7 @@
 #include "Scene.h"
 #include "Quad.h"
 #include "Button.h"
+#include "Selector.h"
 #include "Renderer.h"
 #include "Text.h"
 #include "Canvas.h"
@@ -32,14 +33,14 @@ static Font* demoFonts[] =
 static int32_t numFonts = ARRAYSIZE(demoFonts);
 static int32_t currentFont = 0;
 
-void PlusSize()
+void PlusSize(Button* button)
 {
 	const float increment = 4.0f;
 	fontDemoSize += increment;
 	fontDemoText->SetSize(fontDemoSize);
 }
 
-void MinusSize()
+void MinusSize(Button* button)
 {
 	const float decrement = 4.0f;
 	fontDemoSize -= decrement;
@@ -47,11 +48,10 @@ void MinusSize()
 	fontDemoText->SetSize(fontDemoSize);
 }
 
-void CycleFont()
+void CycleFont(Button* button)
 {
-	currentFont++;
-	if (currentFont >= numFonts) { currentFont = 0; }
-	Font* font = demoFonts[currentFont];
+	int32_t fontIndex = static_cast<Selector*>(button)->GetSelectionIndex();
+	Font* font = demoFonts[fontIndex];
 	fontNameText->SetText(font->mName);
 	fontDemoText->SetFont(font);
 }
@@ -112,7 +112,7 @@ int32_t main(int32_t argc, char** argv)
 	fontDemoText->SetPosition(100, 300);
 	fontDemoText->SetDimensions(1000, 400);
 	fontDemoText->SetSize(fontDemoSize);
-	fontDemoText->SetText("This is a font test!! How is it working?\nDoes it look good? Thanks :)");
+	fontDemoText->SetText("Beep Boop!\nThis is a font test.\nThe quick brown fox jumps over the lazy dog?");
 
 	Button* buttonMinus = new Button();
 	buttonMinus->GetText()->SetText("  -");
@@ -126,17 +126,20 @@ int32_t main(int32_t argc, char** argv)
 	buttonPlus->SetDimensions(32, 32);
 	buttonPlus->SetPressedHandler(PlusSize);
 
-	Button* buttonCycle = new Button();
-	buttonCycle->GetText()->SetText(" Cycle");
-	buttonCycle->SetPosition(180, 200);
-	buttonCycle->SetDimensions(70, 32);
-	buttonCycle->SetPressedHandler(CycleFont);
+	Selector* selectorFont = new Selector();
+	for (int32_t i = 0; i < numFonts; ++i)
+	{
+		selectorFont->AddSelection(demoFonts[i]->mName);
+	}
+	selectorFont->SetPosition(180, 200);
+	selectorFont->SetDimensions(180, 32);
+	selectorFont->SetPressedHandler(CycleFont);
 
 	canvas2->AddChild(quad1);
 
 	rootCanvas->AddChild(buttonMinus);
 	rootCanvas->AddChild(buttonPlus);
-	rootCanvas->AddChild(buttonCycle);
+	rootCanvas->AddChild(selectorFont);
 	rootCanvas->AddChild(fontNameText);
 	rootCanvas->AddChild(fontDemoText);
 	rootCanvas->AddChild(quad2);

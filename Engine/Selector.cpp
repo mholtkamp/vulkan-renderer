@@ -1,4 +1,6 @@
 #include "Selector.h"
+#include "Text.h"
+#include "Input.h"
 
 Selector::Selector() :
 	mSelectionIndex(0)
@@ -11,9 +13,28 @@ Selector::~Selector()
 
 }
 
+void Selector::Update()
+{
+	Button::Update();
+
+	// mText should always display the selected string.
+	if (mDirty)
+	{
+		mText->SetText(GetSelectionString());
+	}
+}
+
 void Selector::OnPressed()
 {
-	SetSelectionIndex(GetSelectionIndex() + 1);
+	if (IsButtonJustUp(VBUTTON_LEFT))
+	{
+		Increment();
+	}
+	else
+	{
+		Decrement();
+	}
+	
 	Button::OnPressed();
 }
 
@@ -64,7 +85,7 @@ void Selector::SetSelectionIndex(int32_t index)
 {
 	mSelectionIndex = index;
 
-	if (mSelectionIndex >= mSelectionStrings.size())
+	if (mSelectionIndex >= int32_t(mSelectionStrings.size()))
 	{
 		mSelectionIndex = 0;
 	}
@@ -79,6 +100,16 @@ void Selector::SetSelectionIndex(int32_t index)
 	}
 
 	MarkDirty();
+}
+
+void Selector::Increment()
+{
+	SetSelectionIndex(GetSelectionIndex() + 1);
+}
+
+void Selector::Decrement()
+{
+	SetSelectionIndex(GetSelectionIndex() - 1);
 }
 
 const std::string Selector::GetSelectionString() const

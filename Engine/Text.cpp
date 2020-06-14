@@ -70,7 +70,6 @@ void Text::Update()
 	{
 		UpdateUniformBuffer();
 		UpdateDescriptorSet();
-		mDirty = false;
 	}
 }
 

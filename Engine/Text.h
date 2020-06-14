@@ -28,7 +28,6 @@ public:
 	virtual ~Text();
 
 	virtual void Render(VkCommandBuffer commandBuffer) override;
-
 	virtual void Update() override;
 
 	void SetFont(struct Font* font);

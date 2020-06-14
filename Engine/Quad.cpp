@@ -50,7 +50,6 @@ void Quad::Update()
 		UpdateVertexBuffer();
 		UpdateUniformBuffer();
 		UpdateDescriptorSet();
-		mDirty = false;
 	}
 }
 

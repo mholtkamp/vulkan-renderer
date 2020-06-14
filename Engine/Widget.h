@@ -14,10 +14,12 @@ public:
 
 	// Issue gpu commands to display the widget.
 	// Recursively render children.
+	void RecursiveRender(VkCommandBuffer commandBuffer);
 	virtual void Render(VkCommandBuffer commandBuffer);
 
 	// Refresh any data used for rendering based on this widget's state. Use dirty flag.
 	// Recursively update children.
+	void RecursiveUpdate();
 	virtual void Update();
 
 	Rect GetRect();
@@ -52,15 +54,12 @@ protected:
 	void PushScissor(VkCommandBuffer commandBuffer);
 	void PopScissor(VkCommandBuffer commandBuffer);
 
-	void RenderChildren(VkCommandBuffer commandBuffer);
-	void UpdateChildren();
-
 	Widget* mParent;
 	std::vector<Widget*> mChildren;
 
 	Rect mRect; // Rect relative to parent
 	Rect mAbsoluteRect; // Holds the true screen-space rect that is calculated on Update if dirty.
 	glm::vec4 mColor;
-	bool mSetScissor;
+	bool mUseScissor;
 	bool mDirty;
 };

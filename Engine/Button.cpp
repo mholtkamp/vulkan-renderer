@@ -30,6 +30,8 @@ Button::Button() :
 	mText(nullptr)
 
 {
+	mUseScissor = true;
+
 	mQuad = new Quad();
 	mText = new Text();
 
@@ -50,20 +52,10 @@ Button::~Button()
 	// Children are deleted automatically in ~Widget().
 }
 
-void Button::Render(VkCommandBuffer commandBuffer)
-{
-	// set scissor
-	PushScissor(commandBuffer);
-
-	// render
-	RenderChildren(commandBuffer);
-
-	// restore scissor
-	PopScissor(commandBuffer);
-}
-
 void Button::Update()
 {
+	Widget::Update();
+
 	if (mHandleMouseInput && mState != ButtonState::Disabled)
 	{
 		int32_t mouseX;
@@ -76,9 +68,9 @@ void Button::Update()
 		float interfaceY = interfaceRes.y * (static_cast<float>(mouseY) / GetAppState()->mWindowHeight);
 
 		const bool containsMouse = mAbsoluteRect.ContainsPoint((float)interfaceX, (float)interfaceY);
-		const bool mouseDown = IsButtonDown(VBUTTON_LEFT);
-		const bool mouseJustDown = IsButtonJustDown(VBUTTON_LEFT);
-		const bool mouseJustUp = IsButtonJustUp(VBUTTON_LEFT);
+		const bool mouseDown = IsButtonDown(VBUTTON_LEFT) || IsButtonDown(VBUTTON_RIGHT);
+		const bool mouseJustDown = IsButtonJustDown(VBUTTON_LEFT) || IsButtonJustDown(VBUTTON_RIGHT);
+		const bool mouseJustUp = IsButtonJustUp(VBUTTON_LEFT) || IsButtonJustUp(VBUTTON_RIGHT);
 
 		if (containsMouse)
 		{
@@ -139,11 +131,7 @@ void Button::Update()
 		{
 			mText->SetColor(stateColor);
 		}
-
-		mDirty = false;
 	}
-
-	Widget::Update();
 }
 
 void Button::SetPosition(float x, float y)
@@ -316,7 +304,7 @@ void Button::OnPressed()
 {
 	if (mPressedHandler)
 	{
-		mPressedHandler();
+		mPressedHandler(this);
 	}
 }
 
@@ -324,6 +312,6 @@ void Button::OnHover()
 {
 	if (mHoveredHandler)
 	{
-		mHoveredHandler();
+		mHoveredHandler(this);
 	}
 }

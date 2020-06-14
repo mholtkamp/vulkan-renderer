@@ -8,7 +8,4 @@ public:
 
 	Canvas();
 	virtual ~Canvas();
-
-	virtual void Render(VkCommandBuffer commandBuffer) override;
-
 };

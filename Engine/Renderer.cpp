@@ -332,7 +332,7 @@ void Renderer::Render()
 
 	if (mRootWidget != nullptr)
 	{
-		mRootWidget->Update();
+		mRootWidget->RecursiveUpdate();
 	}
 
 	// Reset our command buffer to record a fresh set of commands for this frame.
@@ -449,7 +449,7 @@ void Renderer::Render()
 	screenRect.mY = 0.0f;
 	screenRect.mWidth = mInterfaceResolution.x;
 	screenRect.mHeight = mInterfaceResolution.y;
-	if (mRootWidget != nullptr) { mRootWidget->Render(mCommandBuffers[imageIndex]); }
+	if (mRootWidget != nullptr) { mRootWidget->RecursiveRender(mCommandBuffers[imageIndex]); }
 	vkCmdEndRenderPass(mCommandBuffers[imageIndex]);
 
 	if (vkEndCommandBuffer(mCommandBuffers[imageIndex]) != VK_SUCCESS)

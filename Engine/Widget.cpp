@@ -4,7 +4,7 @@
 Widget::Widget() :
 	mParent(nullptr),
 	mColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)),
-	mSetScissor(false),
+	mUseScissor(false),
 	mDirty(true)
 {
 
@@ -23,29 +23,61 @@ Widget::~Widget()
 
 // Issue gpu commands to display the widget.
 // Recursively render children.
+void Widget::RecursiveRender(VkCommandBuffer commandBuffer)
+{
+	Render(commandBuffer);
+
+	if (mUseScissor)
+	{
+		PushScissor(commandBuffer);
+	}
+
+	for (int32_t i = 0; i < mChildren.size(); ++i)
+	{
+		mChildren[i]->RecursiveRender(commandBuffer);
+	}
+
+	if (mUseScissor)
+	{
+		PopScissor(commandBuffer);
+	}
+}
+
 void Widget::Render(VkCommandBuffer commandBuffer)
 {
-	RenderChildren(commandBuffer);
+
 }
 
 // Refresh any data used for rendering based on this widget's state. Use dirty flag.
 // Recursively update children.
+void Widget::RecursiveUpdate()
+{
+	Update();
+	mDirty = false;
+
+	for (int32_t i = 0; i < mChildren.size(); ++i)
+	{
+		mChildren[i]->RecursiveUpdate();
+	}
+}
+
 void Widget::Update()
 {
-	if (mParent != nullptr)
+	if (mDirty)
 	{
-		Rect parentRect = mParent->GetAbsoluteRect();
-		mAbsoluteRect.mX = parentRect.mX + mRect.mX;
-		mAbsoluteRect.mY = parentRect.mY + mRect.mY;
-		mAbsoluteRect.mWidth = mRect.mWidth;
-		mAbsoluteRect.mHeight = mRect.mHeight;
+		if (mParent != nullptr)
+		{
+			Rect parentRect = mParent->GetAbsoluteRect();
+			mAbsoluteRect.mX = parentRect.mX + mRect.mX;
+			mAbsoluteRect.mY = parentRect.mY + mRect.mY;
+			mAbsoluteRect.mWidth = mRect.mWidth;
+			mAbsoluteRect.mHeight = mRect.mHeight;
+		}
+		else
+		{
+			mAbsoluteRect = mRect;
+		}
 	}
-	else
-	{
-		mAbsoluteRect = mRect;
-	}
-
-	UpdateChildren();
 }
 
 Rect Widget::GetRect()
@@ -217,22 +249,5 @@ void Widget::PopScissor(VkCommandBuffer commandBuffer)
 		screenRect.mHeight = interfaceRes.y;
 
 		SetScissor(commandBuffer, screenRect);
-	}
-}
-
-void Widget::RenderChildren(VkCommandBuffer commandBuffer)
-{
-	for (int32_t i = 0; i < mChildren.size(); ++i)
-	{
-		Widget* child = mChildren[i];
-		child->Render(commandBuffer);
-	}
-}
-
-void Widget::UpdateChildren()
-{
-	for (int32_t i = 0; i < mChildren.size(); ++i)
-	{
-		mChildren[i]->Update();
 	}
 }

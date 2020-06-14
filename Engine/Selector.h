@@ -11,6 +11,8 @@ public:
 	Selector();
 	~Selector();
 
+	virtual void Update() override;
+
 	virtual void OnPressed() override;
 
 	void AddSelection(const std::string& selection);
@@ -20,6 +22,8 @@ public:
 
 	void SetSelectionByString(const std::string& string);
 	void SetSelectionIndex(int32_t index);
+	void Increment();
+	void Decrement();
 
 	const std::string GetSelectionString() const;
 	int32_t GetSelectionIndex() const;
