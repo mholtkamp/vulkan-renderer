@@ -14,7 +14,7 @@ public:
 
 	void Update();
 
-	float DeltaTime();
+	float DeltaTime() const;
 
 private:
 	

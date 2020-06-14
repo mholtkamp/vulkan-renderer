@@ -31,7 +31,7 @@ public:
 	virtual void SetDimensions(float width, float height) override;
 
 	ButtonState GetState();
-	void SetState(ButtonState newState);
+	virtual void SetState(ButtonState newState);
 
 	void SetNormalTexture(Texture* texture);
 	void SetHoveredTexture(Texture* texture);

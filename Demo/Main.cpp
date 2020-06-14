@@ -12,6 +12,7 @@
 #include "CheckBox.h"
 #include "Renderer.h"
 #include "Text.h"
+#include "TextField.h"
 #include "Canvas.h"
 #include "Log.h"
 #include "DefaultFonts.h"
@@ -19,6 +20,8 @@
 static Text* fontDemoText = nullptr;
 static Text* fontNameText = nullptr;
 static Canvas* fontTestCanvas = nullptr;
+
+static const char* sDefaultTestString = "Beep Boop!\nThis is a font test.\nThe quick brown fox jumps over the lazy dog?";
 
 static float fontDemoSize = 32.0f;
 
@@ -64,6 +67,19 @@ void ShowFontTest(Button* button)
 	fontTestCanvas->SetVisible(check->IsChecked());
 }
 
+void OnTextFieldEdit(TextField* textField)
+{
+	fontDemoText->SetText(textField->GetTextString());
+}
+
+void OnTextFieldConfirm(TextField* textField)
+{
+	if (textField->GetTextString().empty())
+	{
+		fontDemoText->SetText(sDefaultTestString);
+	}
+}
+
 #ifndef _DEBUG
 int32_t WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR pCmdLine, int32_t nCmdShow)
 #else
@@ -73,8 +89,8 @@ int32_t main(int32_t argc, char** argv)
 	Initialize(1280, 720);
 
 	Scene* scene = new Scene();
-	scene->Load("Scenes/Sponza/", "Sponza.dae");
-	//scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
+	//scene->Load("Scenes/Sponza/", "Sponza.dae");
+	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
 
 	Canvas* rootCanvas = new Canvas();
 	rootCanvas->SetRect(0, 0, 1280, 720);
@@ -125,7 +141,7 @@ int32_t main(int32_t argc, char** argv)
 	fontDemoText->SetPosition(100, 300);
 	fontDemoText->SetDimensions(1000, 400);
 	fontDemoText->SetSize(fontDemoSize);
-	fontDemoText->SetText("Beep Boop!\nThis is a font test.\nThe quick brown fox jumps over the lazy dog?");
+	fontDemoText->SetText(sDefaultTestString);
 
 	Button* buttonMinus = new Button();
 	buttonMinus->GetText()->SetText("  -");
@@ -148,6 +164,12 @@ int32_t main(int32_t argc, char** argv)
 	enableLabel->SetText("Enable Font Test");
 	enableLabel->SetPosition(1130, 685);
 
+	TextField* textField = new TextField();
+	textField->SetPosition(100, 150);
+	textField->SetDimensions(400, 32);
+	textField->SetTextEditHandler(OnTextFieldEdit);
+	textField->SetTextConfirmHandler(OnTextFieldConfirm);
+
 	Selector* selectorFont = new Selector();
 	for (int32_t i = 0; i < numFonts; ++i)
 	{
@@ -159,6 +181,7 @@ int32_t main(int32_t argc, char** argv)
 
 	canvas2->AddChild(quad1);
 
+	fontTestCanvas->AddChild(textField);
 	fontTestCanvas->AddChild(buttonMinus);
 	fontTestCanvas->AddChild(buttonPlus);
 	fontTestCanvas->AddChild(selectorFont);

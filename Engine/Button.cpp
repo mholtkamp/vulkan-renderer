@@ -58,16 +58,7 @@ void Button::Update()
 
 	if (mHandleMouseInput && mState != ButtonState::Disabled)
 	{
-		int32_t mouseX;
-		int32_t mouseY;
-		GetMousePosition(mouseX, mouseY);
-
-		glm::vec2 interfaceRes = Renderer::Get()->GetInterfaceResolution();
-
-		float interfaceX = interfaceRes.x * (static_cast<float>(mouseX) / GetAppState()->mWindowWidth);
-		float interfaceY = interfaceRes.y * (static_cast<float>(mouseY) / GetAppState()->mWindowHeight);
-
-		const bool containsMouse = mAbsoluteRect.ContainsPoint((float)interfaceX, (float)interfaceY);
+		const bool containsMouse = Widget::IsMouseInsideInterfaceRect(mAbsoluteRect);
 		const bool mouseDown = IsButtonDown(VBUTTON_LEFT) || IsButtonDown(VBUTTON_RIGHT);
 		const bool mouseJustDown = IsButtonJustDown(VBUTTON_LEFT) || IsButtonJustDown(VBUTTON_RIGHT);
 		const bool mouseJustUp = IsButtonJustUp(VBUTTON_LEFT) || IsButtonJustUp(VBUTTON_RIGHT);

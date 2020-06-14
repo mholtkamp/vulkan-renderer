@@ -28,7 +28,7 @@ void Clock::Update()
 	mPreviousTime = mCurrentTime;
 }
 
-float Clock::DeltaTime()
+float Clock::DeltaTime() const
 {
 	return mDeltaTime;
 }

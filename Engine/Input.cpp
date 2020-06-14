@@ -27,6 +27,8 @@ static int s_nNumControllers = 0;
 //static Keyboard* s_pKeyboard = 0;
 static int s_nKeyboardEnable = 0;
 
+static std::vector<int32_t> sJustDownKeys;
+
 #if defined (WINDOWS)
 static XINPUT_STATE s_arXinputStates[4] = { 0 };
 static XINPUT_STATE s_arXinputPrevStates[4] = { 0 };
@@ -43,6 +45,7 @@ void SetKey(int nKey)
 	{
 		s_arKeys[nKey] = 1;
 		s_arRepeatKeys[nKey] = 1;
+		sJustDownKeys.push_back(nKey);
 	}
 }
 
@@ -52,6 +55,8 @@ void UpdateInput()
 	memcpy(s_arPrevButtons, s_arButtons, VINPUT_MAX_BUTTONS * sizeof(int32_t));
 	memcpy(s_arPrevTouches, s_arTouches, VINPUT_MAX_TOUCHES * sizeof(int32_t));
 	memset(s_arRepeatKeys, 0, VINPUT_MAX_KEYS * sizeof(int32_t));
+
+	sJustDownKeys.clear();
 
 	s_nScrollWheelDelta = 0;
 }
@@ -145,6 +150,11 @@ int IsKeyJustUp(int nKey)
 		LogWarning("Invalid key queried in IsKeyJustUp().");
 		return 0;
 	}
+}
+
+const std::vector<int32_t> GetJustDownKeys()
+{
+	return sJustDownKeys;
 }
 
 //*****************************************************************************

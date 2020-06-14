@@ -103,7 +103,7 @@ void Text::SetSize(float size)
 	}
 }
 
-void Text::SetText(std::string text)
+void Text::SetText(const std::string& text)
 {
 	if (mText != text)
 	{
@@ -113,7 +113,7 @@ void Text::SetText(std::string text)
 	}
 }
 
-std::string& Text::GetText()
+const std::string& Text::GetText() const
 {
 	return mText;
 }

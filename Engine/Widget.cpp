@@ -1,5 +1,7 @@
 #include "Widget.h"
 #include "Renderer.h"
+#include "Input.h"
+#include "Engine.h"
 
 Widget::Widget() :
 	mParent(nullptr),
@@ -212,6 +214,20 @@ void Widget::MarkDirty()
 float Widget::InterfaceToNormalized(float interfaceCoord, float interfaceSize)
 {
 	return (interfaceCoord / interfaceSize) * 2.0f - 1.0f;
+}
+
+bool Widget::IsMouseInsideInterfaceRect(Rect interfaceRect)
+{
+	int32_t mouseX;
+	int32_t mouseY;
+	GetMousePosition(mouseX, mouseY);
+
+	glm::vec2 interfaceRes = Renderer::Get()->GetInterfaceResolution();
+	float interfaceX = interfaceRes.x * (static_cast<float>(mouseX) / GetAppState()->mWindowWidth);
+	float interfaceY = interfaceRes.y * (static_cast<float>(mouseY) / GetAppState()->mWindowHeight);
+	const bool containsMouse = interfaceRect.ContainsPoint((float)interfaceX, (float)interfaceY);
+
+	return containsMouse;
 }
 
 void Widget::SetScissor(VkCommandBuffer commandBuffer, Rect& area)

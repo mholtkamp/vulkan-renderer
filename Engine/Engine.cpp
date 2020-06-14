@@ -290,3 +290,8 @@ const AppState* GetAppState()
 {
 	return &sAppState;
 }
+
+const Clock* GetAppClock()
+{
+	return &sClock;
+}

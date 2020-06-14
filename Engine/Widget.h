@@ -45,6 +45,7 @@ public:
 	void MarkDirty();
 
 	static float InterfaceToNormalized(float interfaceCoord, float interfaceSize);
+	static bool IsMouseInsideInterfaceRect(Rect interfaceRect);
 
 protected:
 

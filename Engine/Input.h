@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string.h>
+#include <vector>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -347,6 +348,8 @@ int IsKeyJustDownRepeat(int nKey);
 int IsKeyJustDown(int nKey);
 
 int IsKeyJustUp(int nKey);
+
+const std::vector<int32_t> GetJustDownKeys();
 
 //## **********************************************************************
 //## SetButton

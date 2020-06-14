@@ -34,8 +34,8 @@ public:
 	void SetOutlineColor(glm::vec4 color);
 	void SetSize(float size);
 
-	void SetText(std::string text);
-	std::string& GetText();
+	void SetText(const std::string& text);
+	const std::string& GetText() const;
 
 protected:
 
