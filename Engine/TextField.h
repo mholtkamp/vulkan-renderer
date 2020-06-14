@@ -26,6 +26,8 @@ protected:
 	static float sCursorBlinkTime;
 	static const float sCursorBlinkPeriod;
 
+	uint8_t ConvertKeyCodeToChar(uint8_t keyCode, bool shiftDown);
+
 	TextFieldHandlerFP mTextEditHandler;
 	TextFieldHandlerFP mTextConfirmHandler;
 
