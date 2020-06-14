@@ -3,7 +3,9 @@
 
 Quad::Quad() :
 	mTexture(nullptr),
-	mVertexBuffer(VK_NULL_HANDLE)
+	mVertexBuffer(VK_NULL_HANDLE),
+	mUniformBuffer(VK_NULL_HANDLE),
+	mTint(glm::vec4(1, 1, 1, 1))
 {
 	InitVertexData();
 	CreateVertexBuffer();
