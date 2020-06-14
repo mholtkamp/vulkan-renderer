@@ -13,11 +13,16 @@ public:
 
 	virtual void OnPressed() override;
 
-	void SetSelectedString(const std::string& string);
-	void SetSelectedIndex(int32_t index);
+	void AddSelection(const std::string& selection);
+	void RemoveSelection(const std::string& selection);
+	void AddSelections(const std::vector<std::string>& selections);
+	void RemoveAllSelections();
 
-	const std::string& GetSelectedString() const;
-	int32_t GetSelectedIndex() const;
+	void SetSelectionByString(const std::string& string);
+	void SetSelectionIndex(int32_t index);
+
+	const std::string GetSelectionString() const;
+	int32_t GetSelectionIndex() const;
 
 protected:
 
