@@ -15,6 +15,7 @@ Text::Text() :
 	mVisibleCharacters(0),
 	mVertexBuffer(VK_NULL_HANDLE),
 	mUniformBuffer(VK_NULL_HANDLE),
+	mNumCharactersAllocated(0),
 	mVertexBufferDirty(true)
 {
 	mFont = &DefaultFonts::sRoboto32;
@@ -124,13 +125,18 @@ void Text::CreateVertexBuffer()
 
 	if (mText.size() > 0)
 	{
+		const uint32_t allocGranularity = 32;
+		uint32_t numCharsToAllocate = allocGranularity * ((uint32_t(mText.size()) + allocGranularity - 1) / allocGranularity);
+
 		Renderer* renderer = Renderer::Get();
 
-		renderer->CreateBuffer(mText.size() * 6 * sizeof(VertexUI),
+		renderer->CreateBuffer(numCharsToAllocate * 6 * sizeof(VertexUI),
 			VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 			mVertexBuffer,
 			mVertexBufferMemory);
+
+		mNumCharactersAllocated = numCharsToAllocate;
 	}
 }
 
@@ -165,6 +171,8 @@ void Text::DestroyVertexBuffer()
 		mVertexBuffer = VK_NULL_HANDLE;
 
 		Allocator::Free(mVertexBufferMemory);
+
+		mNumCharactersAllocated = 0;
 	}
 }
 
@@ -197,8 +205,7 @@ void Text::UpdateVertexBuffer()
 	const glm::vec2 interfaceResolution = renderer->GetInterfaceResolution();
 
 	// Check if we need to reallocate a bigger buffer.
-	size_t requiredSize = sizeof(VertexUI) * 6 * mText.size();
-	if (requiredSize > mVertexBufferMemory.mSize)
+	if (mText.size() > mNumCharactersAllocated)
 	{
 		DestroyVertexBuffer();
 		CreateVertexBuffer();

@@ -69,5 +69,6 @@ protected:
 
 	DescriptorSet mDescriptorSet;
 
+	uint32_t mNumCharactersAllocated;
 	bool mVertexBufferDirty;
 };
