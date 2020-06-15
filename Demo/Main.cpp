@@ -106,8 +106,8 @@ int32_t main(int32_t argc, char** argv)
 	Initialize(1280, 720);
 
 	Scene* scene = new Scene();
-	//scene->Load("Scenes/Sponza/", "Sponza.dae");
-	scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
+	scene->Load("Scenes/Sponza/", "Sponza.dae");
+	//scene->Load("Scenes/MonkeyScene/Collada/", "MonkeyScene3.dae");
 
 	Canvas* rootCanvas = new Canvas();
 	rootCanvas->SetRect(0, 0, 1280, 720);
@@ -224,6 +224,8 @@ int32_t main(int32_t argc, char** argv)
 	Renderer::Get()->SetRootWidget(rootCanvas);
 
 	AssignDebugCamera(scene->GetActiveCamera());
+	scene->GetActiveCamera()->SetPosition(glm::vec3(0, 10, 10));
+	scene->GetActiveCamera()->SetRotation(glm::vec3(0.0f, -90.0f, 0.0f));
 	SetScene(scene);
 
 	bool ret = true;
