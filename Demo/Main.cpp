@@ -80,6 +80,11 @@ void OnTextFieldConfirm(TextField* textField)
 	}
 }
 
+void ClearTextField(Button* textField)
+{
+	textField->SetTextString("");
+}
+
 void OnFontTextFieldConfirm(TextField* textField)
 {
 	for (int32_t i = 0; i < numFonts; ++i)
@@ -179,12 +184,15 @@ int32_t main(int32_t argc, char** argv)
 	TextField* textFieldDemo = new TextField();
 	textFieldDemo->SetPosition(100, 120);
 	textFieldDemo->SetDimensions(400, 32);
+	textFieldDemo->SetTextString("Enter demo text here");
 	textFieldDemo->SetTextEditHandler(OnTextFieldEdit);
 	textFieldDemo->SetTextConfirmHandler(OnTextFieldConfirm);
+	textFieldDemo->SetPressedHandler(ClearTextField);
 
 	TextField* textFieldFont = new TextField();
 	textFieldFont->SetPosition(100, 160);
 	textFieldFont->SetDimensions(400, 32);
+	textFieldFont->SetTextString("Roboto32");
 	textFieldFont->SetTextConfirmHandler(OnFontTextFieldConfirm);
 
 	Selector* selectorFont = new Selector();

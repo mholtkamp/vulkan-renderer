@@ -119,8 +119,14 @@ void TextField::Update()
 
 void TextField::SetState(ButtonState newState)
 {
+	const bool justPressed = newState != mState && newState == ButtonState::Pressed;
 	Button::SetState(newState);
 	mCursorQuad->SetVisible(newState == ButtonState::Pressed);
+
+	if (justPressed)
+	{
+		OnPressed();
+	}
 }
 
 void TextField::SetTextEditHandler(TextFieldHandlerFP handler)
