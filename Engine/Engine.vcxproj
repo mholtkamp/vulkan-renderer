@@ -85,7 +85,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <Lib>
-      <AdditionalDependencies>vulkan-1.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;Xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)/Bin;$(SolutionDir)Engine/External/lib/Lib/;$(VULKAN_SDK)/Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <ProjectReference>
@@ -106,7 +106,7 @@
       <AdditionalLibraryDirectories>$(VULKAN_SDK)/Bin;$(SolutionDir)External/lib/Lib/;$(VULKAN_SDK)/Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <Lib>
-      <AdditionalDependencies>vulkan-1.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;Xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <TreatLibWarningAsErrors>false</TreatLibWarningAsErrors>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)/Bin;$(SolutionDir)Engine/External/lib/Lib/;$(VULKAN_SDK)/Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
@@ -133,7 +133,7 @@
       <SubSystem>Windows</SubSystem>
     </Link>
     <Lib>
-      <AdditionalDependencies>vulkan-1.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;Xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)/Bin;$(SolutionDir)Engine/External/lib/Lib/;$(VULKAN_SDK)/Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <ProjectReference>
@@ -156,7 +156,7 @@
       <AdditionalDependencies>vulkan-1.lib;assimpd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>vulkan-1.lib; %(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;Xinput.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)/Bin;$(SolutionDir)Engine/External/lib/Lib/;$(VULKAN_SDK)/Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
     <ProjectReference>

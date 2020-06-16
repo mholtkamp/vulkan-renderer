@@ -6,245 +6,219 @@
 #include <string.h>
 #include <ctype.h>
 
+static bool sKeys[VINPUT_MAX_KEYS] = { 0 };
+static bool sPrevKeys[VINPUT_MAX_KEYS] = { 0 };
+static bool sRepeatKeys[VINPUT_MAX_KEYS] = { 0 };
+static bool sButtons[VINPUT_MAX_BUTTONS] = { 0 };
+static bool sPrevButtons[VINPUT_MAX_BUTTONS] = { 0 };
+static bool sTouches[VINPUT_MAX_TOUCHES] = { 0 };
+static bool sPrevTouches[VINPUT_MAX_TOUCHES] = { 0 };
 
-static int s_arKeys[VINPUT_MAX_KEYS] = { 0 };
-static int s_arPrevKeys[VINPUT_MAX_KEYS] = { 0 };
-static int s_arRepeatKeys[VINPUT_MAX_KEYS] = { 0 };
-static int s_arButtons[VINPUT_MAX_BUTTONS] = { 0 };
-static int s_arPrevButtons[VINPUT_MAX_BUTTONS] = { 0 };
-static int s_arTouches[VINPUT_MAX_TOUCHES] = { 0 };
-static int s_arPrevTouches[VINPUT_MAX_TOUCHES] = { 0 };
+static int32_t sScrollWheelDelta = 0;
 
-static int s_nScrollWheelDelta = 0;
+static int32_t sPointerX[VINPUT_MAX_TOUCHES] = { 0 };
+static int32_t sPointerY[VINPUT_MAX_TOUCHES] = { 0 };
 
-static int s_arPointerX[VINPUT_MAX_TOUCHES] = { 0 };
-static int s_arPointerY[VINPUT_MAX_TOUCHES] = { 0 };
+static Controller sControllers[VINPUT_MAX_CONTROLLERS];
 
-static Controller s_arControllers[VINPUT_MAX_CONTROLLERS];
-
-static int s_nNumControllers = 0;
+static int32_t sNumControllers = 0;
 
 //static Keyboard* s_pKeyboard = 0;
-static int s_nKeyboardEnable = 0;
+static bool sKeyboardEnable = 0;
 
 static std::vector<int32_t> sJustDownKeys;
 
-#if defined (WINDOWS)
-static XINPUT_STATE s_arXinputStates[4] = { 0 };
-static XINPUT_STATE s_arXinputPrevStates[4] = { 0 };
-static int s_arActiveControllers[4] = { 0 };
+#if defined (_WIN32)
+static XINPUT_STATE sXinputStates[4] = { 0 };
+static XINPUT_STATE sXinputPrevStates[4] = { 0 };
+static bool sActiveControllers[4] = { 0 };
 #endif
 
-//*****************************************************************************
-// SetKey
-//*****************************************************************************
-void SetKey(int nKey)
+void SetKey(int32_t key)
 {
-	if (nKey >= 0 &&
-		nKey < VINPUT_MAX_KEYS)
+	if (key >= 0 &&
+		key < VINPUT_MAX_KEYS)
 	{
-		s_arKeys[nKey] = 1;
-		s_arRepeatKeys[nKey] = 1;
-		sJustDownKeys.push_back(nKey);
+		sKeys[key] = true;
+		sRepeatKeys[key] = true;
+		sJustDownKeys.push_back(key);
 	}
 }
 
 void UpdateInput()
 {
-	memcpy(s_arPrevKeys, s_arKeys, VINPUT_MAX_KEYS * sizeof(int32_t));
-	memcpy(s_arPrevButtons, s_arButtons, VINPUT_MAX_BUTTONS * sizeof(int32_t));
-	memcpy(s_arPrevTouches, s_arTouches, VINPUT_MAX_TOUCHES * sizeof(int32_t));
-	memset(s_arRepeatKeys, 0, VINPUT_MAX_KEYS * sizeof(int32_t));
+	memcpy(sPrevKeys, sKeys, VINPUT_MAX_KEYS * sizeof(bool));
+	memcpy(sPrevButtons, sButtons, VINPUT_MAX_BUTTONS * sizeof(bool));
+	memcpy(sPrevTouches, sTouches, VINPUT_MAX_TOUCHES * sizeof(bool));
+	memset(sRepeatKeys, 0, VINPUT_MAX_KEYS * sizeof(bool));
 
 	sJustDownKeys.clear();
 
-	s_nScrollWheelDelta = 0;
+	sScrollWheelDelta = 0;
 }
 
-//*****************************************************************************
-// ClearKey
-//*****************************************************************************
-void ClearKey(int nKey)
+void ClearKey(int32_t key)
 {
-	if (nKey >= 0 &&
-		nKey < VINPUT_MAX_KEYS)
+	if (key >= 0 &&
+		key < VINPUT_MAX_KEYS)
 	{
-		s_arKeys[nKey] = 0;
+		sKeys[key] = false;
 	}
 }
 
-//*****************************************************************************
-// ClearAllKeys
-//*****************************************************************************
 void ClearAllKeys()
 {
-	int i = 0;
+	int32_t i = 0;
 
 	// Do not clear hardware keys
-	int nBack = s_arKeys[VKEY_BACK];
+	int32_t back = sKeys[VKEY_BACK];
 
 	for (i = 0; i < VINPUT_MAX_KEYS; i++)
 	{
-		s_arKeys[i] = 0;
+		sKeys[i] = false;
 	}
 
 	// Restore hardware keys
-	s_arKeys[VKEY_BACK] = nBack;
+	sKeys[VKEY_BACK] = back;
 }
 
-//*****************************************************************************
-// IsKeyDown
-//*****************************************************************************
-int IsKeyDown(int nKey)
+bool IsKeyDown(int32_t key)
 {
-	if (nKey >= 0 &&
-		nKey < VINPUT_MAX_KEYS)
+	if (key >= 0 &&
+		key < VINPUT_MAX_KEYS)
 	{
-		return s_arKeys[nKey];
+		return sKeys[key];
 	}
 	else
 	{
 		LogWarning("Invalid key queried in IsKeyDown().");
-		return 0;
+		return false;
 	}
 }
 
-
-int IsKeyJustDownRepeat(int nKey)
+bool IsKeyJustDownRepeat(int32_t key)
 {
-	if (nKey >= 0 &&
-		nKey < VINPUT_MAX_KEYS)
+	if (key >= 0 &&
+		key < VINPUT_MAX_KEYS)
 	{
-		return s_arRepeatKeys[nKey];
+		return sRepeatKeys[key];
 	}
 	else
 	{
 		LogWarning("Invalid key queried in IsKeyDown().");
-		return 0;
+		return false;
 	}
 }
 
-int IsKeyJustDown(int nKey)
+bool IsKeyJustDown(int32_t key)
 {
-	if (nKey >= 0 &&
-		nKey < VINPUT_MAX_KEYS)
+	if (key >= 0 &&
+		key < VINPUT_MAX_KEYS)
 	{
-		return s_arKeys[nKey] && !s_arPrevKeys[nKey];
+		return sKeys[key] && !sPrevKeys[key];
 	}
 	else
 	{
 		LogWarning("Invalid key queried in IsKeyJustDown().");
-		return 0;
+		return false;
 	}
 }
 
-int IsKeyJustUp(int nKey)
+bool IsKeyJustUp(int32_t key)
 {
-	if (nKey >= 0 &&
-		nKey < VINPUT_MAX_KEYS)
+	if (key >= 0 &&
+		key < VINPUT_MAX_KEYS)
 	{
-		return s_arPrevKeys[nKey] && !s_arKeys[nKey];
+		return sPrevKeys[key] && !sKeys[key];
 	}
 	else
 	{
 		LogWarning("Invalid key queried in IsKeyJustUp().");
-		return 0;
+		return false;
 	}
 }
 
-const std::vector<int32_t> GetJustDownKeys()
+const std::vector<int32_t>& GetJustDownKeys()
 {
 	return sJustDownKeys;
 }
 
-//*****************************************************************************
-// SetButton
-//*****************************************************************************
-void SetButton(int nButton)
+void SetButton(int32_t button)
 {
-	if (nButton >= 0 &&
-		nButton < VINPUT_MAX_BUTTONS)
+	if (button >= 0 &&
+		button < VINPUT_MAX_BUTTONS)
 	{
-		s_arButtons[nButton] = 1;
+		sButtons[button] = true;
 
-		if (nButton == VBUTTON_LEFT)
+		if (button == VBUTTON_LEFT)
 		{
-			s_arTouches[0] = 1;
+			sTouches[0] = true;
 		}
 	}
 }
 
-//*****************************************************************************
-// ClearButton
-//*****************************************************************************
-void ClearButton(int nButton)
+void ClearButton(int32_t button)
 {
-	if (nButton >= 0 &&
-		nButton < VINPUT_MAX_BUTTONS)
+	if (button >= 0 &&
+		button < VINPUT_MAX_BUTTONS)
 	{
-		s_arButtons[nButton] = 0;
+		sButtons[button] = false;
 
-		if (nButton == VBUTTON_LEFT)
+		if (button == VBUTTON_LEFT)
 		{
-			s_arTouches[0] = 0;
+			sTouches[0] = false;
 		}
 	}
 }
 
-//*****************************************************************************
-// IsButtonDown
-//*****************************************************************************
-int IsButtonDown(int nButton)
+bool IsButtonDown(int32_t button)
 {
-	if (nButton >= 0 &&
-		nButton < VINPUT_MAX_BUTTONS)
+	if (button >= 0 &&
+		button < VINPUT_MAX_BUTTONS)
 	{
-		return s_arButtons[nButton];
+		return sButtons[button];
 	}
 	else
 	{
 		LogWarning("Invalid button queried in IsButtonDown().");
-		return 0;
+		return false;
 	}
 }
 
-int IsButtonJustDown(int nButton)
+bool IsButtonJustDown(int32_t button)
 {
-	if (nButton >= 0 &&
-		nButton < VINPUT_MAX_BUTTONS)
+	if (button >= 0 &&
+		button < VINPUT_MAX_BUTTONS)
 	{
-		return s_arButtons[nButton] && !s_arPrevButtons[nButton];
+		return sButtons[button] && !sPrevButtons[button];
 	}
 	else
 	{
 		LogWarning("Invalid button queried in IsButtonJustDown().");
-		return 0;
+		return false;
 	}
 }
 
-int IsButtonJustUp(int nButton)
+bool IsButtonJustUp(int32_t button)
 {
-	if (nButton >= 0 &&
-		nButton < VINPUT_MAX_BUTTONS)
+	if (button >= 0 &&
+		button < VINPUT_MAX_BUTTONS)
 	{
-		return !s_arButtons[nButton] && s_arPrevButtons[nButton];
+		return !sButtons[button] && sPrevButtons[button];
 	}
 	else
 	{
 		LogWarning("Invalid button queried in IsButtonJustUp().");
-		return 0;
+		return false;
 	}
 }
 
-//*****************************************************************************
-// SetTouch
-//*****************************************************************************
-void SetTouch(int nTouch)
+void SetTouch(int32_t touch)
 {
-	if (nTouch >= 0 &&
-		nTouch < VINPUT_MAX_TOUCHES)
+	if (touch >= 0 &&
+		touch < VINPUT_MAX_TOUCHES)
 	{
-		s_arTouches[nTouch] = 1;
+		sTouches[touch] = true;
 	}
 	else
 	{
@@ -252,212 +226,189 @@ void SetTouch(int nTouch)
 	}
 }
 
-//*****************************************************************************
-// ClearTouch
-//*****************************************************************************
-void ClearTouch(int nTouch)
+void ClearTouch(int32_t touch)
 {
-	if (nTouch >= 0 &&
-		nTouch < VINPUT_MAX_TOUCHES)
+	if (touch >= 0 &&
+		touch < VINPUT_MAX_TOUCHES)
 	{
-		s_arTouches[nTouch] = 0;
+		sTouches[touch] = false;
 	}
 }
 
-//*****************************************************************************
-// IsTouchDown
-//*****************************************************************************
-int IsTouchDown(int nTouch)
+bool IsTouchDown(int32_t touch)
 {
-	float fX = 0.0f;
-	float fY = 0.0f;
+	float x = 0.0f;
+	float y = 0.0f;
 
-	if (nTouch >= 0 &&
-		nTouch < VINPUT_MAX_TOUCHES)
+	if (touch >= 0 &&
+		touch < VINPUT_MAX_TOUCHES)
 	{
-
-		if (s_nKeyboardEnable != 0)
+		if (sKeyboardEnable)
 		{
-			GetPointerPositionNormalized(fX, fY, nTouch);
-			if (fY > 0.0f)
+			GetPointerPositionNormalized(x, y, touch);
+			if (y > 0.0f)
 			{
-				return s_arTouches[nTouch];
+				return sTouches[touch];
 			}
 			else
 			{
-				return 0;
+				return false;
 			}
 		}
 		else
 		{
-			return s_arTouches[nTouch];
+			return sTouches[touch];
 		}
 	}
 	else
 	{
 		LogWarning("Invalid touch queried in IsTouchDown().");
-		return 0;
+		return false;
 	}
 }
 
-//*****************************************************************************
-// IsPointerDown
-//*****************************************************************************
-int IsPointerDown(int nPointer)
+bool IsPointerDown(int32_t pointer)
 {
-	float fX = 0.0f;
-	float fY = 0.0f;
+	float x = 0.0f;
+	float y = 0.0f;
 
-	if (nPointer >= 0 &&
-		nPointer < VINPUT_MAX_TOUCHES)
+	if (pointer >= 0 &&
+		pointer < VINPUT_MAX_TOUCHES)
 	{
 		// If either the left mouse button is down or the specified
 		// touch index is down, then return 1.
-		if (s_arTouches[nPointer] != 0)
+		if (sTouches[pointer])
 		{
-			if (s_nKeyboardEnable != 0)
+			if (sKeyboardEnable)
 			{
-				GetPointerPositionNormalized(fX, fY, nPointer);
-				if (fY > 0.0f)
+				GetPointerPositionNormalized(x, y, pointer);
+				if (y > 0.0f)
 				{
-					return 1;
+					return true;
 				}
 				else
 				{
-					return 0;
+					return false;
 				}
 			}
 			else
 			{
 				// Return true if down and no keyboard.
-				return 1;
+				return true;
 			}
 		}
 		else
 		{
-			return 0;
+			return false;
 		}
 	}
 	else
 	{
 		LogWarning("Invalid pointer queried in IsPointerDown().");
-		return 0;
+		return false;
 	}
 }
 
-//*****************************************************************************
-// IsPointerJustUp
-//*****************************************************************************
-int IsPointerJustUp(int nPointer)
+bool IsPointerJustUp(int32_t pointer)
 {
-	float fX = 0.0f;
-	float fY = 0.0f;
+	float x = 0.0f;
+	float y = 0.0f;
 
-	if (nPointer >= 0 &&
-		nPointer < VINPUT_MAX_TOUCHES)
+	if (pointer >= 0 &&
+		pointer < VINPUT_MAX_TOUCHES)
 	{
 		// If either the left mouse button is down or the specified
 		// touch index is down, then return 1.
-		if (s_arTouches[nPointer] == 0 && s_arPrevTouches[nPointer] != 0)
+		if (!sTouches[pointer] && sPrevTouches[pointer])
 		{
-			if (s_nKeyboardEnable != 0)
+			if (sKeyboardEnable)
 			{
-				GetPointerPositionNormalized(fX, fY, nPointer);
-				if (fY > 0.0f)
+				GetPointerPositionNormalized(x, y, pointer);
+				if (y > 0.0f)
 				{
-					return 1;
+					return true;
 				}
 				else
 				{
-					return 0;
+					return false;
 				}
 			}
 			else
 			{
 				// Return true if down and no keyboard.
-				return 1;
+				return true;
 			}
 		}
 		else
 		{
-			return 0;
+			return false;
 		}
 	}
 	else
 	{
 		LogWarning("Invalid pointer queried in IsPointerJustUp().");
-		return 0;
+		return false;
 	}
 }
 
-//*****************************************************************************
-// IsPointerJustDown
-//*****************************************************************************
-int IsPointerJustDown(int nPointer)
+bool IsPointerJustDown(int32_t pointer)
 {
-	float fX = 0.0f;
-	float fY = 0.0f;
+	float x = 0.0f;
+	float y = 0.0f;
 
-	if (nPointer >= 0 &&
-		nPointer < VINPUT_MAX_TOUCHES)
+	if (pointer >= 0 &&
+		pointer < VINPUT_MAX_TOUCHES)
 	{
 		// If either the left mouse button is down or the specified
 		// touch index is down, then return 1.
-		if (s_arTouches[nPointer] != 0 && s_arPrevTouches[nPointer] == 0)
+		if (sTouches[pointer] && !sPrevTouches[pointer])
 		{
-			if (s_nKeyboardEnable != 0)
+			if (sKeyboardEnable)
 			{
-				GetPointerPositionNormalized(fX, fY, nPointer);
-				if (fY > 0.0f)
+				GetPointerPositionNormalized(x, y, pointer);
+				if (y > 0.0f)
 				{
-					return 1;
+					return true;
 				}
 				else
 				{
-					return 0;
+					return false;
 				}
 			}
 			else
 			{
 				// Return true if down and no keyboard.
-				return 1;
+				return true;
 			}
 		}
 		else
 		{
-			return 0;
+			return false;
 		}
 	}
 	else
 	{
 		LogWarning("Invalid pointer queried in IsPointerJustDown().");
-		return 0;
+		return false;
 	}
 }
 
-//*****************************************************************************
-// GetMousePosition
-//*****************************************************************************
-void GetMousePosition(int& nMouseX, int& nMouseY)
+void GetMousePosition(int32_t& mouseX, int32_t& mouseY)
 {
 	// First pointer location is for mouse.
-	nMouseX = s_arPointerX[0];
-	nMouseY = s_arPointerY[0];
+	mouseX = sPointerX[0];
+	mouseY = sPointerY[0];
 }
 
-
-//*****************************************************************************
-// GetTouchPosition
-//*****************************************************************************
-void GetTouchPosition(int& nTouchX,
-	int& nTouchY,
-	int nTouch)
+void GetTouchPosition(int32_t& touchX,
+	int32_t& touchY,
+	int32_t touch)
 {
-	if (nTouch >= 0 &&
-		nTouch < VINPUT_MAX_TOUCHES)
+	if (touch >= 0 &&
+		touch < VINPUT_MAX_TOUCHES)
 	{
-		nTouchX = s_arPointerX[nTouch];
-		nTouchY = s_arPointerY[nTouch];
+		touchX = sPointerX[touch];
+		touchY = sPointerY[touch];
 	}
 	else
 	{
@@ -466,19 +417,16 @@ void GetTouchPosition(int& nTouchX,
 	}
 }
 
-//*****************************************************************************
-// GetTouchPositionNormalized
-//*****************************************************************************
 void GetTouchPositionNormalized(float& fTouchX,
 	float& fTouchY,
-	int    nTouch)
+	int32_t touch)
 {
-	if (nTouch >= 0 &&
-		nTouch < VINPUT_MAX_TOUCHES)
+	if (touch >= 0 &&
+		touch < VINPUT_MAX_TOUCHES)
 	{
 		const AppState* appState = GetAppState();
-		fTouchX = (s_arPointerX[nTouch] - (appState->mWindowWidth / 2.0f)) / (appState->mWindowWidth / 2.0f);
-		fTouchY = (s_arPointerY[nTouch] - (appState->mWindowHeight / 2.0f)) / (appState->mWindowHeight / 2.0f);
+		fTouchX = (sPointerX[touch] - (appState->mWindowWidth / 2.0f)) / (appState->mWindowWidth / 2.0f);
+		fTouchY = (sPointerY[touch] - (appState->mWindowHeight / 2.0f)) / (appState->mWindowHeight / 2.0f);
 	}
 	else
 	{
@@ -487,52 +435,40 @@ void GetTouchPositionNormalized(float& fTouchX,
 	}
 }
 
-//*****************************************************************************
-// GetPointerPosition
-//*****************************************************************************
-void GetPointerPosition(int& nPointerX,
-	int& nPointerY,
-	int nPointer)
+void GetPointerPosition(int32_t& pointerX,
+	int32_t& pointerY,
+	int32_t pointer)
 {
-	GetTouchPosition(nPointerX,
-		nPointerY,
-		nPointer);
+	GetTouchPosition(pointerX,
+		pointerY,
+		pointer);
 }
 
-//*****************************************************************************
-// GetPointerPositionNormalized
-//*****************************************************************************
-void GetPointerPositionNormalized(float& fPointerX,
-	float& fPointerY,
-	int  nPointer)
+void GetPointerPositionNormalized(float& pointerX,
+	float& pointerY,
+	int32_t pointer)
 {
-	GetTouchPositionNormalized(fPointerX,
-		fPointerY,
-		nPointer);
+	GetTouchPositionNormalized(pointerX,
+		pointerY,
+		pointer);
 }
 
-//*****************************************************************************
-// SetMousePosition
-//*****************************************************************************
-void SetMousePosition(int nMouseX, int nMouseY)
+void SetMousePosition(int32_t mouseX, int32_t mouseY)
 {
 	// First index in pointer array is mouse position.
-	s_arPointerX[0] = nMouseX;
-	s_arPointerY[0] = nMouseY;
+	sPointerX[0] = mouseX;
+	sPointerY[0] = mouseY;
 }
 
-//*****************************************************************************
-// SetTouchPosition
-//*****************************************************************************
-void SetTouchPosition(int nTouchX,
-	int nTouchY,
-	int nTouch)
+void SetTouchPosition(int32_t touchX,
+	int32_t touchY,
+	int32_t touch)
 {
-	if (nTouch >= 0 &&
-		nTouch < VINPUT_MAX_TOUCHES)
+	if (touch >= 0 &&
+		touch < VINPUT_MAX_TOUCHES)
 	{
-		s_arPointerX[nTouch] = nTouchX;
-		s_arPointerY[nTouch] = nTouchY;
+		sPointerX[touch] = touchX;
+		sPointerY[touch] = touchY;
 	}
 	else
 	{
@@ -541,169 +477,150 @@ void SetTouchPosition(int nTouchX,
 	}
 }
 
-
-//*****************************************************************************
-// SetControllerButton
-//*****************************************************************************
-void SetControllerButton(int nControllerButton,
-	int nControllerNumber)
+void SetControllerButton(int32_t controllerButton,
+	int32_t controllerNumber)
 {
-#if !defined(WINDOWS)
-	if (nControllerNumber >= 0 &&
-		nControllerNumber < VINPUT_MAX_CONTROLLERS)
+#if !defined(_WIN32)
+	if (controllerNumber >= 0 &&
+		controllerNumber < VINPUT_MAX_CONTROLLERS)
 	{
-		if (nControllerButton >= VCONT_A &&
-			nControllerButton < VCONT_SELECT)
+		if (controllerButton >= VCONT_A &&
+			controllerButton < VCONT_SELECT)
 		{
 			// Bias the controller button by VCONT_A to get correct array index
-			s_arControllers[nControllerNumber].arButtons[nControllerButton - VCONT_A] = 1;
+			sControllers[controllerNumber].mButtons[controllerButton - VCONT_A] = true;
 		}
 	}
 #endif
 }
 
-//*****************************************************************************
-// ClearControllerButton
-//*****************************************************************************
-void ClearControllerButton(int nControllerButton,
-	int nControllerNumber)
+void ClearControllerButton(int32_t controllerButton,
+	int32_t controllerNumber)
 {
-#if !defined(WINDOWS)
-	if (nControllerNumber >= 0 &&
-		nControllerNumber < VINPUT_MAX_CONTROLLERS)
+#if !defined(_WIN32)
+	if (controllerNumber >= 0 &&
+		controllerNumber < VINPUT_MAX_CONTROLLERS)
 	{
-		if (nControllerButton >= VCONT_A &&
-			nControllerButton < VCONT_SELECT)
+		if (controllerButton >= VCONT_A &&
+			controllerButton < VCONT_SELECT)
 		{
 			// Bias the controller button by VCONT_A to get correct array index
-			s_arControllers[nControllerNumber].arButtons[nControllerButton - VCONT_A] = 0;
+			sControllers[controllerNumber].mButtons[controllerButton - VCONT_A] = false;
 		}
 	}
 #endif
 }
 
-//*****************************************************************************
-// IsControllerButtonDown
-//*****************************************************************************
-int IsControllerButtonDown(int nControllerButton,
-	int nControllerNumber)
+bool IsControllerButtonDown(int32_t controllerButton,
+	int32_t controllerNumber)
 {
-#if defined(WINDOWS)
+#if defined(_WIN32)
 
-	if (s_arXinputStates[nControllerNumber].Gamepad.wButtons & nControllerButton)
+	if (sXinputStates[controllerNumber].Gamepad.wButtons & controllerButton)
 	{
-		return 1;
+		return true;
 	}
 	else
 	{
-		return 0;
+		return false;
 	}
 
 #else
-	if (nControllerNumber >= 0 &&
-		nControllerNumber < VINPUT_MAX_CONTROLLERS)
+	if (controllerNumber >= 0 &&
+		controllerNumber < VINPUT_MAX_CONTROLLERS)
 	{
-		if (nControllerButton >= VCONT_A &&
-			nControllerButton < VCONT_SELECT)
+		if (controllerButton >= VCONT_A &&
+			controllerButton < VCONT_SELECT)
 		{
 			// Bias the controller button by VCONT_A to get correct array index
-			return s_arControllers[nControllerNumber].arButtons[nControllerButton - VCONT_A];
+			return sControllers[controllerNumber].mButtons[controllerButton - VCONT_A];
 		}
 	}
 
-	return 0;
+	return false;
 #endif
 }
 
-//*****************************************************************************
-// IsControllerButtonJustDown
-//*****************************************************************************
-int IsControllerButtonJustDown(int nControllerButton,
-	int nControllerNumber)
+bool IsControllerButtonJustDown(int32_t controllerButton,
+	int32_t controllerNumber)
 {
-#if defined (WINDOWS)
-	if ((s_arXinputStates[nControllerNumber].Gamepad.wButtons & nControllerButton) != 0 &&
-		(s_arXinputPrevStates[nControllerNumber].Gamepad.wButtons & nControllerButton) == 0)
+#if defined (_WIN32)
+	if ((sXinputStates[controllerNumber].Gamepad.wButtons & controllerButton) &&
+		!(sXinputPrevStates[controllerNumber].Gamepad.wButtons & controllerButton))
 	{
-		return 1;
+		return true;
 	}
 	else
 	{
-		return 0;
+		return false;
 	}
 #else
-	return 0;
+	return false;
 #endif
 }
 
-//*****************************************************************************
-// SetControllerAxisValue
-//*****************************************************************************
-void SetControllerAxisValue(int   nControllerAxis,
+void SetControllerAxisValue(int32_t controllerAxis,
 	float fAxisValue,
-	int   nControllerNumber)
+	int32_t controllerNumber)
 {
-#if !defined(WINDOWS)
-	if (nControllerNumber >= 0 &&
-		nControllerNumber < VINPUT_MAX_CONTROLLERS)
+#if !defined(_WIN32)
+	if (controllerNumber >= 0 &&
+		controllerNumber < VINPUT_MAX_CONTROLLERS)
 	{
-		if (nControllerAxis >= VCONT_AXIS_X &&
-			nControllerAxis < VCONT_AXIS_RTRIGGER)
+		if (controllerAxis >= VCONT_AXIS_X &&
+			controllerAxis < VCONT_AXIS_RTRIGGER)
 		{
-			s_arControllers[nControllerNumber].arAxes[nControllerAxis] = fAxisValue;
+			sControllers[controllerNumber].mAxes[controllerAxis] = fAxisValue;
 		}
 	}
 #endif
 }
 
-//*****************************************************************************
-// GetControllerAxisValue
-//*****************************************************************************
-float GetControllerAxisValue(int nControllerAxis,
-	int nControllerNumber)
+float GetControllerAxisValue(int32_t controllerAxis,
+	int32_t controllerNumber)
 {
-#if defined (WINDOWS)
-	float fRet = 0.0f;
+#if defined (_WIN32)
+	float ret = 0.0f;
 
 	// Is the controller connected? if not 0.0f
-	if (IsControllerConnected(nControllerNumber) == 0)
+	if (!IsControllerConnected(controllerNumber))
 	{
 		return 0.0f;
 	}
 
-	switch (nControllerAxis)
+	switch (controllerAxis)
 	{
 	case VCONT_AXIS_LTRIGGER:
-		fRet = (float)s_arXinputStates[nControllerNumber].Gamepad.bLeftTrigger / 255;
+		ret = (float)sXinputStates[controllerNumber].Gamepad.bLeftTrigger / 255;
 		break;
 	case VCONT_AXIS_RTRIGGER:
-		fRet = (float)s_arXinputStates[nControllerNumber].Gamepad.bRightTrigger / 255;
+		ret = (float)sXinputStates[controllerNumber].Gamepad.bRightTrigger / 255;
 		break;
 	case VCONT_AXIS_LTHUMB_X:
-		fRet = (float)s_arXinputStates[nControllerNumber].Gamepad.sThumbLX / 32767;
+		ret = (float)sXinputStates[controllerNumber].Gamepad.sThumbLX / 32767;
 		break;
 	case VCONT_AXIS_LTHUMB_Y:
-		fRet = (float)s_arXinputStates[nControllerNumber].Gamepad.sThumbLY / 32767;
+		ret = (float)sXinputStates[controllerNumber].Gamepad.sThumbLY / 32767;
 		break;
 	case VCONT_AXIS_RTHUMB_X:
-		fRet = (float)s_arXinputStates[nControllerNumber].Gamepad.sThumbRX / 32767;
+		ret = (float)sXinputStates[controllerNumber].Gamepad.sThumbRX / 32767;
 		break;
 	case VCONT_AXIS_RTHUMB_Y:
-		fRet = (float)s_arXinputStates[nControllerNumber].Gamepad.sThumbRY / 32767;
+		ret = (float)sXinputStates[controllerNumber].Gamepad.sThumbRY / 32767;
 		break;
 	default:
 		break;
 	}
 
-	return fRet;
+	return ret;
 #else
-	if (nControllerNumber >= 0 &&
-		nControllerNumber < VINPUT_MAX_CONTROLLERS)
+	if (controllerNumber >= 0 &&
+		controllerNumber < VINPUT_MAX_CONTROLLERS)
 	{
-		if (nControllerAxis >= VCONT_AXIS_X &&
-			nControllerAxis < VCONT_AXIS_RTRIGGER)
+		if (controllerAxis >= VCONT_AXIS_X &&
+			controllerAxis < VCONT_AXIS_RTRIGGER)
 		{
-			return s_arControllers[nControllerNumber].arAxes[nControllerAxis];
+			return sControllers[controllerNumber].mAxes[controllerAxis];
 		}
 	}
 
@@ -711,16 +628,13 @@ float GetControllerAxisValue(int nControllerAxis,
 #endif
 }
 
-//*****************************************************************************
-// GetControllerIndex
-//*****************************************************************************
-int GetControllerIndex(int nInputDevice)
+int32_t GetControllerIndex(int32_t inputDevice)
 {
-	int i = 0;
+	int32_t i = 0;
 
-	for (i = 0; i < s_nNumControllers; i++)
+	for (i = 0; i < sNumControllers; i++)
 	{
-		if (s_arControllers[i].nDevice == nInputDevice)
+		if (sControllers[i].mDevice == inputDevice)
 		{
 			return i;
 		}
@@ -728,112 +642,88 @@ int GetControllerIndex(int nInputDevice)
 
 	if (i < VINPUT_MAX_CONTROLLERS)
 	{
-		AssignController(nInputDevice);
+		AssignController(inputDevice);
 		return i;
 	}
 
 	return -1;
 }
 
-//*****************************************************************************
-// AssignController
-//*****************************************************************************
-void AssignController(int nInputDevice)
+void AssignController(int32_t inputDevice)
 {
-#if !defined(WINDOWS)
-	if (s_nNumControllers < VINPUT_MAX_CONTROLLERS)
+#if !defined(_WIN32)
+	if (sNumControllers < VINPUT_MAX_CONTROLLERS)
 	{
-		s_arControllers[s_nNumControllers].nDevice = nInputDevice;
-		s_nNumControllers++;
+		sControllers[sNumControllers].mDevice = inputDevice;
+		sNumControllers++;
 	}
 #endif
 }
 
-//*****************************************************************************
-// IsControllerConnected
-//*****************************************************************************
-int IsControllerConnected(int nIndex)
+bool IsControllerConnected(int32_t index)
 {
-#if defined (WINDOWS)
-	return s_arActiveControllers[nIndex];
+#if defined (_WIN32)
+	return sActiveControllers[index];
 #else
-	if (nIndex < s_nNumControllers)
+	if (index < sNumControllers)
 	{
-		return 1;
+		return true;
 	}
 	else
 	{
-		return 0;
+		return false;
 	}
 #endif
 }
 
-//*****************************************************************************
-// RefreshControllerStates
-//*****************************************************************************
 void RefreshControllerStates()
 {
-#if defined (WINDOWS)
-	memcpy(s_arXinputPrevStates, s_arXinputStates, sizeof(XINPUT_STATE) * VINPUT_MAX_CONTROLLERS);
-	memset(s_arXinputStates, 0, sizeof(XINPUT_STATE) * VINPUT_MAX_CONTROLLERS);
+#if defined (_WIN32)
+	memcpy(sXinputPrevStates, sXinputStates, sizeof(XINPUT_STATE) * VINPUT_MAX_CONTROLLERS);
+	memset(sXinputStates, 0, sizeof(XINPUT_STATE) * VINPUT_MAX_CONTROLLERS);
 
-	for (int i = 0; i < XUSER_MAX_COUNT; i++)
+	for (int32_t i = 0; i < XUSER_MAX_COUNT; i++)
 	{
-		if (XInputGetState(i, &s_arXinputStates[i]) == 0)
+		if (!XInputGetState(i, &sXinputStates[i]))
 		{
-			s_arActiveControllers[i] = 1;
+			sActiveControllers[i] = true;
 		}
 		else
 		{
-			s_arActiveControllers[i] = 0;
+			sActiveControllers[i] = false;
 		}
 	}
 
 #endif
 }
 
-//*****************************************************************************
-// ShowSoftKeyboard
-//*****************************************************************************
 void ShowSoftKeyboard()
 {
-	s_nKeyboardEnable = 1;
+	sKeyboardEnable = true;
 }
 
-//*****************************************************************************
-// HideSoftKeyboard
-//*****************************************************************************
 void HideSoftKeyboard()
 {
-	s_nKeyboardEnable = 0;
+	sKeyboardEnable = false;
 }
 
-//*****************************************************************************
-// InitializeSoftKeyboard
-//*****************************************************************************
 void InitializeSoftKeyboard()
 {
-	//if (s_pKeyboard == 0)
+	//if (s_pKeyboard == nullptr)
 	//{
 	//	s_pKeyboard = new Keyboard();
 	//}
 }
 
-//*****************************************************************************
-// IsSoftKeyboardEnabled
-//*****************************************************************************
-int IsSoftKeyboardEnabled()
+bool IsSoftKeyboardEnabled()
 {
-	return s_nKeyboardEnable;
+	return sKeyboardEnable;
 }
 
-//*****************************************************************************
-// RenderSoftKeyboard
-//*****************************************************************************
 void RenderSoftKeyboard()
 {
-	//if (s_pKeyboard != 0 &&
-	//	s_nKeyboardEnable != 0)
+	//if (s_pKeyboard &&
+	//	s_nKeyboardEnable)
 	//{
 	//	s_pKeyboard->Render();
 	//}
@@ -843,56 +733,40 @@ void RenderSoftKeyboard()
 	//}
 }
 
-//*****************************************************************************
-// UpdateSoftKeyboard
-//*****************************************************************************
 void UpdateSoftKeyboard()
 {
-	//if (s_pKeyboard != 0 &&
-	//	s_nKeyboardEnable != 0)
+	//if (s_pKeyboard &&
+	//	s_nKeyboardEnable)
 	//{
 	//	s_pKeyboard->Update();
 	//}
 }
 
-//*****************************************************************************
-// IsPointerDownRaw
-//*****************************************************************************
-int IsPointerDownRaw(int nPointer)
+bool IsPointerDownRaw(int32_t pointer)
 {
-	if (nPointer >= 0 &&
-		nPointer < VINPUT_MAX_TOUCHES)
+	if (pointer >= 0 &&
+		pointer < VINPUT_MAX_TOUCHES)
 	{
 		// If either the left mouse button is down or the specified
 		// touch index is down, then return 1.
-		if ((s_arButtons[VBUTTON_LEFT] != 0) ||
-			(s_arTouches[nPointer] != 0))
-		{
-			return 1;
-		}
+		return (sButtons[VBUTTON_LEFT] || sTouches[pointer]);
 	}
 
-	return 0;
+	return false;
 }
 
-//*****************************************************************************
-// IsTouchDownRaw
-//*****************************************************************************
-int IsTouchDownRaw(int nTouch)
+bool IsTouchDownRaw(int32_t touch)
 {
-	if (nTouch >= 0 &&
-		nTouch < VINPUT_MAX_TOUCHES)
+	if (touch >= 0 &&
+		touch < VINPUT_MAX_TOUCHES)
 	{
-		return s_arTouches[nTouch];
+		return sTouches[touch];
 	}
 
-	return 0;
+	return false;
 }
 
-//*****************************************************************************
-// CharToKey
-//*****************************************************************************
-int CharToKey(char cTarget)
+int32_t CharToKey(char cTarget)
 {
 	cTarget = toupper(cTarget);
 
@@ -907,19 +781,19 @@ int CharToKey(char cTarget)
 	{
 		return VKEY_A + (cTarget - 'A');
 	}
-#elif defined (WINDOWS)
-	return static_cast<int>(cTarget);
+#elif defined (_WIN32)
+	return static_cast<int32_t>(cTarget);
 #endif
 
 	return 0;
 }
 
-void SetScrollWheelDelta(int nDelta)
+void SetScrollWheelDelta(int32_t nDelta)
 {
-	s_nScrollWheelDelta = nDelta;
+	sScrollWheelDelta = nDelta;
 }
 
-int GetScrollWheelDelta()
+int32_t GetScrollWheelDelta()
 {
-	return s_nScrollWheelDelta;
+	return sScrollWheelDelta;
 }

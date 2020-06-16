@@ -293,443 +293,78 @@ class Controller
 public:
 	Controller()
 	{
-		nDevice = -1;
-		memset(arButtons, 0, VINPUT_CONT_BUTTONS * sizeof(int));
-		memset(arAxes, 0, VINPUT_CONT_AXES * sizeof(float));
+		mDevice = -1;
+		memset(mButtons, 0, VINPUT_CONT_BUTTONS * sizeof(int32_t));
+		memset(mAxes, 0, VINPUT_CONT_AXES * sizeof(float));
 	}
 
-	int   nDevice;
-	int   arButtons[VINPUT_CONT_BUTTONS];
-	float arAxes[VINPUT_CONT_AXES];
+	int32_t   mDevice;
+	int32_t   mButtons[VINPUT_CONT_BUTTONS];
+	float mAxes[VINPUT_CONT_AXES];
 };
 
-//## **********************************************************************
-//## SetKey
-//## 
-//## Registers that a key is currently being pressed.
-//## Should only be called internally by the engine.
-//##
-//## Input:
-//##   nKey - keycode to set.
-//## **********************************************************************
-void SetKey(int nKey);
-
-//## **********************************************************************
-//## ClearKey
-//##
-//## Indicate that a key is no longer being pressed.
-//## Should only be called internally by the engine.
-//## 
-//## Input:
-//##   nKey - keycode to clear.
-//## **********************************************************************
-void ClearKey(int nKey);
+void SetKey(int32_t key);
+void ClearKey(int32_t key);
 
 void UpdateInput();
 
 void ClearAllKeys();
 
-//## **********************************************************************
-//## IsKeyDown
-//##
-//## Used to tell if a key is currently being pressed.
-//##
-//## Input:
-//##   nKey - keycode to check.
-//##
-//## Returns:
-//##   int - '1' if key is down.
-//##         '0' if key is up.
-//## **********************************************************************
-int IsKeyDown(int nKey);
+bool IsKeyDown(int32_t key);
+bool IsKeyJustDownRepeat(int32_t key);
+bool IsKeyJustDown(int32_t key);
+bool IsKeyJustUp(int32_t key);
 
-int IsKeyJustDownRepeat(int nKey);
+const std::vector<int32_t>& GetJustDownKeys();
 
-int IsKeyJustDown(int nKey);
+void SetButton(int32_t button);
+void ClearButton(int32_t button);
+bool IsButtonDown(int32_t button);
 
-int IsKeyJustUp(int nKey);
+bool IsButtonJustDown(int32_t button);
+bool IsButtonJustUp(int32_t button);
 
-const std::vector<int32_t> GetJustDownKeys();
+void SetTouch(int32_t touch);
+void ClearTouch(int32_t touch);
+bool IsTouchDown(int32_t touch);
 
-//## **********************************************************************
-//## SetButton
-//##
-//## Registers that a mouse button is pressed down.
-//## Should only be called internally by the engine.
-//## 
-//## Input:
-//##   nButton - button code to register.
-//## **********************************************************************
-void SetButton(int nButton);
+bool IsPointerJustUp(int32_t pointer = 0);
+bool IsPointerJustDown(int32_t pointer = 0);
+bool IsPointerDown(int32_t pointer = 0);
 
-//## **********************************************************************
-//## ClearButton
-//## 
-//## Indicate that a button is not being pressed.
-//## Should only be called internally by the engine.
-//## 
-//## Input:
-//##   nButton - button code to register.
-//## **********************************************************************
-void ClearButton(int nButton);
+void GetMousePosition(int32_t& mouseX, int32_t& mouseY);
+void GetTouchPosition(int32_t& touchX, int32_t& touchY, int32_t touch);
+void GetTouchPositionNormalized(float& fTouchX, float& fTouchY, int32_t touch);
+void GetPointerPosition(int32_t& pointerX, int32_t& pointerY, int32_t pointer = 0);
+void GetPointerPositionNormalized(float& fPointerX, float& fPointerY, int32_t  pointer = 0);
 
-//## **********************************************************************
-//## IsButtonDown
-//##
-//## Used to check if a mouse button is being held down.
-//##
-//## Input:
-//##   nButton - mouse button code to check (see above).
-//## 
-//## Returns:
-//##   int - '1' if mouse button is pressed down.
-//##       - '0' if mouse button is not pressed.
-//## **********************************************************************
-int IsButtonDown(int nButton);
+void SetMousePosition(int32_t mouseX, int32_t mouseY);
+void SetTouchPosition(int32_t touchX, int32_t touchY, int32_t touch = 0);
 
-int IsButtonJustDown(int nButton);
-int IsButtonJustUp(int nButton);
+void SetControllerButton(int32_t controllerButton, int32_t controllerNumber);
+void ClearControllerButton(int32_t controllerButton, int32_t controllerNumber);
+bool IsControllerButtonDown(int32_t controllerButton, int32_t controllerNumber);
+bool IsControllerButtonJustDown(int32_t controllerButton, int32_t controllerNumber);
 
-//## **********************************************************************
-//## SetTouch
-//##
-//## Indicate that a touch index is being used (finger touching screen).
-//## Should only be used internally by the engine.
-//## 
-//## Input:
-//##   nTouch - touch index.
-//## **********************************************************************
-void SetTouch(int nTouch);
+void SetControllerAxisValue(int32_t controllerAxis, float fAxisValue, int32_t controllerNumber);
+float GetControllerAxisValue(int32_t controllerAxis, int32_t controllerNumber);
 
-//## **********************************************************************
-//## ClearTouch
-//##
-//## Indicate that a touch index is not being used.
-//## Should only be used internally by the engine.
-//##
-//## Input:
-//##   nTouch - touch index.
-//## **********************************************************************
-void ClearTouch(int nTouch);
-
-//## **********************************************************************
-//## IsTouchDown
-//## 
-//## Used to check if a touch is down on screen.
-//## 
-//## Input:
-//##   nTouch - touch index to check.
-//##
-//## Returns:
-//##   int - '1' if touch index is down.
-//##         '0' otherwise.
-//## **********************************************************************
-int IsTouchDown(int nTouch);
-
-int IsPointerJustUp(int nPointer = 0);
-int IsPointerJustDown(int nPointer = 0);
-
-//## **********************************************************************
-//## IsPointerDown
-//## 
-//## Same as IsTouchDown(), but with the default touch index set to the 
-//## mouse index.
-//##
-//## Input:
-//##   nPointer - index of pointer (mouse or touch).
-//##
-//## Returns:
-//##   int - '1' if pointer is pressed down.
-//##       - '0' otherwise.
-//## **********************************************************************
-int IsPointerDown(int nPointer = 0);
-
-//## **********************************************************************
-//## GetMousePosition
-//## 
-//## Used to check the mouse position
-//## **********************************************************************
-void GetMousePosition(int& nMouseX,
-	int& nMouseY);
-
-//## **********************************************************************
-//## GetTouchPosition
-//## 
-//## Gets the position of a pointer in screen coordinates. Coordinate
-//## origin is at bottom left corner of the screen.
-//##
-//## Input:
-//##   nTouch - touch index to query.
-//##
-//## Output:
-//##   nTouchX - x coordinate of touch position.
-//##   nTouchY - y coordinate of touch position.
-//## **********************************************************************
-void GetTouchPosition(int& nTouchX,
-	int& nTouchY,
-	int  nTouch);
-
-//## **********************************************************************
-//## GetTouchPositionNormalized
-//## 
-//## Gets the position of a pointer in normalized screen coordinates. 
-//## Coordinate origin is at bottom left corner of the screen.
-//##
-//## Input:
-//##   nTouch - touch index to query.
-//##
-//## Output:
-//##   fTouchX - x coordinate of touch position.
-//##   fTouchY - y coordinate of touch position.
-//## **********************************************************************
-void GetTouchPositionNormalized(float& fTouchX,
-	float& fTouchY,
-	int    nTouch);
-
-//## **********************************************************************
-//## GetPointerPosition
-//## 
-//## Refer to GetTouchPosition. It is the same as that function except 
-//## the touch index is defaulted to 0 (mouse index).
-//## **********************************************************************
-void GetPointerPosition(int& nPointerX,
-	int& nPointerY,
-	int  nPointer = 0);
-
-//## **********************************************************************
-//## GetPointerPosition
-//## 
-//## Refer to GetTouchPositionNormalized. It is the same as that function
-//##  except the touch index is defaulted to 0 (mouse index).
-//## **********************************************************************
-void GetPointerPositionNormalized(float& fPointerX,
-	float& fPointerY,
-	int  nPointer = 0);
-
-//## **********************************************************************
-//## SetMousePosition
-//## 
-//## Register the current mouse location. Should only be called internally
-//## by the engine. Origin is at bottom left of screen.
-//##
-//## Input:
-//##   nMouseX - x coordinate of mouse position.
-//##   nMouseY - y coordinate of mouse position.
-//## **********************************************************************
-void SetMousePosition(int nMouseX,
-	int nMouseY);
-
-//## **********************************************************************
-//## SetTouchPosition
-//## 
-//## Register the current touch position. Should only be called internally
-//## by the engine. Origin as at the bottom left of the screen.
-//## 
-//## Input:
-//##   nTouchX - x coordinate of the touch position.
-//##   nTouchY - y cooridnate of the touch position.
-//##   nTouch  - touch index.
-//## **********************************************************************
-void SetTouchPosition(int nTouchX,
-	int nTouchY,
-	int nTouch = 0);
-
-//## **********************************************************************
-//## SetControllerButton
-//## 
-//## Registers a controller button being pressed down.
-//##
-//## Input:
-//##   nControllerButton - button enum value
-//##   nControllerNumber - controller index
-//## **********************************************************************
-void SetControllerButton(int nControllerButton,
-	int nControllerNumber);
-
-//## **********************************************************************
-//## ClearControllerButton
-//## 
-//## Registers a controller button being released.
-//##
-//## Input:
-//##   nControllerButton - button enum value
-//##   nControllerNumber - controller index
-//## **********************************************************************
-void ClearControllerButton(int nControllerButton,
-	int nControllerNumber);
-
-//## **********************************************************************
-//## IsControllerButtonDown
-//## 
-//## Queries the state of a controller button.
-//##
-//## Input:
-//##   nControllerButton - button enum value
-//##   nControllerNumber - controller index
-//##
-//## Returns:
-//##   int - '1' if button is down.
-//##         '0' otherwise.
-//## **********************************************************************
-int IsControllerButtonDown(int nControllerButton,
-	int nControllerNumber);
-
-//## **********************************************************************
-//## IsControllerButtonJustDown
-//## 
-//## Queries if a button was just pressed.
-//##
-//## Input:
-//##   nControllerButton - button enum value
-//##   nControllerNumber - controller index
-//##
-//## Returns:
-//##   int - '1' if button is down.
-//##         '0' otherwise.
-//## **********************************************************************
-int IsControllerButtonJustDown(int nControllerButton,
-	int nControllerNumber);
-
-
-//## **********************************************************************
-//## SetControllerAxisValue
-//## 
-//## Sets the value of analog axis.
-//##
-//## Input:
-//##   nControllerAxis   - axis enum value
-//##   fAxisValue        - current value of axis.
-//##   nControllerNumber - controller index
-//## **********************************************************************
-void SetControllerAxisValue(int   nControllerAxis,
-	float fAxisValue,
-	int   nControllerNumber);
-
-//## **********************************************************************
-//## GetControllerAxisValue
-//##
-//## Input:
-//##   nControllerAxis   - axis enum value
-//##   nControllerNumber - controller index
-//##
-//## Returns:
-//##   float - value of analog axis.
-//## **********************************************************************
-float GetControllerAxisValue(int nControllerAxis,
-	int nControllerNumber);
-//## **********************************************************************
-//## GetControllerIndex
-//##
-//## Input:
-//##   nInputDevice - device identification number assigned by OS.
-//##
-//## Returns:
-//##   int - controller index
-//## **********************************************************************
-int GetControllerIndex(int nInputDevice);
-
-//## **********************************************************************
-//## AssignController
-//##
-//## Based on the input device ID, assign a controller to the Vakz engine.
-//##
-//## Input:
-//##   nInputDevice   - axis enum value
-//## **********************************************************************
-void AssignController(int nInputDevice);
-
-//## **********************************************************************
-//## IsControllerConnected
-//##
-//## Check if a controller has been connected. (Player1, Player2, etc).
-//##
-//## Input:
-//##   nIndex - controller index
-//##
-//## Returns:
-//##   int - '1' if controller has been connected/registered.
-//##         '0'
-//## **********************************************************************
-int IsControllerConnected(int nIndex);
+int32_t GetControllerIndex(int32_t inputDevice);
+void AssignController(int32_t inputDevice);
+bool IsControllerConnected(int32_t index);
 
 void RefreshControllerStates();
 
-//## **********************************************************************
-//## ShowSoftKeyboard
-//##
-//## Enable the on-screen keyboard for providing keyboard input.
-//## **********************************************************************
 void ShowSoftKeyboard();
-
-//## **********************************************************************
-//## HideSoftKeyboard
-//##
-//## Disable the on-screen keyboard for providing keyboard input.
-//## **********************************************************************
 void HideSoftKeyboard();
-
-//## **********************************************************************
-//## InitializeSoftKeyboard
-//##
-//## Used internally to initialize the on-screen keyboard.
-//## **********************************************************************
 void InitializeSoftKeyboard();
-
-//## **********************************************************************
-//## IsSoftKeyboardEnabled
-//##
-//## Returns:
-//##   int - '1' if on-screen keyboard is enabled.
-//##         '0' otherwise.
-//## **********************************************************************
-int IsSoftKeyboardEnabled();
-
-//## **********************************************************************
-//## RenderSoftKeyboard
-//##
-//## Used internally to render the on-screen keyboard to the screen if
-//## it has been enabled.
-//## **********************************************************************
+bool IsSoftKeyboardEnabled();
 void RenderSoftKeyboard();
-
-//## **********************************************************************
-//## UpdateSoftKeyboard
-//##
-//## Used internally to check what keys are being pressed on the on-screen
-//## keyboard if the on-screen keyboard has been enabled.
-//## **********************************************************************
 void UpdateSoftKeyboard();
 
-//## **********************************************************************
-//## IsPointerDownRaw
-//##
-//## Same as IsPointerDown, but returns true even if the pointer is down
-//## on the on-screen keyboard.
-//## **********************************************************************
-int IsPointerDownRaw(int nPointer = 0);
+bool IsPointerDownRaw(int32_t pointer = 0);
+bool IsTouchDownRaw(int32_t touch);
+int32_t CharToKey(char target);
 
-//## **********************************************************************
-//## IsTouchDownRaw
-//##
-//## Same as IsTouchDown, but returns true even if the pointer is down
-//## on the on-screen keyboard.
-//## **********************************************************************
-int IsTouchDownRaw(int nTouch);
-
-//## **********************************************************************
-//## CharToKey
-//##
-//## Converts an ascii character to the key that corresponds with it.
-//## Example: CharToKey('A') will return VKEY_A.
-//##
-//## Input:
-//##   cTarget - character to convert.
-//##
-//## Returns:
-//##   int - Key enum value
-//## **********************************************************************
-int CharToKey(char cTarget);
-
-int GetScrollWheelDelta();
-
-void SetScrollWheelDelta(int nDelta);
+int32_t GetScrollWheelDelta();
+void SetScrollWheelDelta(int32_t delta);
